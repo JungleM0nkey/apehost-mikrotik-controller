@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Sidebar } from './components/organisms/Sidebar/Sidebar';
+import { DashboardPage } from './pages/DashboardPage/DashboardPage';
 import { SettingsPage } from './pages/SettingsPage/SettingsPage';
 import { RouterInfo } from './types/router';
 import './styles/tokens.css';
@@ -30,16 +31,29 @@ const App: React.FC = () => {
 
   const renderContent = () => {
     switch (activeNav) {
+      case 'dashboard':
+        return <DashboardPage />;
       case 'settings':
         return <SettingsPage />;
+      case 'terminal':
+      case 'network':
+      case 'firewall':
+      case 'dhcp':
+      case 'analytics':
+        return (
+          <div className={styles.placeholder}>
+            <h1>{activeNav.charAt(0).toUpperCase() + activeNav.slice(1)}</h1>
+            <p>This section is under construction</p>
+            <p style={{ marginTop: '16px', color: 'var(--color-text-secondary)' }}>
+              Navigate to Dashboard or Settings to see implemented pages
+            </p>
+          </div>
+        );
       default:
         return (
           <div className={styles.placeholder}>
             <h1>MikroTik Router Management Dashboard</h1>
-            <p>Active Section: {activeNav}</p>
-            <p style={{ marginTop: '16px', color: 'var(--color-text-secondary)' }}>
-              Navigate to Settings to see the new configuration page
-            </p>
+            <p>Select a section from the navigation menu</p>
           </div>
         );
     }
