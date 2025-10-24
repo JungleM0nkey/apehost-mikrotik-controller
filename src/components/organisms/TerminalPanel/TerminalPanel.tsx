@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import api from '../../../services/api';
 import { TerminalLine } from '../../../types/terminal';
 import styles from './TerminalPanel.module.css';
 
@@ -15,6 +16,7 @@ export const TerminalPanel: React.FC<TerminalPanelProps> = ({
   const [currentCommand, setCurrentCommand] = useState('');
   const [commandHistory, setCommandHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
+  const [isExecuting, setIsExecuting] = useState(false);
   const terminalEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -41,10 +43,17 @@ export const TerminalPanel: React.FC<TerminalPanelProps> = ({
     }
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!currentCommand.trim()) return;
+    if (!currentCommand.trim() || isExecuting) return;
+
+    // Handle local commands
+    if (currentCommand.trim().toLowerCase() === '/clear' || currentCommand.trim().toLowerCase() === 'clear') {
+      setLines([]);
+      setCurrentCommand('');
+      return;
+    }
 
     // Add command to history
     const newHistory = [...commandHistory, currentCommand];
@@ -59,67 +68,39 @@ export const TerminalPanel: React.FC<TerminalPanelProps> = ({
       timestamp: new Date().toISOString()
     };
 
-    // Generate mock response
-    const response = generateMockResponse(currentCommand);
-    const responseLine: TerminalLine = {
-      id: (Date.now() + 1).toString(),
-      type: 'output',
-      content: response,
-      timestamp: new Date().toISOString()
-    };
-
-    setLines([...lines, commandLine, responseLine]);
+    setLines(prev => [...prev, commandLine]);
     setCurrentCommand('');
+    setIsExecuting(true);
 
-    // Callback for external handling
-    if (onCommand) {
-      onCommand(currentCommand);
-    }
-  };
+    try {
+      // Call API to execute command
+      const response = await api.executeCommand(currentCommand);
+      
+      const responseLine: TerminalLine = {
+        id: (Date.now() + 1).toString(),
+        type: 'output',
+        content: response.output,
+        timestamp: response.timestamp
+      };
 
-  const generateMockResponse = (command: string): string => {
-    const cmd = command.trim().toLowerCase();
-    
-    // Mock responses for common MikroTik commands
-    if (cmd.startsWith('/system resource print')) {
-      return `uptime: 15d7h23m45s
-version: 7.11 (stable)
-cpu-load: 23%
-free-memory: 1200MiB
-total-memory: 2048MiB`;
+      setLines(prev => [...prev, responseLine]);
+
+      // Callback for external handling
+      if (onCommand) {
+        onCommand(currentCommand);
+      }
+    } catch (error) {
+      const errorLine: TerminalLine = {
+        id: (Date.now() + 1).toString(),
+        type: 'error',
+        content: error instanceof Error ? error.message : 'Command execution failed',
+        timestamp: new Date().toISOString()
+      };
+
+      setLines(prev => [...prev, errorLine]);
+    } finally {
+      setIsExecuting(false);
     }
-    
-    if (cmd.startsWith('/interface print')) {
-      return `Flags: X - disabled, R - running
- #   NAME            TYPE       ACTUAL-MTU
- 0 R ether1-gateway  ether      1500
- 1 R ether2-local    ether      1500
- 2   ether3          ether      1500
- 3 R wlan1           wlan       1500`;
-    }
-    
-    if (cmd.startsWith('/ip address print')) {
-      return ` #   ADDRESS         NETWORK       INTERFACE
- 0   192.168.88.1/24 192.168.88.0  ether2-local
- 1   10.0.0.1/24     10.0.0.0      ether1-gateway`;
-    }
-    
-    if (cmd === '/help' || cmd === 'help') {
-      return `Available commands:
-  /system resource print  - Show system resources
-  /interface print        - Show network interfaces  
-  /ip address print       - Show IP addresses
-  /clear                  - Clear terminal
-  /help                   - Show this help`;
-    }
-    
-    if (cmd === '/clear' || cmd === 'clear') {
-      setLines([]);
-      return '';
-    }
-    
-    // Default response for unknown commands
-    return `bad command name ${command.split(' ')[0]} (line 1 column 1)`;
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -161,12 +142,14 @@ total-memory: 2048MiB`;
     <div className={styles.container} onClick={handleTerminalClick}>
       <div className={styles.header}>
         <div className={styles.headerLeft}>
-          <span className={styles.headerIcon}>💻</span>
+          <span className={styles.headerIcon}>TRM</span>
           <span className={styles.headerTitle}>Terminal</span>
         </div>
         <div className={styles.headerRight}>
           <span className={styles.statusDot} />
-          <span className={styles.statusText}>Connected</span>
+          <span className={styles.statusText}>
+            {isExecuting ? 'Executing...' : 'Connected'}
+          </span>
         </div>
       </div>
 
@@ -199,13 +182,14 @@ total-memory: 2048MiB`;
             spellCheck={false}
             autoComplete="off"
             autoFocus
+            disabled={isExecuting}
           />
         </form>
       </div>
 
       <div className={styles.footer}>
         <div className={styles.footerHint}>
-          <kbd>↑</kbd> <kbd>↓</kbd> Navigate history
+          <kbd>UP</kbd> <kbd>DN</kbd> Navigate history
         </div>
         <div className={styles.footerHint}>
           Type <code>/help</code> for commands

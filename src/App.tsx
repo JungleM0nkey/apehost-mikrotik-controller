@@ -75,11 +75,7 @@ const App: React.FC = () => {
       />
 
       <main className={styles.main}>
-        <Header
-          routerName={routerInfo.name}
-          connectionStatus={routerInfo.status}
-          currentPage={activeNav}
-        />
+        <Header currentPage={activeNav} />
         <div className={styles.content}>
           {renderContent()}
         </div>

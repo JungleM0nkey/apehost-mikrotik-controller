@@ -1,4 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import api from '../../services/api';
+import type { RouterStatus, NetworkInterface } from '../../types/api';
 import styles from './DashboardPage.module.css';
 
 interface StatCardProps {
@@ -46,21 +48,87 @@ const InterfaceItem: React.FC<InterfaceItemProps> = ({ name, status, rx, tx }) =
   );
 };
 
+// Format bytes to human readable
+const formatBytes = (bytes: number): string => {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`;
+};
+
+// Format uptime to readable format
+const formatUptime = (seconds: number): string => {
+  const days = Math.floor(seconds / 86400);
+  const hours = Math.floor((seconds % 86400) / 3600);
+  return `${days}d ${hours}h`;
+};
+
+// Determine status based on percentage
+const getStatus = (percentage: number): 'good' | 'warning' | 'critical' => {
+  if (percentage < 60) return 'good';
+  if (percentage < 80) return 'warning';
+  return 'critical';
+};
+
 export const DashboardPage: React.FC = () => {
-  // Mock data - will be replaced with real data from API
-  const stats = {
-    cpu: { value: '23', unit: '%', status: 'good' as const },
-    memory: { value: '1.2', unit: 'GB', status: 'good' as const },
-    uptime: { value: '15d 7h', status: 'good' as const },
-    traffic: { value: '125', unit: 'Mbps', status: 'warning' as const }
+  const [routerStatus, setRouterStatus] = useState<RouterStatus | null>(null);
+  const [interfaces, setInterfaces] = useState<NetworkInterface[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const [status, ifaces] = await Promise.all([
+        api.getRouterStatus(),
+        api.getInterfaces()
+      ]);
+      
+      setRouterStatus(status);
+      setInterfaces(ifaces);
+    } catch (err) {
+      console.error('Failed to fetch dashboard data:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load data');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const interfaces = [
-    { name: 'ether1-gateway', status: 'up' as const, rx: '1.2 GB', tx: '856 MB' },
-    { name: 'ether2-local', status: 'up' as const, rx: '2.5 GB', tx: '1.1 GB' },
-    { name: 'ether3', status: 'down' as const, rx: '0 B', tx: '0 B' },
-    { name: 'wlan1', status: 'up' as const, rx: '125 MB', tx: '89 MB' }
-  ];
+  useEffect(() => {
+    fetchData();
+    
+    // Refresh every 5 seconds
+    const interval = setInterval(fetchData, 5000);
+    
+    return () => clearInterval(interval);
+  }, []);
+
+  if (loading && !routerStatus) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.loading}>Loading dashboard data...</div>
+      </div>
+    );
+  }
+
+  if (error && !routerStatus) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.error}>
+          Error: {error}
+          <button onClick={fetchData}>Retry</button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!routerStatus) return null;
+
+  const memoryPercentage = (routerStatus.memoryUsed / routerStatus.memoryTotal) * 100;
+  const totalTraffic = interfaces.reduce((sum, iface) => sum + iface.rxRate + iface.txRate, 0);
 
   return (
     <div className={styles.container}>
@@ -73,30 +141,30 @@ export const DashboardPage: React.FC = () => {
       <div className={styles.statsGrid}>
         <StatCard
           title="CPU Usage"
-          value={stats.cpu.value}
-          unit={stats.cpu.unit}
-          status={stats.cpu.status}
-          icon="⚡"
+          value={routerStatus.cpuLoad.toString()}
+          unit="%"
+          status={getStatus(routerStatus.cpuLoad)}
+          icon="CPU"
         />
         <StatCard
           title="Memory"
-          value={stats.memory.value}
-          unit={stats.memory.unit}
-          status={stats.memory.status}
-          icon="💾"
+          value={(routerStatus.memoryUsed / 1024 / 1024 / 1024).toFixed(1)}
+          unit="GB"
+          status={getStatus(memoryPercentage)}
+          icon="MEM"
         />
         <StatCard
           title="Uptime"
-          value={stats.uptime.value}
-          status={stats.uptime.status}
-          icon="⏱️"
+          value={formatUptime(routerStatus.uptime)}
+          status="good"
+          icon="UP"
         />
         <StatCard
           title="Traffic"
-          value={stats.traffic.value}
-          unit={stats.traffic.unit}
-          status={stats.traffic.status}
-          icon="📊"
+          value={(totalTraffic / 1024 / 1024).toFixed(0)}
+          unit="Mbps"
+          status={totalTraffic > 100000000 ? 'warning' : 'good'}
+          icon="NET"
         />
       </div>
 
@@ -104,11 +172,19 @@ export const DashboardPage: React.FC = () => {
       <div className={styles.section}>
         <div className={styles.sectionHeader}>
           <h2 className={styles.sectionTitle}>Network Interfaces</h2>
-          <span className={styles.sectionBadge}>{interfaces.filter(i => i.status === 'up').length} Active</span>
+          <span className={styles.sectionBadge}>
+            {interfaces.filter(i => i.status === 'up').length} Active
+          </span>
         </div>
         <div className={styles.interfacesList}>
           {interfaces.map((iface) => (
-            <InterfaceItem key={iface.name} {...iface} />
+            <InterfaceItem
+              key={iface.id}
+              name={iface.name}
+              status={iface.status}
+              rx={formatBytes(iface.rxBytes)}
+              tx={formatBytes(iface.txBytes)}
+            />
           ))}
         </div>
       </div>
@@ -117,20 +193,20 @@ export const DashboardPage: React.FC = () => {
       <div className={styles.section}>
         <h2 className={styles.sectionTitle}>Quick Actions</h2>
         <div className={styles.quickActions}>
-          <button className={styles.actionButton}>
-            <span className={styles.actionIcon}>🔄</span>
+          <button className={styles.actionButton} onClick={fetchData}>
+            <span className={styles.actionIcon}>REF</span>
             <span>Refresh Stats</span>
           </button>
           <button className={styles.actionButton}>
-            <span className={styles.actionIcon}>📋</span>
+            <span className={styles.actionIcon}>LOG</span>
             <span>View Logs</span>
           </button>
           <button className={styles.actionButton}>
-            <span className={styles.actionIcon}>💾</span>
+            <span className={styles.actionIcon}>BAK</span>
             <span>Backup Config</span>
           </button>
           <button className={styles.actionButton}>
-            <span className={styles.actionIcon}>🔍</span>
+            <span className={styles.actionIcon}>DIA</span>
             <span>Run Diagnostics</span>
           </button>
         </div>
