@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Sidebar } from './components/organisms/Sidebar/Sidebar';
+import { Header } from './components/organisms/Header/Header';
 import { DashboardPage } from './pages/DashboardPage/DashboardPage';
 import { TerminalPage } from './pages/TerminalPage/TerminalPage';
 import { ChatPage } from './pages/ChatPage/ChatPage';
@@ -74,6 +75,11 @@ const App: React.FC = () => {
       />
 
       <main className={styles.main}>
+        <Header
+          routerName={routerInfo.name}
+          connectionStatus={routerInfo.status}
+          currentPage={activeNav}
+        />
         <div className={styles.content}>
           {renderContent()}
         </div>

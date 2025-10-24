@@ -1,0 +1,108 @@
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-lg) var(--space-xl);
+  background: var(--color-bg-secondary);
+  border-bottom: 1px solid var(--color-border-primary);
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+}
+
+.left {
+  flex: 1;
+}
+
+.pageTitle {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xl);
+}
+
+.connectionStatus {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-bg-tertiary);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-border-primary);
+}
+
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.statusText {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.userProfile {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-xs) var(--space-md);
+  background: var(--color-bg-tertiary);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-border-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.userProfile:hover {
+  border-color: var(--color-accent-primary);
+  background: var(--color-bg-secondary);
+}
+
+.avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--color-accent-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.username {
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+@media (max-width: 768px) {
+  .header {
+    padding: var(--space-md);
+  }
+
+  .pageTitle {
+    font-size: var(--font-size-md);
+  }
+
+  .right {
+    gap: var(--space-md);
+  }
+
+  .connectionStatus {
+    display: none;
+  }
+}
