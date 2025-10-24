@@ -13,6 +13,7 @@ export interface SidebarProps {
 const navItems = [
   { id: 'dashboard', label: 'Dashboard', icon: '📊' },
   { id: 'terminal', label: 'Terminal', icon: '💻' },
+  { id: 'chat', label: 'AI Assistant', icon: '🤖' },
   { id: 'network', label: 'Network', icon: '🌐' },
   { id: 'firewall', label: 'Firewall', icon: '🛡️' },
   { id: 'dhcp', label: 'DHCP', icon: '📡' },

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Sidebar } from './components/organisms/Sidebar/Sidebar';
 import { DashboardPage } from './pages/DashboardPage/DashboardPage';
 import { TerminalPage } from './pages/TerminalPage/TerminalPage';
+import { ChatPage } from './pages/ChatPage/ChatPage';
 import { SettingsPage } from './pages/SettingsPage/SettingsPage';
 import { RouterInfo } from './types/router';
 import './styles/tokens.css';
@@ -36,6 +37,8 @@ const App: React.FC = () => {
         return <DashboardPage />;
       case 'terminal':
         return <TerminalPage />;
+      case 'chat':
+        return <ChatPage />;
       case 'settings':
         return <SettingsPage />;
       case 'network':
@@ -47,7 +50,7 @@ const App: React.FC = () => {
             <h1>{activeNav.charAt(0).toUpperCase() + activeNav.slice(1)}</h1>
             <p>This section is under construction</p>
             <p style={{ marginTop: '16px', color: 'var(--color-text-secondary)' }}>
-              Implemented pages: Dashboard, Terminal, Settings
+              Implemented pages: Dashboard, Terminal, AI Assistant, Settings
             </p>
           </div>
         );

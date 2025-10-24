@@ -1,0 +1,23 @@
+.container {
+  display: flex;
+  height: 100%;
+  padding: var(--space-xl);
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.chatContainer {
+  flex: 1;
+  min-height: 600px;
+  display: flex;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: var(--space-md);
+  }
+
+  .chatContainer {
+    min-height: 500px;
+  }
+}
