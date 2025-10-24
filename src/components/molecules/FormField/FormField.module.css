@@ -1,0 +1,28 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.label {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-primary);
+  font-weight: 500;
+}
+
+.required::after {
+  content: ' *';
+  color: var(--color-accent-primary);
+}
+
+.helpText {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-normal);
+}
+
+.error {
+  font-size: var(--font-size-xs);
+  color: #ef4444;
+  line-height: var(--line-height-normal);
+}

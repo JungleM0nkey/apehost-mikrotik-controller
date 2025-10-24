@@ -1,0 +1,68 @@
+/**
+ * Design System Tokens
+ * Extracted from Figma design: MikroTik Router Management Dashboard
+ */
+
+:root {
+  /* Colors - Backgrounds */
+  --color-bg-primary: #0a0a0a;
+  --color-bg-secondary: #1a1a1a;
+  --color-bg-tertiary: #1f1f1f;
+  --color-bg-terminal: #000000;
+
+  /* Colors - Borders */
+  --color-border-primary: #2d2d2d;
+  --color-border-transparent: rgba(0, 0, 0, 0);
+
+  /* Colors - Text */
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #a0a0a0;
+
+  /* Colors - Accent */
+  --color-accent-primary: #ff6b35;
+  --color-accent-success: #10b981;
+
+  /* Spacing Scale */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 24px;
+
+  /* Component Sizes */
+  --size-icon-sm: 16px;
+  --size-icon-md: 20px;
+  --size-button-sm: 32px;
+  --size-input: 36px;
+  --size-avatar: 40px;
+  --size-button-lg: 48px;
+  --size-header: 56px;
+  --size-sidebar: 260px;
+
+  /* Typography */
+  --font-family-primary: Arial, sans-serif;
+  --font-family-mono: Consolas, 'Courier New', monospace;
+  --font-size-xs: 14px;
+  --font-size-sm: 16px;
+  --line-height-tight: 20px;
+  --line-height-normal: 24px;
+
+  /* Border Radius */
+  --radius-sm: 6px;
+  --radius-full: 9999px;
+
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+
+  /* Z-Index Layers */
+  --z-base: 0;
+  --z-sticky: 10;
+  --z-dropdown: 20;
+  --z-modal: 30;
+  --z-tooltip: 40;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
+}
