@@ -20,7 +20,7 @@ export const SettingsPage: React.FC = () => {
   ) => {
     setSettings((prev) => ({
       ...prev,
-      [section]: { ...prev[section], ...updates }
+      [section]: { ...(prev[section] as object), ...updates } as Settings[K]
     }));
     setHasChanges(true);
   };
