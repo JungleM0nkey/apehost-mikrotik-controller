@@ -3,6 +3,58 @@
   flex-direction: column;
 }
 
+/* Animation keyframes */
+@keyframes zoomIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes zoomOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+}
+
+@keyframes minimizeOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.3) translateY(200%);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
 .window {
   width: 100%;
   height: 100%;
@@ -15,12 +67,21 @@
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
   transition: all 0.2s ease;
   opacity: 0.7;
+  animation: zoomIn 0.2s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 .window.active {
   border-color: var(--color-accent-primary);
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), 0 0 0 2px rgba(255, 140, 0, 0.3);
   opacity: 1;
+}
+
+.window.closing {
+  animation: zoomOut 0.15s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
+}
+
+.window.minimizing {
+  animation: minimizeOut 0.2s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
 }
 
 .titleBar {
@@ -105,6 +166,15 @@
   background: var(--color-bg-terminal);
   border: none;
   border-radius: 0;
+  animation: fadeIn 0.15s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.maximized.closing {
+  animation: fadeOut 0.15s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
+}
+
+.maximized.minimizing {
+  animation: minimizeOut 0.2s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
 }
 
 .maximized .titleBar {

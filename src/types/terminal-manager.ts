@@ -22,6 +22,7 @@ export interface Terminal {
   createdAt: Date;
   lastActivity: Date;
   zIndex: number;
+  resetCount: number;
 }
 
 export interface TerminalManagerState {

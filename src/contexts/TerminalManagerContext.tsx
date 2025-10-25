@@ -66,6 +66,7 @@ function terminalReducer(state: TerminalManagerState, action: TerminalAction): T
         createdAt: new Date(),
         lastActivity: new Date(),
         zIndex: BASE_Z_INDEX + state.terminals.size,
+        resetCount: 0,
       };
 
       const newTerminals = new Map(state.terminals);
@@ -110,6 +111,7 @@ function terminalReducer(state: TerminalManagerState, action: TerminalAction): T
           createdAt: new Date(),
           lastActivity: new Date(),
           zIndex: BASE_Z_INDEX,
+          resetCount: 0,
         };
         newTerminals.set(id, newTerminal);
         return {
@@ -342,6 +344,7 @@ function terminalReducer(state: TerminalManagerState, action: TerminalAction): T
         createdAt: new Date(),
         lastActivity: new Date(),
         zIndex: BASE_Z_INDEX + state.terminals.size,
+        resetCount: 0,
       };
 
       const newTerminals = new Map(state.terminals);
@@ -380,6 +383,7 @@ function terminalReducer(state: TerminalManagerState, action: TerminalAction): T
         createdAt: new Date(),
         lastActivity: new Date(),
         zIndex: BASE_Z_INDEX,
+        resetCount: 0,
       };
 
       const newTerminals = new Map();
@@ -406,6 +410,7 @@ function terminalReducer(state: TerminalManagerState, action: TerminalAction): T
         websocketConnection: createWebSocketService(),
         sessionId: null,
         lastActivity: new Date(),
+        resetCount: terminal.resetCount + 1,
       };
       newTerminals.set(action.id, resetTerminal);
 
@@ -432,6 +437,7 @@ function terminalReducer(state: TerminalManagerState, action: TerminalAction): T
           createdAt: new Date(persisted.createdAt),
           lastActivity: new Date(),
           zIndex: BASE_Z_INDEX + index,
+          resetCount: 0,
         };
         newTerminals.set(persisted.id, terminal);
 

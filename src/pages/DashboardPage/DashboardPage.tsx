@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Progress, Badge, Tag } from 'antd';
 import { CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
 import api from '../../services/api';
+import websocket from '../../services/websocket';
 import type { RouterStatus, NetworkInterface } from '../../types/api';
 import { TrafficIndicator } from '../../components/atoms/TrafficIndicator/TrafficIndicator';
 import styles from './DashboardPage.module.css';
@@ -133,16 +134,27 @@ export const DashboardPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const fetchRouterStatus = async () => {
+    try {
+      const status = await api.getRouterStatus();
+      setRouterStatus(status);
+      setError(null);
+    } catch (err) {
+      console.error('Failed to fetch router status:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load router status');
+    }
+  };
+
   const fetchData = async () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const [status, ifaces] = await Promise.all([
         api.getRouterStatus(),
         api.getInterfaces()
       ]);
-      
+
       setRouterStatus(status);
       setInterfaces(ifaces);
     } catch (err) {
@@ -154,12 +166,63 @@ export const DashboardPage: React.FC = () => {
   };
 
   useEffect(() => {
+    // Initial data fetch
     fetchData();
-    
-    // Refresh every 5 seconds
-    const interval = setInterval(fetchData, 5000);
-    
-    return () => clearInterval(interval);
+
+    // Connect to WebSocket and subscribe to interface updates
+    let cleanupInterfaces: (() => void) | undefined;
+    let cleanupErrors: (() => void) | undefined;
+
+    const setupWebSocket = async () => {
+      try {
+        await websocket.connect();
+        console.log('[Dashboard] WebSocket connected, subscribing to interfaces');
+
+        // Subscribe to interface updates with 1-second interval
+        websocket.subscribeToInterfaces(1000);
+
+        // Listen for interface updates
+        cleanupInterfaces = websocket.onInterfacesUpdate((data) => {
+          console.log('[Dashboard] Received interface update:', data.interfaces.length, 'interfaces');
+          setInterfaces(data.interfaces);
+          setLoading(false);
+        });
+
+        // Listen for errors
+        cleanupErrors = websocket.onInterfacesError((data) => {
+          console.error('[Dashboard] Interface update error:', data.error);
+          setError(`Interface update error: ${data.error}`);
+        });
+      } catch (err) {
+        console.error('[Dashboard] WebSocket connection failed:', err);
+        setError('Failed to connect to real-time updates');
+      }
+    };
+
+    setupWebSocket();
+
+    // Refresh router status every 5 seconds (less frequently than interfaces)
+    const statusInterval = setInterval(fetchRouterStatus, 5000);
+
+    return () => {
+      console.log('[Dashboard] Cleaning up WebSocket subscriptions');
+
+      // Unsubscribe from interface updates
+      if (websocket.isConnected()) {
+        try {
+          websocket.unsubscribeFromInterfaces();
+        } catch (err) {
+          console.warn('[Dashboard] Failed to unsubscribe:', err);
+        }
+      }
+
+      // Clean up event listeners
+      if (cleanupInterfaces) cleanupInterfaces();
+      if (cleanupErrors) cleanupErrors();
+
+      // Clear router status polling
+      clearInterval(statusInterval);
+    };
   }, []);
 
   if (loading && !routerStatus) {

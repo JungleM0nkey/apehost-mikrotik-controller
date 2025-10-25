@@ -22,17 +22,11 @@ export const TrafficIndicator: React.FC<TrafficIndicatorProps> = ({
 
   const speedClass = getSpeedClass();
 
-  // DEBUG: Log to console to verify data
-  React.useEffect(() => {
-    console.log(`TrafficIndicator ${direction}:`, { rate, active, speedClass });
-  }, [direction, rate, active, speedClass]);
-
   return (
     <div
       className={`${styles.trafficIndicator} ${styles[direction]} ${styles[speedClass]}`}
       aria-hidden="true"
       role="presentation"
-      title={`${direction.toUpperCase()}: ${rate} bytes/sec (${speedClass})`}
     >
       <div className={`${styles.pixel} ${styles.pixel1}`} />
       <div className={`${styles.pixel} ${styles.pixel2}`} />

@@ -33,22 +33,6 @@ const InterfaceCard: React.FC<InterfaceCardProps> = ({ iface, onUpdate, isEditin
   const [contextMenu, setContextMenu] = useState<{x: number; y: number} | null>(null);
   const isDisabled = iface.status === 'down';
 
-  const formatBytes = (bytes: number): string => {
-    if (bytes === 0) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`;
-  };
-
-  const formatRate = (rate: number): string => {
-    if (rate === 0) return '0 bps';
-    const k = 1000;
-    const sizes = ['bps', 'Kbps', 'Mbps', 'Gbps'];
-    const i = Math.floor(Math.log(rate) / Math.log(k));
-    return `${(rate / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`;
-  };
-
   const handleToggleStatus = async () => {
     setIsSaving(true);
     try {
@@ -231,25 +215,6 @@ const InterfaceCard: React.FC<InterfaceCardProps> = ({ iface, onUpdate, isEditin
               </button>
             </div>
           )}
-        </div>
-      </div>
-
-      <div className={styles.interfaceStats}>
-        <div className={styles.statGroup}>
-          <div className={styles.statLabel}>RX Rate</div>
-          <div className={styles.statValue}>{formatRate(iface.rxRate)}</div>
-        </div>
-        <div className={styles.statGroup}>
-          <div className={styles.statLabel}>TX Rate</div>
-          <div className={styles.statValue}>{formatRate(iface.txRate)}</div>
-        </div>
-        <div className={styles.statGroup}>
-          <div className={styles.statLabel}>RX Bytes</div>
-          <div className={styles.statValue}>{formatBytes(iface.rxBytes)}</div>
-        </div>
-        <div className={styles.statGroup}>
-          <div className={styles.statLabel}>TX Bytes</div>
-          <div className={styles.statValue}>{formatBytes(iface.txBytes)}</div>
         </div>
       </div>
 

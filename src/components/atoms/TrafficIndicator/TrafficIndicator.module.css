@@ -3,33 +3,43 @@
 .trafficIndicator {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  margin-right: 10px;
+  gap: 3px;
+  margin-right: 8px;
   vertical-align: middle;
-  /* Debug border to verify rendering */
-  /* border: 1px solid rgba(255, 0, 0, 0.3); */
 }
 
 .pixel {
-  width: 12px;
-  height: 12px;
+  width: 11px;
+  height: 11px;
   border-radius: 2px;
-  opacity: 0.4;
-  /* Debug to verify pixels are rendering */
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  opacity: 0.35;
 }
 
-/* RX (Download) - ULTRA Bright Success Green */
+/* RX (Download) - GREEN - ALWAYS ANIMATE IF NOT INACTIVE */
 .rx .pixel {
-  background-color: #00ff88;
-  box-shadow: 0 0 4px #00ff88;
+  background-color: #0f8;
+  box-shadow: 0 0 6px rgba(0, 255, 136, 0.6);
+  animation: pixelFlow 1000ms cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  will-change: opacity, transform;
 }
 
-/* TX (Upload) - ULTRA Bright Blue */
+.rx .pixel:nth-child(1) { animation-delay: 0ms; }
+.rx .pixel:nth-child(2) { animation-delay: 200ms; }
+.rx .pixel:nth-child(3) { animation-delay: 400ms; }
+.rx .pixel:nth-child(4) { animation-delay: 600ms; }
+
+/* TX (Upload) - BLUE - ALWAYS ANIMATE IF NOT INACTIVE */
 .tx .pixel {
-  background-color: #00b8ff;
-  box-shadow: 0 0 4px #00b8ff;
+  background-color: #08f;
+  box-shadow: 0 0 6px rgba(0, 136, 255, 0.6);
+  animation: pixelFlow 1000ms cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  will-change: opacity, transform;
 }
+
+.tx .pixel:nth-child(1) { animation-delay: 0ms; }
+.tx .pixel:nth-child(2) { animation-delay: 200ms; }
+.tx .pixel:nth-child(3) { animation-delay: 400ms; }
+.tx .pixel:nth-child(4) { animation-delay: 600ms; }
 
 /* Active State - Normal Speed (1-10 MB/s) */
 .normal .pixel {
@@ -37,19 +47,19 @@
   will-change: opacity, transform;
 }
 
-.normal .pixel1 {
+.trafficIndicator.normal .pixel1 {
   animation-delay: 0ms;
 }
 
-.normal .pixel2 {
+.trafficIndicator.normal .pixel2 {
   animation-delay: 200ms;
 }
 
-.normal .pixel3 {
+.trafficIndicator.normal .pixel3 {
   animation-delay: 400ms;
 }
 
-.normal .pixel4 {
+.trafficIndicator.normal .pixel4 {
   animation-delay: 600ms;
 }
 
@@ -59,68 +69,65 @@
   will-change: opacity, transform;
 }
 
-.fast .pixel1 {
+.trafficIndicator.fast .pixel1 {
   animation-delay: 0ms;
 }
 
-.fast .pixel2 {
+.trafficIndicator.fast .pixel2 {
   animation-delay: 120ms;
 }
 
-.fast .pixel3 {
+.trafficIndicator.fast .pixel3 {
   animation-delay: 240ms;
 }
 
-.fast .pixel4 {
+.trafficIndicator.fast .pixel4 {
   animation-delay: 360ms;
 }
 
-/* Active State - Slow Speed (<1 MB/s) - ALSO ULTRA VISIBLE */
+/* Active State - Slow Speed (<1 MB/s) */
 .slow .pixel {
   animation: pixelFlow 1400ms cubic-bezier(0.4, 0, 0.2, 1) infinite;
   will-change: opacity, transform;
 }
 
-.slow .pixel1 {
+.trafficIndicator.slow .pixel1 {
   animation-delay: 0ms;
 }
 
-.slow .pixel2 {
+.trafficIndicator.slow .pixel2 {
   animation-delay: 280ms;
 }
 
-.slow .pixel3 {
+.trafficIndicator.slow .pixel3 {
   animation-delay: 560ms;
 }
 
-.slow .pixel4 {
+.trafficIndicator.slow .pixel4 {
   animation-delay: 840ms;
 }
 
-/* Inactive State - Static but visible */
+/* Inactive State - Dim and Static */
 .inactive .pixel {
-  opacity: 0.3;
-  animation: none;
+  opacity: 0.2;
+  animation: none !important;
   will-change: auto;
-  /* Make inactive pixels visible too */
-  background-color: #666 !important;
+  background-color: #555 !important;
+  box-shadow: none !important;
 }
 
-/* Pixel Flow Keyframe Animation - ULTRA VISIBLE VERSION */
+/* Pixel Flow Keyframe Animation - Clearly Visible */
 @keyframes pixelFlow {
-  0% {
+  0%, 100% {
     opacity: 0.4;
     transform: scale(1);
+    box-shadow: inherit;
   }
   50% {
     opacity: 1;
-    transform: scale(2);
-    box-shadow: 0 0 20px currentColor, 0 0 30px currentColor;
+    transform: scale(1.8);
+    box-shadow: 0 0 14px currentColor, 0 0 20px currentColor;
     filter: brightness(1.5);
-  }
-  100% {
-    opacity: 0.4;
-    transform: scale(1);
   }
 }
 

@@ -28,6 +28,28 @@ export interface TerminalHistoryEvent {
   timestamp: string;
 }
 
+export interface InterfacesUpdateEvent {
+  interfaces: NetworkInterface[];
+  timestamp: string;
+}
+
+export interface InterfacesErrorEvent {
+  error: string;
+  timestamp: string;
+}
+
+export interface NetworkInterface {
+  id: string;
+  name: string;
+  type: string;
+  status: 'up' | 'down';
+  rxRate: number;
+  txRate: number;
+  rxBytes: number;
+  txBytes: number;
+  comment?: string;
+}
+
 type EventCallback<T> = (data: T) => void;
 
 export class WebSocketService {
@@ -312,9 +334,61 @@ export class WebSocketService {
     }
 
     this.socket.on('pong', callback);
-    
+
     return () => {
       this.socket?.off('pong', callback);
+    };
+  }
+
+  /**
+   * Subscribe to interface statistics updates
+   */
+  subscribeToInterfaces(interval: number = 1000): void {
+    if (!this.socket?.connected) {
+      throw new Error('WebSocket not connected');
+    }
+
+    this.socket.emit('interfaces:subscribe', { interval });
+  }
+
+  /**
+   * Unsubscribe from interface statistics updates
+   */
+  unsubscribeFromInterfaces(): void {
+    if (!this.socket?.connected) {
+      throw new Error('WebSocket not connected');
+    }
+
+    this.socket.emit('interfaces:unsubscribe');
+  }
+
+  /**
+   * Listen for interface updates
+   */
+  onInterfacesUpdate(callback: EventCallback<InterfacesUpdateEvent>): () => void {
+    if (!this.socket) {
+      throw new Error('WebSocket not initialized');
+    }
+
+    this.socket.on('interfaces:update', callback);
+
+    return () => {
+      this.socket?.off('interfaces:update', callback);
+    };
+  }
+
+  /**
+   * Listen for interface errors
+   */
+  onInterfacesError(callback: EventCallback<InterfacesErrorEvent>): () => void {
+    if (!this.socket) {
+      throw new Error('WebSocket not initialized');
+    }
+
+    this.socket.on('interfaces:error', callback);
+
+    return () => {
+      this.socket?.off('interfaces:error', callback);
     };
   }
 }

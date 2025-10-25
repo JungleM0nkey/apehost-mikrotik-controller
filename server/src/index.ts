@@ -140,35 +140,38 @@ const io = new SocketIOServer(httpServer, {
   transports: ['websocket', 'polling']
 });
 
+// Track interface streaming intervals per socket
+const interfaceStreamingIntervals = new Map<string, NodeJS.Timeout>();
+
 // Socket.IO connection handler
 io.on('connection', (socket) => {
   console.log(`[WebSocket] Client connected: ${socket.id}`);
-  
+
   // Create terminal session
   const session = terminalSessionManager.createSession(socket.id);
-  
+
   // Send session ID to client
   socket.emit('session:created', {
     sessionId: session.id,
     timestamp: new Date().toISOString()
   });
-  
+
   // Handle terminal command execution
   socket.on('terminal:execute', async (data: { command: string; sessionId?: string }) => {
     try {
       const sessionId = data.sessionId || session.id;
       console.log(`[WebSocket] Executing command in session ${sessionId}: ${data.command}`);
-      
+
       // Send command acknowledgment
       socket.emit('terminal:executing', {
         command: data.command,
         timestamp: new Date().toISOString()
       });
-      
+
       const startTime = Date.now();
       const output = await terminalSessionManager.executeCommand(sessionId, data.command);
       const executionTime = Date.now() - startTime;
-      
+
       // Send command output
       socket.emit('terminal:output', {
         command: data.command,
@@ -185,7 +188,7 @@ io.on('connection', (socket) => {
       });
     }
   });
-  
+
   // Handle get command history
   socket.on('terminal:getHistory', (data: { sessionId?: string }) => {
     const sessionId = data.sessionId || session.id;
@@ -195,13 +198,75 @@ io.on('connection', (socket) => {
       timestamp: new Date().toISOString()
     });
   });
-  
+
+  // Handle interface statistics streaming
+  socket.on('interfaces:subscribe', async (data: { interval?: number } = {}) => {
+    const interval = data.interval || 1000; // Default 1 second
+    console.log(`[WebSocket] Client ${socket.id} subscribed to interface updates (${interval}ms)`);
+
+    // Clear any existing interval for this socket
+    const existingInterval = interfaceStreamingIntervals.get(socket.id);
+    if (existingInterval) {
+      clearInterval(existingInterval);
+    }
+
+    // Send initial data immediately
+    try {
+      const interfaces = await mikrotikService.getInterfaces();
+      socket.emit('interfaces:update', {
+        interfaces,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error: any) {
+      socket.emit('interfaces:error', {
+        error: error.message,
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    // Start streaming updates
+    const streamInterval = setInterval(async () => {
+      try {
+        const interfaces = await mikrotikService.getInterfaces();
+        socket.emit('interfaces:update', {
+          interfaces,
+          timestamp: new Date().toISOString()
+        });
+      } catch (error: any) {
+        console.error('[WebSocket] Error fetching interfaces:', error.message);
+        socket.emit('interfaces:error', {
+          error: error.message,
+          timestamp: new Date().toISOString()
+        });
+      }
+    }, interval);
+
+    interfaceStreamingIntervals.set(socket.id, streamInterval);
+  });
+
+  // Handle unsubscribe from interface updates
+  socket.on('interfaces:unsubscribe', () => {
+    console.log(`[WebSocket] Client ${socket.id} unsubscribed from interface updates`);
+    const existingInterval = interfaceStreamingIntervals.get(socket.id);
+    if (existingInterval) {
+      clearInterval(existingInterval);
+      interfaceStreamingIntervals.delete(socket.id);
+    }
+  });
+
   // Handle disconnect
   socket.on('disconnect', (reason) => {
     console.log(`[WebSocket] Client disconnected: ${socket.id} (${reason})`);
     terminalSessionManager.removeSessionBySocketId(socket.id);
+
+    // Clean up interface streaming interval
+    const existingInterval = interfaceStreamingIntervals.get(socket.id);
+    if (existingInterval) {
+      clearInterval(existingInterval);
+      interfaceStreamingIntervals.delete(socket.id);
+    }
   });
-  
+
   // Handle ping/pong for connection health
   socket.on('ping', () => {
     socket.emit('pong', { timestamp: Date.now() });

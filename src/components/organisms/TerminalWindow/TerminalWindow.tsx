@@ -24,6 +24,8 @@ export const TerminalWindow: React.FC<TerminalWindowProps> = ({ terminal }) => {
   const [isMaximized, setIsMaximized] = useState(false);
   const [isConnecting, setIsConnecting] = useState(true);
   const [connectionError, setConnectionError] = useState<string | null>(null);
+  const [isClosing, setIsClosing] = useState(false);
+  const [isMinimizing, setIsMinimizing] = useState(false);
 
   // Initialize WebSocket connection
   useEffect(() => {
@@ -67,11 +69,19 @@ export const TerminalWindow: React.FC<TerminalWindowProps> = ({ terminal }) => {
   }, [terminal.id, terminal.websocketConnection, updateSessionId]);
 
   const handleMinimize = () => {
-    minimizeTerminal(terminal.id);
+    setIsMinimizing(true);
+    setTimeout(() => {
+      minimizeTerminal(terminal.id);
+      setIsMinimizing(false);
+    }, 200); // Match animation duration
   };
 
   const handleClose = () => {
-    closeTerminal(terminal.id);
+    setIsClosing(true);
+    setTimeout(() => {
+      closeTerminal(terminal.id);
+      setIsClosing(false);
+    }, 150); // Match animation duration
   };
 
   const handleMaximize = () => {
@@ -116,7 +126,7 @@ export const TerminalWindow: React.FC<TerminalWindowProps> = ({ terminal }) => {
   if (isMaximized) {
     return (
       <div
-        className={styles.maximized}
+        className={`${styles.maximized} ${isClosing ? styles.closing : ''} ${isMinimizing ? styles.minimizing : ''}`}
         style={{ zIndex: terminal.zIndex }}
         onClick={handleFocus}
       >
@@ -167,6 +177,7 @@ export const TerminalWindow: React.FC<TerminalWindowProps> = ({ terminal }) => {
           </div>
         ) : (
           <TerminalPanel
+            key={`${terminal.id}-${terminal.resetCount}`}
             websocket={terminal.websocketConnection}
             terminalId={terminal.id}
             hideHeader
@@ -193,7 +204,7 @@ export const TerminalWindow: React.FC<TerminalWindowProps> = ({ terminal }) => {
       disableDragging={false}
     >
       <div
-        className={`${styles.window} ${terminal.isActive ? styles.active : ''}`}
+        className={`${styles.window} ${terminal.isActive ? styles.active : ''} ${isClosing ? styles.closing : ''} ${isMinimizing ? styles.minimizing : ''}`}
         onClick={handleFocus}
       >
         <div className={`${styles.titleBar} ${styles.dragHandle}`}>
@@ -249,6 +260,7 @@ export const TerminalWindow: React.FC<TerminalWindowProps> = ({ terminal }) => {
             </div>
           ) : (
             <TerminalPanel
+              key={`${terminal.id}-${terminal.resetCount}`}
               websocket={terminal.websocketConnection}
               terminalId={terminal.id}
               hideHeader

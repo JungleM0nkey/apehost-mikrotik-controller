@@ -1,3 +1,15 @@
+/* Tab animations */
+@keyframes tabSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 .terminalTab {
   display: flex;
   align-items: center;
@@ -15,6 +27,7 @@
   position: relative;
   font-size: 13px;
   font-weight: 500;
+  animation: tabSlideIn 0.2s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 .terminalTab:hover {
