@@ -165,6 +165,14 @@ export class WebSocketService {
   }
 
   /**
+   * Get the underlying socket instance
+   * Use with caution - prefer using dedicated methods when available
+   */
+  getSocket(): Socket | null {
+    return this.socket;
+  }
+
+  /**
    * Execute terminal command
    * Waits for connection if currently connecting
    */

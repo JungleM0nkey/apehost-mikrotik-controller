@@ -2,11 +2,9 @@ import React, { useState } from 'react';
 import { Menu } from 'antd';
 import {
   DashboardOutlined,
-  RobotOutlined,
   GlobalOutlined,
   SafetyOutlined,
   ApiOutlined,
-  LineChartOutlined,
   SettingOutlined,
   ClusterOutlined
 } from '@ant-design/icons';
@@ -19,25 +17,20 @@ export interface SidebarProps {
   router: RouterInfoType;
   activeNav: string;
   onNavigate: (nav: string) => void;
-  onExportConfig: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
   router,
   activeNav,
-  onNavigate,
-  onExportConfig
+  onNavigate
 }) => {
   const [openKeys, setOpenKeys] = useState<string[]>(activeNav === 'settings' ? ['settings'] : []);
 
   const handleMenuClick = (key: string) => {
-    // If it's a settings sub-item, scroll to that section
+    // If it's a settings sub-item, set hash and navigate to settings
     if (key.startsWith('settings-')) {
       const sectionId = key.replace('settings-', '');
-      const element = document.getElementById(sectionId);
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
+      window.location.hash = sectionId;
       onNavigate('settings');
     } else {
       onNavigate(key);
@@ -53,11 +46,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
       key: 'dashboard',
       icon: <DashboardOutlined />,
       label: 'Dashboard',
-    },
-    {
-      key: 'chat',
-      icon: <RobotOutlined />,
-      label: 'AI Assistant',
     },
     {
       key: 'network',
@@ -76,8 +64,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
     {
       key: 'analytics',
-      icon: <LineChartOutlined />,
-      label: 'Analytics',
+      icon: <ClusterOutlined />,
+      label: 'Network Map',
     },
     {
       key: 'settings',
@@ -132,16 +120,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
           }}
         />
       </nav>
-
-      <div className={styles.footer}>
-        <button
-          className={styles.exportButton}
-          onClick={onExportConfig}
-          aria-label="Export router configuration"
-        >
-          Export Config
-        </button>
-      </div>
     </aside>
   );
 };

@@ -229,6 +229,29 @@
 .line.error {
   color: var(--color-accent-error);
   font-weight: 500;
+  background: rgba(239, 68, 68, 0.1);
+  border-left: 3px solid var(--color-accent-error);
+  padding: 8px 12px;
+  margin: 4px 0;
+  border-radius: 4px;
+  animation: errorPulse 0.3s ease-out;
+}
+
+@keyframes errorPulse {
+  0% {
+    background: rgba(239, 68, 68, 0.2);
+    border-left-color: var(--color-accent-error);
+  }
+  100% {
+    background: rgba(239, 68, 68, 0.1);
+  }
+}
+
+.errorIcon {
+  margin-right: 8px;
+  color: var(--color-accent-error);
+  font-size: 14px;
+  vertical-align: middle;
 }
 
 .line.prompt {

@@ -1,0 +1,16 @@
+.metricsCards {
+  margin-bottom: var(--space-xl);
+}
+
+.metricCard {
+  height: 100%;
+  transition: all 0.3s ease;
+}
+
+.metricCard:hover {
+  transform: translateY(-2px);
+}
+
+.progress {
+  margin-top: var(--space-md);
+}

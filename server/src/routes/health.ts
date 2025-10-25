@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import mikrotikService from '../services/mikrotik.js';
+import { getGlobalProvider } from '../services/ai/provider-factory.js';
 
 const router = Router();
 
@@ -19,6 +20,11 @@ router.get('/', async (req: Request, res: Response) => {
       }), 2000)) // 2 second timeout for health check
     ]);
     
+    // Check LLM configuration
+    const llmProvider = await getGlobalProvider();
+    const llmConfigured = llmProvider !== null;
+    const llmProviderName = llmProvider?.getName() || null;
+
     res.json({
       status: 'ok',
       pid: process.pid,
@@ -31,6 +37,10 @@ router.get('/', async (req: Request, res: Response) => {
         port: process.env.MIKROTIK_PORT,
       },
       router: routerHealth,
+      llm: {
+        configured: llmConfigured,
+        provider: llmProviderName,
+      },
     });
   } catch (error: any) {
     res.status(500).json({

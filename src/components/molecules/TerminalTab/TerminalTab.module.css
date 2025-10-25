@@ -43,8 +43,17 @@
 }
 
 .terminalTab.minimized {
-  opacity: 0.5;
-  font-style: italic;
+  background: transparent;
+  border-color: transparent;
+}
+
+.terminalTab.minimized:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 140, 0, 0.1);
+}
+
+.terminalTab.minimized .name {
+  color: rgba(255, 255, 255, 0.4);
 }
 
 .iconContainer {
@@ -61,6 +70,10 @@
 }
 
 .terminalTab.active .terminalIcon {
+  color: var(--color-accent-primary);
+}
+
+.terminalTab.minimized .terminalIcon {
   color: var(--color-accent-primary);
 }
 

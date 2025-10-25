@@ -9,7 +9,11 @@ import type {
   IpAddress,
   Route,
   ArpEntry,
-  ApiError
+  ApiError,
+  FirewallFilterRule,
+  FirewallNatRule,
+  FirewallMangleRule,
+  FirewallAddressList
 } from '../types/api';
 
 const API_BASE_URL = '/api';
@@ -91,6 +95,26 @@ class ApiService {
   // ARP Table
   async getArpTable(): Promise<ArpEntry[]> {
     return this.request<ArpEntry[]>('/router/ip/arp');
+  }
+
+  // Firewall Filter Rules
+  async getFirewallFilterRules(): Promise<FirewallFilterRule[]> {
+    return this.request<FirewallFilterRule[]>('/router/firewall/filter');
+  }
+
+  // Firewall NAT Rules
+  async getFirewallNatRules(): Promise<FirewallNatRule[]> {
+    return this.request<FirewallNatRule[]>('/router/firewall/nat');
+  }
+
+  // Firewall Mangle Rules
+  async getFirewallMangleRules(): Promise<FirewallMangleRule[]> {
+    return this.request<FirewallMangleRule[]>('/router/firewall/mangle');
+  }
+
+  // Firewall Address Lists
+  async getFirewallAddressLists(): Promise<FirewallAddressList[]> {
+    return this.request<FirewallAddressList[]>('/router/firewall/address-list');
   }
 }
 

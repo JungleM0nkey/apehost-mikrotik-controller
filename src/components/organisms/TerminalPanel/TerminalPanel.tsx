@@ -6,7 +6,8 @@ import {
   PushpinOutlined,
   SelectOutlined,
   ClearOutlined,
-  FontSizeOutlined
+  FontSizeOutlined,
+  ExclamationCircleOutlined
 } from '@ant-design/icons';
 import type { WebSocketService, TerminalOutputEvent, TerminalErrorEvent, TerminalExecutingEvent } from '../../../services/websocket';
 import { TerminalLine } from '../../../types/terminal';
@@ -611,6 +612,9 @@ Note: All RouterOS commands must start with a forward slash (/)`,
             >
               {line.type === 'command' && (
                 <span className={styles.prompt}>[admin@MikroTik] &gt; </span>
+              )}
+              {line.type === 'error' && (
+                <ExclamationCircleOutlined className={styles.errorIcon} />
               )}
               <span
                 className={styles.content}

@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Progress, Badge, Tag } from 'antd';
-import { CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
+import {
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+  DashboardOutlined,
+  DatabaseOutlined,
+  ClockCircleOutlined,
+  GlobalOutlined
+} from '@ant-design/icons';
 import api from '../../services/api';
 import websocket from '../../services/websocket';
 import type { RouterStatus, NetworkInterface } from '../../types/api';
@@ -12,13 +19,13 @@ interface StatCardProps {
   value: string;
   unit?: string;
   status?: 'good' | 'warning' | 'critical';
-  icon: string;
+  icon: React.ReactNode;
 }
 
 const StatCard: React.FC<StatCardProps> = ({ title, value, unit, status = 'good', icon }) => {
   return (
     <div className={`${styles.statCard} ${styles[status]}`}>
-      <div className={styles.statIcon}>{icon}</div>
+      <div className={styles.statIconContainer}>{icon}</div>
       <div className={styles.statContent}>
         <h3 className={styles.statTitle}>{title}</h3>
         <div className={styles.statValue}>
@@ -34,7 +41,7 @@ interface ProgressStatCardProps {
   title: string;
   percentage: number;
   details: string;
-  icon: string;
+  icon: React.ReactNode;
 }
 
 const ProgressStatCard: React.FC<ProgressStatCardProps> = ({ title, percentage, details, icon }) => {
@@ -65,7 +72,7 @@ const ProgressStatCard: React.FC<ProgressStatCardProps> = ({ title, percentage, 
           format={(percent) => (
             <div className={styles.progressText}>
               <div className={styles.progressPercent}>{percent}%</div>
-              <div className={styles.progressIcon}>{icon}</div>
+              <div className={styles.progressIconInner}>{icon}</div>
             </div>
           )}
         />
@@ -85,9 +92,10 @@ interface InterfaceItemProps {
   tx: string;
   rxRate: number;
   txRate: number;
+  ipAddress?: string;
 }
 
-const InterfaceItem: React.FC<InterfaceItemProps> = ({ name, status, rx, tx, rxRate, txRate }) => {
+const InterfaceItem: React.FC<InterfaceItemProps> = ({ name, status, rx, tx, rxRate, txRate, ipAddress }) => {
   const isActive = status === 'up';
 
   return (
@@ -95,17 +103,24 @@ const InterfaceItem: React.FC<InterfaceItemProps> = ({ name, status, rx, tx, rxR
       <div className={styles.interfaceStatus}>
         <Badge
           status={isActive ? 'success' : 'default'}
-          text={<span className={styles.interfaceName}>{name}</span>}
+          text={
+            <div className={styles.interfaceInfo}>
+              <span className={styles.interfaceName}>{name}</span>
+              {ipAddress && (
+                <span className={styles.interfaceIp}>{ipAddress}</span>
+              )}
+            </div>
+          }
         />
       </div>
       <div className={styles.interfaceStats}>
         <span className={isActive ? styles.interfaceRx : styles.interfaceInactive}>
           <TrafficIndicator direction="rx" rate={rxRate} active={isActive} />
-          ↓ {rx}
+          <span className={styles.trafficRate}>↓ {rx}</span>
         </span>
         <span className={isActive ? styles.interfaceTx : styles.interfaceInactive}>
           <TrafficIndicator direction="tx" rate={txRate} active={isActive} />
-          ↑ {tx}
+          <span className={styles.trafficRate}>↑ {tx}</span>
         </span>
       </div>
     </div>
@@ -268,26 +283,26 @@ export const DashboardPage: React.FC = () => {
               ? `${routerStatus.cpuArchitecture}${routerStatus.cpuCount ? ` (${routerStatus.cpuCount} core${routerStatus.cpuCount > 1 ? 's' : ''})` : ''}`
               : `${routerStatus.cpuLoad}% utilization`
           }
-          icon="CPU"
+          icon={<DashboardOutlined />}
         />
         <ProgressStatCard
           title="Memory"
           percentage={memoryPercentage}
           details={`${(routerStatus.memoryUsed / 1024 / 1024 / 1024).toFixed(2)} GB / ${(routerStatus.memoryTotal / 1024 / 1024 / 1024).toFixed(2)} GB`}
-          icon="MEM"
+          icon={<DatabaseOutlined />}
         />
         <StatCard
           title="Uptime"
           value={formatUptime(routerStatus.uptime)}
           status="good"
-          icon="UP"
+          icon={<ClockCircleOutlined />}
         />
         <StatCard
           title="Traffic"
           value={totalTrafficMbps.toFixed(1)}
           unit="Mbps"
           status={totalTrafficMbps > 100 ? 'warning' : 'good'}
-          icon="NET"
+          icon={<GlobalOutlined />}
         />
       </div>
 
@@ -314,31 +329,9 @@ export const DashboardPage: React.FC = () => {
               tx={formatBytes(iface.txBytes)}
               rxRate={iface.rxRate}
               txRate={iface.txRate}
+              ipAddress={iface.ipAddress}
             />
           ))}
-        </div>
-      </div>
-
-      {/* Quick Actions */}
-      <div className={styles.section}>
-        <h2 className={styles.sectionTitle}>Quick Actions</h2>
-        <div className={styles.quickActions}>
-          <button className={styles.actionButton} onClick={fetchData}>
-            <span className={styles.actionIcon}>REF</span>
-            <span>Refresh Stats</span>
-          </button>
-          <button className={styles.actionButton}>
-            <span className={styles.actionIcon}>LOG</span>
-            <span>View Logs</span>
-          </button>
-          <button className={styles.actionButton}>
-            <span className={styles.actionIcon}>BAK</span>
-            <span>Backup Config</span>
-          </button>
-          <button className={styles.actionButton}>
-            <span className={styles.actionIcon}>DIA</span>
-            <span>Run Diagnostics</span>
-          </button>
         </div>
       </div>
     </div>

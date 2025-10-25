@@ -122,6 +122,7 @@ export const TerminalTab: React.FC<TerminalTabProps> = ({
         role="button"
         tabIndex={0}
         aria-label={`${terminal.name}, ${terminal.isActive ? 'active' : 'inactive'}`}
+        data-terminal-id={terminal.id}
       >
         {/* Terminal Icon */}
         <div className={styles.iconContainer}>

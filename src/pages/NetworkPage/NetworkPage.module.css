@@ -249,6 +249,19 @@
   flex-shrink: 0;
 }
 
+.interfaceIpAddress {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-accent-primary);
+  padding: 2px 8px;
+  background: rgba(255, 140, 0, 0.1);
+  border: 1px solid rgba(255, 140, 0, 0.3);
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+}
+
 /* Custom Toggle Switch */
 .toggleSwitch {
   display: flex;

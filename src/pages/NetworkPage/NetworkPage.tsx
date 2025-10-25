@@ -24,14 +24,26 @@ interface InterfaceCardProps {
   isEditing: boolean;
   onEditStart: () => void;
   onEditEnd: () => void;
+  contextMenu: {x: number; y: number} | null;
+  onContextMenuOpen: (id: string, position: {x: number; y: number}) => void;
+  onContextMenuClose: () => void;
 }
 
-const InterfaceCard: React.FC<InterfaceCardProps> = ({ iface, onUpdate, isEditing, onEditStart, onEditEnd }) => {
+const InterfaceCard: React.FC<InterfaceCardProps> = ({
+  iface,
+  onUpdate,
+  isEditing,
+  onEditStart,
+  onEditEnd,
+  contextMenu,
+  onContextMenuOpen,
+  onContextMenuClose
+}) => {
   const [editName, setEditName] = useState(iface.name);
   const [editComment, setEditComment] = useState(iface.comment || '');
   const [isSaving, setIsSaving] = useState(false);
-  const [contextMenu, setContextMenu] = useState<{x: number; y: number} | null>(null);
   const isDisabled = iface.status === 'down';
+  const isContextMenuOpen = contextMenu !== null;
 
   const handleToggleStatus = async () => {
     setIsSaving(true);
@@ -101,18 +113,14 @@ const InterfaceCard: React.FC<InterfaceCardProps> = ({ iface, onUpdate, isEditin
       y = 10;
     }
 
-    setContextMenu({ x, y });
-  };
-
-  const closeContextMenu = () => {
-    setContextMenu(null);
+    onContextMenuOpen(iface.id, { x, y });
   };
 
   const handleCopyName = async () => {
     try {
       await navigator.clipboard.writeText(iface.name);
       antMessage.success(`Copied "${iface.name}" to clipboard`);
-      closeContextMenu();
+      onContextMenuClose();
     } catch (err) {
       console.error('Failed to copy:', err);
       antMessage.error('Failed to copy to clipboard');
@@ -121,27 +129,27 @@ const InterfaceCard: React.FC<InterfaceCardProps> = ({ iface, onUpdate, isEditin
 
   const handleContextEdit = () => {
     onEditStart();
-    closeContextMenu();
+    onContextMenuClose();
   };
 
   const handleContextToggle = async () => {
-    closeContextMenu();
+    onContextMenuClose();
     await handleToggleStatus();
   };
 
   const handleRefreshStats = () => {
-    closeContextMenu();
+    onContextMenuClose();
     antMessage.info('Interface stats refreshing...');
   };
 
   // Close context menu when clicking outside
   React.useEffect(() => {
-    const handleClick = () => closeContextMenu();
+    const handleClick = () => onContextMenuClose();
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') closeContextMenu();
+      if (e.key === 'Escape') onContextMenuClose();
     };
 
-    if (contextMenu) {
+    if (isContextMenuOpen) {
       document.addEventListener('click', handleClick);
       document.addEventListener('keydown', handleEscape);
       return () => {
@@ -149,7 +157,7 @@ const InterfaceCard: React.FC<InterfaceCardProps> = ({ iface, onUpdate, isEditin
         document.removeEventListener('keydown', handleEscape);
       };
     }
-  }, [contextMenu]);
+  }, [isContextMenuOpen, onContextMenuClose]);
 
   return (
     <div
@@ -171,6 +179,9 @@ const InterfaceCard: React.FC<InterfaceCardProps> = ({ iface, onUpdate, isEditin
             <h3 className={styles.interfaceName}>{iface.name}</h3>
           )}
           <span className={styles.interfaceType}>{iface.type}</span>
+          {iface.ipAddress && (
+            <span className={styles.interfaceIpAddress}>{iface.ipAddress}</span>
+          )}
         </div>
         <div className={styles.interfaceActions}>
           <button
@@ -235,12 +246,12 @@ const InterfaceCard: React.FC<InterfaceCardProps> = ({ iface, onUpdate, isEditin
       </div>
 
       {/* Context Menu */}
-      {contextMenu && (
+      {isContextMenuOpen && (
         <div
           className={styles.contextMenu}
           style={{
-            left: `${contextMenu.x}px`,
-            top: `${contextMenu.y}px`,
+            left: `${contextMenu!.x}px`,
+            top: `${contextMenu!.y}px`,
           }}
           onClick={(e) => e.stopPropagation()}
         >
@@ -280,6 +291,10 @@ export const NetworkPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editingInterfaceId, setEditingInterfaceId] = useState<string | null>(null);
+  const [contextMenuState, setContextMenuState] = useState<{
+    interfaceId: string;
+    position: {x: number; y: number};
+  } | null>(null);
 
   const fetchInterfaces = async () => {
     try {
@@ -365,6 +380,14 @@ export const NetworkPage: React.FC = () => {
       console.error('Failed to update interface:', err);
       throw err;
     }
+  };
+
+  const handleContextMenuOpen = (interfaceId: string, position: {x: number; y: number}) => {
+    setContextMenuState({ interfaceId, position });
+  };
+
+  const handleContextMenuClose = () => {
+    setContextMenuState(null);
   };
 
   useEffect(() => {
@@ -508,6 +531,9 @@ export const NetworkPage: React.FC = () => {
                       isEditing={editingInterfaceId === iface.id}
                       onEditStart={() => setEditingInterfaceId(iface.id)}
                       onEditEnd={() => setEditingInterfaceId(null)}
+                      contextMenu={contextMenuState?.interfaceId === iface.id ? contextMenuState.position : null}
+                      onContextMenuOpen={handleContextMenuOpen}
+                      onContextMenuClose={handleContextMenuClose}
                     />
                   ))}
                 </div>
@@ -530,6 +556,9 @@ export const NetworkPage: React.FC = () => {
                       isEditing={editingInterfaceId === iface.id}
                       onEditStart={() => setEditingInterfaceId(iface.id)}
                       onEditEnd={() => setEditingInterfaceId(null)}
+                      contextMenu={contextMenuState?.interfaceId === iface.id ? contextMenuState.position : null}
+                      onContextMenuOpen={handleContextMenuOpen}
+                      onContextMenuClose={handleContextMenuClose}
                     />
                   ))}
                 </div>

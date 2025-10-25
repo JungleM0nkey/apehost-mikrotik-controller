@@ -1,4 +1,5 @@
 import { RouterOSAPI } from 'node-routeros';
+import { configManager } from './config-manager.js';
 
 export interface MikroTikConfig {
   host: string;
@@ -69,6 +70,13 @@ class MikroTikService {
   private cacheHits: number = 0;
   private cacheMisses: number = 0;
 
+  // Rate calculation system
+  private previousInterfaceStats: Map<string, {rxBytes: number; txBytes: number; timestamp: number}> = new Map();
+
+  // Rate smoothing system (EMA - Exponential Moving Average)
+  private smoothedRates: Map<string, {rxRate: number; txRate: number}> = new Map();
+  private readonly EMA_ALPHA = 0.4; // Smoothing factor: 0.4 balances responsiveness vs stability
+
   private constructor() {
     // Lazy initialization - config loaded on first use
   }
@@ -80,20 +88,21 @@ class MikroTikService {
     return MikroTikService.instance;
   }
 
-  private loadConfig(): MikroTikConfig {
+  private async loadConfig(): Promise<MikroTikConfig> {
     if (!this.config) {
-      const host = process.env.MIKROTIK_HOST;
-      if (!host) {
-        throw new Error('MIKROTIK_HOST environment variable is required');
+      const mikrotikConfig = await configManager.getMikroTikConfig();
+
+      if (!mikrotikConfig.host) {
+        throw new Error('MikroTik host is required in settings');
       }
 
       this.config = {
-        host,
-        port: parseInt(process.env.MIKROTIK_PORT || '8728'),
-        user: process.env.MIKROTIK_USERNAME || 'admin',
-        password: process.env.MIKROTIK_PASSWORD || '',
-        timeout: parseInt(process.env.MIKROTIK_TIMEOUT || '10000'),
-        keepaliveInterval: parseInt(process.env.MIKROTIK_KEEPALIVE_SEC || '30') * 1000,
+        host: mikrotikConfig.host,
+        port: mikrotikConfig.port,
+        user: mikrotikConfig.username,
+        password: mikrotikConfig.password,
+        timeout: mikrotikConfig.timeout,
+        keepaliveInterval: mikrotikConfig.keepaliveInterval,
       };
 
       console.log(`[MikroTik] Configuration loaded: ${this.config.host}:${this.config.port} (user: ${this.config.user})`);
@@ -144,7 +153,7 @@ class MikroTikService {
    */
   private async _doConnect(): Promise<boolean> {
     try {
-      const config = this.loadConfig();
+      const config = await this.loadConfig();
       console.log(`[MikroTik] Connecting to ${config.host}:${config.port}...`);
       
       this.connection = new RouterOSAPI({
@@ -248,7 +257,7 @@ class MikroTikService {
    */
   public async disconnect(reason?: string): Promise<void> {
     this.stopKeepalive();
-    
+
     if (this.connection) {
       try {
         await this.connection.close();
@@ -263,24 +272,59 @@ class MikroTikService {
   }
 
   /**
+   * Refresh connection with new configuration from settings
+   * Call this after updating MikroTik settings via web UI
+   */
+  public async refreshConnection(): Promise<boolean> {
+    console.log('[MikroTik] Refreshing connection with new configuration...');
+
+    // Clear cached config
+    this.config = null;
+
+    // Disconnect current connection
+    await this.disconnect('Settings updated');
+
+    // Clear cache
+    this.clearCache();
+
+    // Reset reconnect attempts
+    this.reconnectAttempts = 0;
+
+    // Reconnect with new config
+    try {
+      await this.connect();
+      console.log('[MikroTik] Connection refreshed successfully');
+      return true;
+    } catch (error: any) {
+      console.error('[MikroTik] Failed to refresh connection:', error.message);
+      return false;
+    }
+  }
+
+  /**
    * Start keepalive pings
    */
   private startKeepalive(): void {
     this.stopKeepalive();
-    
-    const config = this.loadConfig();
+
+    // Use cached config (already loaded by connect())
+    if (!this.config) {
+      console.warn('[MikroTik] Cannot start keepalive: config not loaded');
+      return;
+    }
+
     this.keepaliveTimer = setInterval(async () => {
       if (!this.isConnected) {
         this.stopKeepalive();
         return;
       }
-      
+
       try {
         await this.executeCommand('/system/identity/print');
       } catch (error) {
         console.warn('[MikroTik] Keepalive failed');
       }
-    }, config.keepaliveInterval);
+    }, this.config.keepaliveInterval);
   }
 
   /**
@@ -394,8 +438,8 @@ class MikroTikService {
    * Health check - returns connection status
    */
   public async healthCheck(): Promise<HealthStatus> {
-    const config = this.loadConfig();
-    
+    const config = await this.loadConfig();
+
     // Try to refresh identity if connected (with caching)
     if (this.isConnected) {
       try {
@@ -408,7 +452,7 @@ class MikroTikService {
         // Identity fetch failed, but connection might still be valid
       }
     }
-    
+
     return {
       connected: this.isConnected,
       connectedSince: this.connectedSince ? this.connectedSince.toISOString() : null,
@@ -427,7 +471,7 @@ class MikroTikService {
       'router-status',
       async () => {
         try {
-          const config = this.loadConfig(); // Ensure config is loaded
+          const config = await this.loadConfig(); // Ensure config is loaded
 
           const [resources, identity, routerboard, interfaces, ipAddresses] = await Promise.all([
             this.executeCommand('/system/resource/print'),
@@ -491,48 +535,86 @@ class MikroTikService {
   }
 
   /**
-   * Get network interfaces (formatted for frontend) - with caching
+   * Get network interfaces (formatted for frontend) - with caching disabled for rate calculation
    */
   async getInterfaces(): Promise<NetworkInterface[]> {
-    return this.getCached(
-      'interfaces',
-      async () => {
-        try {
-          // Get interface list and stats separately
-          const interfaces = await this.executeCommand('/interface/print');
+    try {
+      // Get interface list - NO CACHING to get fresh byte counts for rate calculation
+      const interfaces = await this.executeCommand('/interface/print');
+      const currentTimestamp = Date.now();
 
-          // Get traffic stats for all interfaces
-          let trafficStats: any[] = [];
-          try {
-            trafficStats = await this.executeCommand('/interface/print stats');
-          } catch (error) {
-            console.warn('Failed to get interface stats, using fallback:', error);
+      // Get IP addresses to associate with interfaces
+      let ipAddresses: any[] = [];
+      try {
+        ipAddresses = await this.getIpAddresses();
+      } catch (error) {
+        console.warn('Failed to fetch IP addresses for interfaces:', error);
+      }
+
+      return interfaces.map((iface: any, index: number) => {
+        const ifaceName = iface.name || 'unknown';
+        const currentRxBytes = parseInt(iface['rx-byte'] || '0');
+        const currentTxBytes = parseInt(iface['tx-byte'] || '0');
+
+        // Calculate rates from previous measurements
+        let rawRxRate = 0;
+        let rawTxRate = 0;
+
+        const previous = this.previousInterfaceStats.get(ifaceName);
+        if (previous) {
+          const timeDelta = (currentTimestamp - previous.timestamp) / 1000; // seconds
+
+          if (timeDelta > 0) {
+            // Calculate raw bytes per second
+            rawRxRate = Math.max(0, (currentRxBytes - previous.rxBytes) / timeDelta);
+            rawTxRate = Math.max(0, (currentTxBytes - previous.txBytes) / timeDelta);
           }
-
-          return interfaces.map((iface: any, index: number) => {
-            // Find matching stats entry
-            const stats = trafficStats.find((s: any) => s.name === iface.name) || {};
-
-            return {
-              id: iface['.id'] || `iface-${index}`,
-              name: iface.name || 'unknown',
-              type: iface.type || 'unknown',
-              status: (iface.running === 'true' || iface.disabled === 'false') ? 'up' : 'down',
-              // Try multiple possible field names for rates (in bytes per second)
-              rxRate: parseInt(stats['rx-bits-per-second'] || stats['rx-rate'] || '0') / 8,
-              txRate: parseInt(stats['tx-bits-per-second'] || stats['tx-rate'] || '0') / 8,
-              rxBytes: parseInt(stats['rx-byte'] || iface['rx-byte'] || '0'),
-              txBytes: parseInt(stats['tx-byte'] || iface['tx-byte'] || '0'),
-              comment: iface.comment,
-            };
-          });
-        } catch (error) {
-          console.error('Error getting interfaces:', error);
-          throw error;
         }
-      },
-      5000 // Cache interfaces for 5 seconds
-    );
+
+        // Apply EMA smoothing to reduce jitter from timing variance
+        let rxRate = rawRxRate;
+        let txRate = rawTxRate;
+
+        const previousSmoothed = this.smoothedRates.get(ifaceName);
+        if (previousSmoothed && previous) {
+          // EMA formula: smoothed = (alpha * current) + ((1 - alpha) * previous_smoothed)
+          rxRate = (this.EMA_ALPHA * rawRxRate) + ((1 - this.EMA_ALPHA) * previousSmoothed.rxRate);
+          txRate = (this.EMA_ALPHA * rawTxRate) + ((1 - this.EMA_ALPHA) * previousSmoothed.txRate);
+        }
+
+        // Store smoothed rates for next calculation
+        this.smoothedRates.set(ifaceName, {
+          rxRate,
+          txRate
+        });
+
+        // Store current values for next calculation
+        this.previousInterfaceStats.set(ifaceName, {
+          rxBytes: currentRxBytes,
+          txBytes: currentTxBytes,
+          timestamp: currentTimestamp
+        });
+
+        // Find IP address for this interface
+        const ipAddr = ipAddresses.find(addr => addr.interface === ifaceName);
+
+        return {
+          id: iface['.id'] || `iface-${index}`,
+          name: ifaceName,
+          type: iface.type || 'unknown',
+          status: (iface.running === 'true' || iface.disabled === 'false') ? 'up' : 'down',
+          rxRate, // bytes per second (calculated from delta)
+          txRate, // bytes per second (calculated from delta)
+          rxBytes: currentRxBytes,
+          txBytes: currentTxBytes,
+          comment: iface.comment,
+          ipAddress: ipAddr ? ipAddr.address : undefined,
+        };
+      });
+    } catch (error) {
+      console.error('Error getting interfaces:', error);
+      throw error;
+    }
   }
 
   /**
@@ -1048,6 +1130,347 @@ class MikroTikService {
    */
   public isConnectionActive(): boolean {
     return this.isConnected && this.connection !== null;
+  }
+
+  /**
+   * Get firewall filter rules
+   */
+  async getFirewallFilterRules(): Promise<any[]> {
+    if (!this.isConnectionActive()) {
+      return this.getMockFirewallFilterRules();
+    }
+
+    try {
+      const result = await this.executeCommand('/ip/firewall/filter/print');
+
+      return result.map((rule: any, index: number) => ({
+        id: rule['.id'] || `*${index}`,
+        chain: rule.chain || '',
+        action: rule.action || '',
+        protocol: rule.protocol,
+        srcAddress: rule['src-address'],
+        dstAddress: rule['dst-address'],
+        srcPort: rule['src-port'],
+        dstPort: rule['dst-port'],
+        inInterface: rule['in-interface'],
+        outInterface: rule['out-interface'],
+        bytes: parseInt(rule.bytes || '0'),
+        packets: parseInt(rule.packets || '0'),
+        disabled: rule.disabled === 'true',
+        invalid: rule.invalid === 'true',
+        dynamic: rule.dynamic === 'true',
+        comment: rule.comment || ''
+      }));
+    } catch (error) {
+      console.error('Failed to fetch firewall filter rules:', error);
+      return this.getMockFirewallFilterRules();
+    }
+  }
+
+  /**
+   * Get firewall NAT rules
+   */
+  async getFirewallNatRules(): Promise<any[]> {
+    if (!this.isConnectionActive()) {
+      return this.getMockFirewallNatRules();
+    }
+
+    try {
+      const result = await this.executeCommand('/ip/firewall/nat/print');
+
+      return result.map((rule: any, index: number) => ({
+        id: rule['.id'] || `*${index}`,
+        chain: rule.chain || '',
+        action: rule.action || '',
+        protocol: rule.protocol,
+        srcAddress: rule['src-address'],
+        dstAddress: rule['dst-address'],
+        srcPort: rule['src-port'],
+        dstPort: rule['dst-port'],
+        toAddresses: rule['to-addresses'],
+        toPorts: rule['to-ports'],
+        inInterface: rule['in-interface'],
+        outInterface: rule['out-interface'],
+        bytes: parseInt(rule.bytes || '0'),
+        packets: parseInt(rule.packets || '0'),
+        disabled: rule.disabled === 'true',
+        invalid: rule.invalid === 'true',
+        dynamic: rule.dynamic === 'true',
+        comment: rule.comment || ''
+      }));
+    } catch (error) {
+      console.error('Failed to fetch firewall NAT rules:', error);
+      return this.getMockFirewallNatRules();
+    }
+  }
+
+  /**
+   * Get firewall mangle rules
+   */
+  async getFirewallMangleRules(): Promise<any[]> {
+    if (!this.isConnectionActive()) {
+      return this.getMockFirewallMangleRules();
+    }
+
+    try {
+      const result = await this.executeCommand('/ip/firewall/mangle/print');
+
+      return result.map((rule: any, index: number) => ({
+        id: rule['.id'] || `*${index}`,
+        chain: rule.chain || '',
+        action: rule.action || '',
+        protocol: rule.protocol,
+        srcAddress: rule['src-address'],
+        dstAddress: rule['dst-address'],
+        newRoutingMark: rule['new-routing-mark'],
+        newPacketMark: rule['new-packet-mark'],
+        passthroughEnabled: rule.passthrough === 'true',
+        bytes: parseInt(rule.bytes || '0'),
+        packets: parseInt(rule.packets || '0'),
+        disabled: rule.disabled === 'true',
+        invalid: rule.invalid === 'true',
+        dynamic: rule.dynamic === 'true',
+        comment: rule.comment || ''
+      }));
+    } catch (error) {
+      console.error('Failed to fetch firewall mangle rules:', error);
+      return this.getMockFirewallMangleRules();
+    }
+  }
+
+  /**
+   * Get firewall address lists
+   */
+  async getFirewallAddressLists(): Promise<any[]> {
+    if (!this.isConnectionActive()) {
+      return this.getMockFirewallAddressLists();
+    }
+
+    try {
+      const result = await this.executeCommand('/ip/firewall/address-list/print');
+
+      return result.map((entry: any, index: number) => ({
+        id: entry['.id'] || `*${index}`,
+        list: entry.list || '',
+        address: entry.address || '',
+        creationTime: entry['creation-time'],
+        timeout: entry.timeout,
+        dynamic: entry.dynamic === 'true',
+        disabled: entry.disabled === 'true',
+        comment: entry.comment || ''
+      }));
+    } catch (error) {
+      console.error('Failed to fetch firewall address lists:', error);
+      return this.getMockFirewallAddressLists();
+    }
+  }
+
+  /**
+   * Mock firewall filter rules for development
+   */
+  private getMockFirewallFilterRules(): any[] {
+    return [
+      {
+        id: '*1',
+        chain: 'input',
+        action: 'accept',
+        protocol: 'tcp',
+        dstPort: '22',
+        inInterface: 'ether1',
+        bytes: 1234567,
+        packets: 4321,
+        disabled: false,
+        invalid: false,
+        dynamic: false,
+        comment: 'Allow SSH from LAN'
+      },
+      {
+        id: '*2',
+        chain: 'input',
+        action: 'drop',
+        protocol: 'tcp',
+        srcAddress: '!192.168.88.0/24',
+        dstPort: '8291',
+        bytes: 0,
+        packets: 0,
+        disabled: false,
+        invalid: false,
+        dynamic: false,
+        comment: 'Block external Winbox access'
+      },
+      {
+        id: '*3',
+        chain: 'forward',
+        action: 'accept',
+        protocol: 'icmp',
+        bytes: 98765,
+        packets: 123,
+        disabled: false,
+        invalid: false,
+        dynamic: false,
+        comment: 'Allow ICMP'
+      },
+      {
+        id: '*4',
+        chain: 'input',
+        action: 'accept',
+        srcAddress: '192.168.88.0/24',
+        bytes: 567890,
+        packets: 890,
+        disabled: false,
+        invalid: false,
+        dynamic: false,
+        comment: 'Allow LAN to Router'
+      },
+      {
+        id: '*5',
+        chain: 'input',
+        action: 'drop',
+        bytes: 123,
+        packets: 5,
+        disabled: false,
+        invalid: false,
+        dynamic: false,
+        comment: 'Drop all other input'
+      }
+    ];
+  }
+
+  /**
+   * Mock firewall NAT rules for development
+   */
+  private getMockFirewallNatRules(): any[] {
+    return [
+      {
+        id: '*1',
+        chain: 'srcnat',
+        action: 'masquerade',
+        outInterface: 'ether2',
+        bytes: 9876543,
+        packets: 12345,
+        disabled: false,
+        invalid: false,
+        dynamic: false,
+        comment: 'Masquerade to WAN'
+      },
+      {
+        id: '*2',
+        chain: 'dstnat',
+        action: 'dst-nat',
+        protocol: 'tcp',
+        dstPort: '80',
+        toAddresses: '192.168.88.10',
+        toPorts: '80',
+        inInterface: 'ether2',
+        bytes: 456789,
+        packets: 789,
+        disabled: false,
+        invalid: false,
+        dynamic: false,
+        comment: 'Port forward HTTP to web server'
+      },
+      {
+        id: '*3',
+        chain: 'dstnat',
+        action: 'dst-nat',
+        protocol: 'tcp',
+        dstPort: '443',
+        toAddresses: '192.168.88.10',
+        toPorts: '443',
+        inInterface: 'ether2',
+        bytes: 345678,
+        packets: 567,
+        disabled: false,
+        invalid: false,
+        dynamic: false,
+        comment: 'Port forward HTTPS to web server'
+      }
+    ];
+  }
+
+  /**
+   * Mock firewall mangle rules for development
+   */
+  private getMockFirewallMangleRules(): any[] {
+    return [
+      {
+        id: '*1',
+        chain: 'prerouting',
+        action: 'mark-routing',
+        srcAddress: '192.168.88.0/24',
+        newRoutingMark: 'LAN_MARK',
+        passthroughEnabled: true,
+        bytes: 234567,
+        packets: 345,
+        disabled: false,
+        invalid: false,
+        dynamic: false,
+        comment: 'Mark LAN traffic'
+      },
+      {
+        id: '*2',
+        chain: 'prerouting',
+        action: 'mark-packet',
+        protocol: 'tcp',
+        dstPort: '80,443',
+        newPacketMark: 'HTTP_MARK',
+        passthroughEnabled: true,
+        bytes: 123456,
+        packets: 234,
+        disabled: false,
+        invalid: false,
+        dynamic: false,
+        comment: 'Mark HTTP/HTTPS packets'
+      }
+    ];
+  }
+
+  /**
+   * Mock firewall address lists for development
+   */
+  private getMockFirewallAddressLists(): any[] {
+    return [
+      {
+        id: '*1',
+        list: 'whitelist',
+        address: '192.168.88.100',
+        dynamic: false,
+        disabled: false,
+        comment: 'Admin workstation'
+      },
+      {
+        id: '*2',
+        list: 'whitelist',
+        address: '192.168.88.101',
+        dynamic: false,
+        disabled: false,
+        comment: 'Management server'
+      },
+      {
+        id: '*3',
+        list: 'blacklist',
+        address: '10.20.30.40',
+        dynamic: true,
+        disabled: false,
+        comment: 'Blocked IP - suspicious activity'
+      },
+      {
+        id: '*4',
+        list: 'vpn_clients',
+        address: '10.10.10.5',
+        dynamic: false,
+        disabled: false,
+        comment: 'VPN Client 1'
+      },
+      {
+        id: '*5',
+        list: 'vpn_clients',
+        address: '10.10.10.6',
+        dynamic: false,
+        disabled: false,
+        comment: 'VPN Client 2'
+      }
+    ];
   }
 }
 

@@ -176,3 +176,71 @@ routerRoutes.get('/export', async (req: Request, res: Response) => {
     });
   }
 });
+
+/**
+ * GET /api/router/firewall/filter
+ * Get firewall filter rules
+ */
+routerRoutes.get('/firewall/filter', async (req: Request, res: Response) => {
+  try {
+    const rules = await mikrotikService.getFirewallFilterRules();
+    res.json(rules);
+  } catch (error: any) {
+    console.error('Error fetching firewall filter rules:', error);
+    res.status(500).json({
+      error: 'Failed to fetch firewall filter rules',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/router/firewall/nat
+ * Get firewall NAT rules
+ */
+routerRoutes.get('/firewall/nat', async (req: Request, res: Response) => {
+  try {
+    const rules = await mikrotikService.getFirewallNatRules();
+    res.json(rules);
+  } catch (error: any) {
+    console.error('Error fetching firewall NAT rules:', error);
+    res.status(500).json({
+      error: 'Failed to fetch firewall NAT rules',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/router/firewall/mangle
+ * Get firewall mangle rules
+ */
+routerRoutes.get('/firewall/mangle', async (req: Request, res: Response) => {
+  try {
+    const rules = await mikrotikService.getFirewallMangleRules();
+    res.json(rules);
+  } catch (error: any) {
+    console.error('Error fetching firewall mangle rules:', error);
+    res.status(500).json({
+      error: 'Failed to fetch firewall mangle rules',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/router/firewall/address-list
+ * Get firewall address lists
+ */
+routerRoutes.get('/firewall/address-list', async (req: Request, res: Response) => {
+  try {
+    const lists = await mikrotikService.getFirewallAddressLists();
+    res.json(lists);
+  } catch (error: any) {
+    console.error('Error fetching firewall address lists:', error);
+    res.status(500).json({
+      error: 'Failed to fetch firewall address lists',
+      message: error.message
+    });
+  }
+});

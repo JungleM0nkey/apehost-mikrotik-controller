@@ -1,0 +1,279 @@
+.container {
+  height: 100vh;
+  overflow: hidden;
+  background-color: var(--color-bg-primary);
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  padding: 0 var(--space-xl);
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--color-border-primary);
+  background-color: var(--color-bg-primary);
+  flex-wrap: wrap;
+  gap: var(--space-md);
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.headerControls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2xl);
+  flex-wrap: wrap;
+}
+
+.stats {
+  display: flex;
+  gap: var(--space-xl);
+}
+
+.layoutControls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.layoutLabel {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.layoutSelect {
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-xs);
+  font-family: inherit;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  min-width: 180px;
+}
+
+.layoutSelect:hover {
+  border-color: var(--color-accent-primary);
+  background: var(--color-bg-secondary);
+}
+
+.layoutSelect:focus {
+  outline: none;
+  border-color: var(--color-accent-primary);
+  box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.1);
+}
+
+.layoutSelect option {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-primary);
+}
+
+.statItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.statLabel {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+}
+
+.statValue {
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  color: var(--color-accent-primary);
+}
+
+.loadingContainer {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.content {
+  padding: var(--space-xl);
+  flex: 1;
+  overflow-y: auto;
+}
+
+.mapContainer {
+  flex: 1;
+  position: relative;
+  background-color: var(--color-bg-primary);
+}
+
+/* React Flow Styling */
+.mapContainer :global(.react-flow) {
+  background-color: var(--color-bg-primary);
+}
+
+.mapContainer :global(.react-flow__node) {
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.mapContainer :global(.react-flow__node):hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.mapContainer :global(.react-flow__edge-path) {
+  transition: stroke var(--transition-fast);
+}
+
+.mapContainer :global(.react-flow__edge):hover :global(.react-flow__edge-path) {
+  stroke-width: 3;
+}
+
+/* Controls Styling */
+.controls :global(.react-flow__controls) {
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-md);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.controls :global(.react-flow__controls-button) {
+  background-color: var(--color-bg-tertiary);
+  border-bottom: 1px solid var(--color-border-primary);
+  color: var(--color-text-primary);
+  transition: background-color var(--transition-fast);
+}
+
+.controls :global(.react-flow__controls-button:hover) {
+  background-color: var(--color-bg-secondary);
+}
+
+.controls :global(.react-flow__controls-button):last-child {
+  border-bottom: none;
+}
+
+.controls :global(.react-flow__controls-button) svg {
+  fill: var(--color-text-primary);
+}
+
+/* Minimap Styling */
+.minimap :global(.react-flow__minimap) {
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-md);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.minimap :global(.react-flow__minimap-mask) {
+  fill: rgba(0, 0, 0, 0.5);
+}
+
+/* Node Content Styling */
+.routerNode,
+.interfaceNode,
+.hostNode {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.nodeTitle {
+  font-weight: 600;
+  font-size: 13px;
+  text-align: center;
+}
+
+.nodeSubtitle {
+  font-size: 11px;
+  opacity: 0.8;
+  text-align: center;
+}
+
+.nodeInfo {
+  font-size: 10px;
+  opacity: 0.7;
+  text-align: center;
+}
+
+.statusBadge {
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+
+.statusUp {
+  background-color: rgba(16, 185, 129, 0.2);
+  color: var(--color-accent-success);
+  border: 1px solid var(--color-accent-success);
+}
+
+.statusDown {
+  background-color: rgba(239, 68, 68, 0.2);
+  color: var(--color-accent-error);
+  border: 1px solid var(--color-accent-error);
+}
+
+/* Background Pattern */
+.mapContainer :global(.react-flow__background) {
+  background-color: var(--color-bg-primary);
+}
+
+.mapContainer :global(.react-flow__background-pattern) {
+  stroke: var(--color-border-primary);
+  stroke-width: 0.5;
+}
+
+/* Attribution */
+.mapContainer :global(.react-flow__attribution) {
+  background-color: var(--color-bg-secondary);
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-sm);
+  padding: 2px 6px;
+  font-size: 10px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    height: auto;
+    padding: var(--space-md);
+    gap: var(--space-md);
+    align-items: flex-start;
+  }
+
+  .headerControls {
+    width: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-md);
+  }
+
+  .stats {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .layoutControls {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .layoutSelect {
+    flex: 1;
+    min-width: 140px;
+  }
+}

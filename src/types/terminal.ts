@@ -9,4 +9,4 @@ export interface TerminalLine {
   timestamp?: string;
 }
 
-export type TerminalTab = 'terminal' | 'stats' | 'config' | 'logs';
+export type TerminalTab = 'terminal' | 'stats' | 'config' | 'logs' | 'assistant';

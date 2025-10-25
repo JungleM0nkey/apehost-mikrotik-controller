@@ -11,6 +11,10 @@ export interface HealthResponse {
     external: number;
     arrayBuffers: number;
   };
+  llm?: {
+    configured: boolean;
+    provider: string | null;
+  };
 }
 
 export interface RouterStatus {
@@ -40,6 +44,7 @@ export interface NetworkInterface {
   rxBytes: number;
   txBytes: number;
   comment?: string;
+  ipAddress?: string;
 }
 
 export interface UpdateInterfaceRequest {
@@ -125,4 +130,73 @@ export interface ApiError {
   error: string;
   message?: string;
   path?: string;
+}
+
+export interface FirewallFilterRule {
+  id: string;
+  chain: string;
+  action: string;
+  protocol?: string;
+  srcAddress?: string;
+  dstAddress?: string;
+  srcPort?: string;
+  dstPort?: string;
+  inInterface?: string;
+  outInterface?: string;
+  bytes?: number;
+  packets?: number;
+  disabled: boolean;
+  invalid: boolean;
+  dynamic: boolean;
+  comment?: string;
+}
+
+export interface FirewallNatRule {
+  id: string;
+  chain: string;
+  action: string;
+  protocol?: string;
+  srcAddress?: string;
+  dstAddress?: string;
+  srcPort?: string;
+  dstPort?: string;
+  toAddresses?: string;
+  toPorts?: string;
+  inInterface?: string;
+  outInterface?: string;
+  bytes?: number;
+  packets?: number;
+  disabled: boolean;
+  invalid: boolean;
+  dynamic: boolean;
+  comment?: string;
+}
+
+export interface FirewallMangleRule {
+  id: string;
+  chain: string;
+  action: string;
+  protocol?: string;
+  srcAddress?: string;
+  dstAddress?: string;
+  newRoutingMark?: string;
+  newPacketMark?: string;
+  passthroughEnabled: boolean;
+  bytes?: number;
+  packets?: number;
+  disabled: boolean;
+  invalid: boolean;
+  dynamic: boolean;
+  comment?: string;
+}
+
+export interface FirewallAddressList {
+  id: string;
+  list: string;
+  address: string;
+  creationTime?: string;
+  timeout?: string;
+  dynamic: boolean;
+  disabled: boolean;
+  comment?: string;
 }

@@ -19,13 +19,24 @@
 }
 
 .content {
-  padding: 0 var(--space-xl);
-  padding-bottom: 100px;
+  padding: var(--space-xl);
+  padding-bottom: 130px; /* Footer (64px) + Terminal taskbar (48px) + spacing */
+  max-width: 1200px;
+}
+
+.tabsContainer {
+  margin-bottom: var(--space-xl);
+}
+
+.tabContent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
 }
 
 .footer {
   position: fixed;
-  bottom: 0;
+  bottom: 48px; /* Position above terminal taskbar */
   right: 0;
   left: var(--size-sidebar);
   height: 64px;
@@ -39,8 +50,160 @@
   z-index: var(--z-sticky);
 }
 
+.providerSection {
+  display: flex;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+.providerOption {
+  flex: 1;
+  padding: var(--space-lg);
+  background: var(--color-bg-tertiary);
+  border: 2px solid var(--color-border-primary);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.providerOption:hover {
+  border-color: var(--color-border-secondary);
+}
+
+.providerOption.active {
+  border-color: var(--color-accent-primary);
+  background: var(--color-bg-secondary);
+}
+
+.providerHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-xs);
+}
+
+.providerTitle {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.providerDescription {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-normal);
+}
+
+.gridTwo {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-lg);
+}
+
+.sliderContainer {
+  margin-bottom: var(--space-lg);
+}
+
+.sliderLabel {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-sm);
+}
+
+.sliderLabelText {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  font-weight: 500;
+}
+
+.sliderValue {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  font-family: var(--font-mono);
+}
+
+.toggleGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  margin-top: var(--space-lg);
+  padding-top: var(--space-lg);
+  border-top: 1px solid var(--color-border-primary);
+}
+
+.subsectionTitle {
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0 0 var(--space-lg) 0;
+}
+
+.select {
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-xs);
+  font-family: inherit;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L6 6L11 1' stroke='%23a0a0a0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--space-md) center;
+  padding-right: calc(var(--space-md) * 3);
+}
+
+.select:hover {
+  border-color: var(--color-border-secondary);
+}
+
+.select:focus {
+  outline: none;
+  border-color: var(--color-accent-primary);
+}
+
+.select option {
+  background: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+  padding: var(--space-sm);
+}
+
+.loadingContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+}
+
+.unsavedBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: 2px var(--space-sm);
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 500;
+  color: #f59e0b;
+  margin-left: var(--space-sm);
+}
+
 @media (max-width: 1024px) {
   .footer {
     left: 0;
+    bottom: 48px; /* Keep above terminal taskbar on mobile */
+  }
+
+  .gridTwo {
+    grid-template-columns: 1fr;
+  }
+
+  .providerSection {
+    flex-direction: column;
   }
 }

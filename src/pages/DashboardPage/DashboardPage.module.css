@@ -37,23 +37,25 @@
   display: flex;
   align-items: center;
   gap: var(--space-lg);
+  transition: all 0.2s ease;
 }
 
-.statCard.good {
-  border-left: 3px solid #10b981;
+.statCard:hover {
+  border-color: var(--color-border-secondary);
+  transform: translateY(-2px);
 }
 
-.statCard.warning {
-  border-left: 3px solid var(--color-accent-primary);
-}
-
-.statCard.critical {
-  border-left: 3px solid #ef4444;
-}
-
-.statIcon {
-  font-size: 32px;
-  opacity: 0.8;
+.statIconContainer {
+  font-size: 40px;
+  color: var(--color-accent-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  background: rgba(255, 107, 53, 0.1);
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
 }
 
 .statContent {
@@ -119,11 +121,13 @@
   line-height: 1;
 }
 
-.progressIcon {
-  font-size: var(--font-size-xs);
-  color: var(--color-text-secondary);
+.progressIconInner {
+  font-size: 14px;
+  color: var(--color-accent-primary);
   margin-top: var(--space-xs);
-  opacity: 0.7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Section */
@@ -179,7 +183,14 @@
 
 .interfaceStatus {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+}
+
+.interfaceInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: flex-start;
 }
 
 .interfaceName {
@@ -188,25 +199,47 @@
   font-family: var(--font-mono);
 }
 
+.interfaceIp {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  font-family: var(--font-mono);
+}
+
 .interfaceStats {
   display: flex;
-  gap: var(--space-lg);
+  gap: var(--space-xl);
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
   font-family: var(--font-mono);
 }
 
 .interfaceRx {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
   color: #10b981;
 }
 
 .interfaceTx {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
   color: #3b82f6;
 }
 
 .interfaceInactive {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
   color: var(--color-text-secondary);
   opacity: 0.5;
+}
+
+.trafficRate {
+  min-width: 95px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 /* Quick Actions */

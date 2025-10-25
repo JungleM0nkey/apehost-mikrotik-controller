@@ -2,119 +2,79 @@
  * Settings Types
  */
 
-export type AIProvider = 'claude' | 'cloudflare' | 'lmstudio';
+export type AIProvider = 'claude' | 'lmstudio';
 export type ColorScheme = 'dark-orange' | 'classic-green' | 'cyan-blue' | 'custom';
 
-export interface LMStudioConfig {
-  serverUrl: string;
-  endpointPath: string;
-  apiKey?: string;
-  modelName: string;
+// Server Settings (from backend API)
+export interface ServerSettings {
+  server: {
+    port: number;
+    corsOrigin: string;
+    nodeEnv: string;
+  };
+  mikrotik: {
+    host: string;
+    port: number;
+    username: string;
+    password: string;
+  };
+  llm: {
+    provider: AIProvider;
+    claude: {
+      apiKey: string;
+      model: string;
+    };
+    lmstudio: {
+      endpoint: string;
+      model: string;
+    };
+  };
+  assistant: {
+    temperature: number;
+    maxTokens: number;
+    systemPrompt: string;
+  };
 }
 
-export interface RouterAPIConfig {
-  ipAddress: string;
-  port: number;
-  username: string;
-  password: string;
-  useSsl: boolean;
-  keepAlive: boolean;
-  autoReconnect: boolean;
-  connectionTimeout: number;
-  commandTimeout: number;
-  maxRetries: number;
-  keepAliveInterval: number;
+// UI-Only Settings (stored in localStorage)
+export interface UISettings {
+  terminal: {
+    fontFamily: string;
+    fontSize: number;
+    lineHeight: number;
+    syntaxHighlighting: boolean;
+    lineNumbers: boolean;
+    historyLimit: number;
+    colorScheme: ColorScheme;
+  };
+  display: {
+    timezone: string;
+    timeFormat: '12h' | '24h';
+    dateFormat: string;
+  };
+  behavior: {
+    enableSuggestions: boolean;
+    showExplanations: boolean;
+    autoExecuteSafe: boolean;
+    requireConfirmation: boolean;
+  };
+  security: {
+    storeCredentials: boolean;
+    encryptCredentials: boolean;
+    sessionTimeout: number;
+    enableAuditLogging: boolean;
+    logAiConversations: boolean;
+    logRouterCommands: boolean;
+  };
 }
 
-export interface AIAssistantConfig {
-  systemPrompt: string;
-  temperature: number;
-  maxTokens: number;
-  responseTimeout: number;
-  enableSuggestions: boolean;
-  showExplanations: boolean;
-  autoExecuteSafe: boolean;
-  requireConfirmation: boolean;
-}
-
-export interface TerminalConfig {
-  fontFamily: string;
-  fontSize: number;
-  lineHeight: number;
-  syntaxHighlighting: boolean;
-  lineNumbers: boolean;
-  historyLimit: number;
-  colorScheme: ColorScheme;
-}
-
-export interface DisplayConfig {
-  timezone: string;
-  timeFormat: '12h' | '24h';
-  dateFormat: string;
-}
-
-export interface SecurityConfig {
-  storeCredentials: boolean;
-  encryptCredentials: boolean;
-  sessionTimeout: number;
-  enableAuditLogging: boolean;
-  logAiConversations: boolean;
-  logRouterCommands: boolean;
-}
-
-export interface AdvancedConfig {
-  debugMode: boolean;
-  apiRequestLogging: boolean;
-  useProxy: boolean;
-  proxyUrl: string;
-  proxyUsername?: string;
-  proxyPassword?: string;
-  maxRequestsPerMinute: number;
-  throttleDelay: number;
-}
-
+// Combined Settings
 export interface Settings {
-  aiProvider: AIProvider;
-  lmStudio: LMStudioConfig;
-  routerApi: RouterAPIConfig;
-  aiAssistant: AIAssistantConfig;
-  terminal: TerminalConfig;
-  display: DisplayConfig;
-  security: SecurityConfig;
-  advanced: AdvancedConfig;
+  server: ServerSettings;
+  ui: UISettings;
 }
 
-export const defaultSettings: Settings = {
-  aiProvider: 'lmstudio',
-  lmStudio: {
-    serverUrl: 'http://localhost:1234',
-    endpointPath: '/v1/completions',
-    apiKey: '',
-    modelName: 'model-name'
-  },
-  routerApi: {
-    ipAddress: '192.168.100.2',
-    port: 8728,
-    username: 'secureadmin',
-    password: '',
-    useSsl: false,
-    keepAlive: true,
-    autoReconnect: true,
-    connectionTimeout: 10,
-    commandTimeout: 30,
-    maxRetries: 3,
-    keepAliveInterval: 60
-  },
-  aiAssistant: {
-    systemPrompt: 'You are an expert MikroTik router assistant. Help users configure and troubleshoot their MikroTik RouterOS devices. Be concise, accurate, and security-conscious.',
-    temperature: 0.7,
-    maxTokens: 2048,
-    responseTimeout: 60,
-    enableSuggestions: true,
-    showExplanations: true,
-    autoExecuteSafe: false,
-    requireConfirmation: true
-  },
+export const defaultUISettings: UISettings = {
   terminal: {
     fontFamily: 'JetBrains Mono',
     fontSize: 14,
@@ -129,6 +89,12 @@ export const defaultSettings: Settings = {
     timeFormat: '12h',
     dateFormat: 'MMM DD, YYYY'
   },
+  behavior: {
+    enableSuggestions: true,
+    showExplanations: true,
+    autoExecuteSafe: false,
+    requireConfirmation: true
+  },
   security: {
     storeCredentials: false,
     encryptCredentials: true,
@@ -136,15 +102,5 @@ export const defaultSettings: Settings = {
     enableAuditLogging: true,
     logAiConversations: true,
     logRouterCommands: true
-  },
-  advanced: {
-    debugMode: false,
-    apiRequestLogging: false,
-    useProxy: false,
-    proxyUrl: '',
-    proxyUsername: '',
-    proxyPassword: '',
-    maxRequestsPerMinute: 60,
-    throttleDelay: 100
   }
 };

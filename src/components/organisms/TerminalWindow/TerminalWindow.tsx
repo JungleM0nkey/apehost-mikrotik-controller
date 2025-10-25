@@ -2,8 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { Rnd } from 'react-rnd';
 import { ExpandOutlined, CompressOutlined, MinusOutlined, CloseOutlined, CodeOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useTerminalManager } from '../../../contexts/TerminalManagerContext';
+import { useLLMStatus } from '../../../hooks/useLLMStatus';
 import { TerminalPanel } from '../TerminalPanel/TerminalPanel';
+import { AssistantPanel } from '../AssistantPanel/AssistantPanel';
 import type { Terminal } from '../../../types/terminal-manager';
+import type { TerminalTab } from '../../../types/terminal';
 import styles from './TerminalWindow.module.css';
 
 export interface TerminalWindowProps {
@@ -21,11 +24,14 @@ export const TerminalWindow: React.FC<TerminalWindowProps> = ({ terminal }) => {
     resetTerminal,
   } = useTerminalManager();
 
+  const { llmStatus } = useLLMStatus();
+
   const [isMaximized, setIsMaximized] = useState(false);
   const [isConnecting, setIsConnecting] = useState(true);
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const [isClosing, setIsClosing] = useState(false);
   const [isMinimizing, setIsMinimizing] = useState(false);
+  const [activeTab, setActiveTab] = useState<TerminalTab>('terminal');
 
   // Initialize WebSocket connection
   useEffect(() => {
@@ -73,7 +79,7 @@ export const TerminalWindow: React.FC<TerminalWindowProps> = ({ terminal }) => {
     setTimeout(() => {
       minimizeTerminal(terminal.id);
       setIsMinimizing(false);
-    }, 200); // Match animation duration
+    }, 300); // Match animation duration
   };
 
   const handleClose = () => {
@@ -121,6 +127,41 @@ export const TerminalWindow: React.FC<TerminalWindowProps> = ({ terminal }) => {
   if (terminal.isMinimized) {
     return null;
   }
+
+  // Render tab content
+  const renderTabContent = () => {
+    if (connectionError) {
+      return (
+        <div className={styles.connectionError}>
+          <p>Failed to connect: {connectionError}</p>
+          <button onClick={() => window.location.reload()}>Retry</button>
+        </div>
+      );
+    }
+
+    if (activeTab === 'terminal') {
+      return (
+        <TerminalPanel
+          key={`${terminal.id}-${terminal.resetCount}`}
+          websocket={terminal.websocketConnection}
+          terminalId={terminal.id}
+          hideHeader
+        />
+      );
+    }
+
+    if (activeTab === 'assistant') {
+      return (
+        <AssistantPanel
+          websocket={terminal.websocketConnection}
+          terminalId={terminal.id}
+          hideHeader
+        />
+      );
+    }
+
+    return null;
+  };
 
   // Maximized mode
   if (isMaximized) {
@@ -170,19 +211,23 @@ export const TerminalWindow: React.FC<TerminalWindowProps> = ({ terminal }) => {
             </button>
           </div>
         </div>
-        {connectionError ? (
-          <div className={styles.connectionError}>
-            <p>Failed to connect: {connectionError}</p>
-            <button onClick={() => window.location.reload()}>Retry</button>
-          </div>
-        ) : (
-          <TerminalPanel
-            key={`${terminal.id}-${terminal.resetCount}`}
-            websocket={terminal.websocketConnection}
-            terminalId={terminal.id}
-            hideHeader
-          />
-        )}
+        <div className={styles.tabBar}>
+          <button
+            className={`${styles.tab} ${activeTab === 'terminal' ? styles.tabActive : ''}`}
+            onClick={() => setActiveTab('terminal')}
+          >
+            Terminal
+          </button>
+          <button
+            className={`${styles.tab} ${activeTab === 'assistant' ? styles.tabActive : ''} ${!llmStatus.configured ? styles.tabDisabled : ''}`}
+            onClick={() => llmStatus.configured && setActiveTab('assistant')}
+            disabled={!llmStatus.configured}
+            title={!llmStatus.configured ? 'AI Assistant requires LLM configuration. Please configure in Settings.' : 'AI Assistant'}
+          >
+            AI Assistant
+          </button>
+        </div>
+        {renderTabContent()}
       </div>
     );
   }
@@ -247,24 +292,30 @@ export const TerminalWindow: React.FC<TerminalWindowProps> = ({ terminal }) => {
             </button>
           </div>
         </div>
+        <div className={styles.tabBar}>
+          <button
+            className={`${styles.tab} ${activeTab === 'terminal' ? styles.tabActive : ''}`}
+            onClick={() => setActiveTab('terminal')}
+          >
+            Terminal
+          </button>
+          <button
+            className={`${styles.tab} ${activeTab === 'assistant' ? styles.tabActive : ''} ${!llmStatus.configured ? styles.tabDisabled : ''}`}
+            onClick={() => llmStatus.configured && setActiveTab('assistant')}
+            disabled={!llmStatus.configured}
+            title={!llmStatus.configured ? 'AI Assistant requires LLM configuration. Please configure in Settings.' : 'AI Assistant'}
+          >
+            AI Assistant
+          </button>
+        </div>
         <div className={styles.content}>
-          {connectionError ? (
-            <div className={styles.connectionError}>
-              <p>Failed to connect: {connectionError}</p>
-              <button onClick={() => window.location.reload()}>Retry</button>
-            </div>
-          ) : isConnecting ? (
+          {isConnecting ? (
             <div className={styles.connecting}>
               <div className={styles.spinner} />
               <p>Connecting to server...</p>
             </div>
           ) : (
-            <TerminalPanel
-              key={`${terminal.id}-${terminal.resetCount}`}
-              websocket={terminal.websocketConnection}
-              terminalId={terminal.id}
-              hideHeader
-            />
+            renderTabContent()
           )}
         </div>
       </div>

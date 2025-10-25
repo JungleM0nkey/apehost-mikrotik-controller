@@ -6,6 +6,8 @@ import { TerminalPage } from './pages/TerminalPage/TerminalPage';
 import { ChatPage } from './pages/ChatPage/ChatPage';
 import { SettingsPage } from './pages/SettingsPage/SettingsPage';
 import { NetworkPage } from './pages/NetworkPage/NetworkPage';
+import { FirewallPage } from './pages/FirewallPage/FirewallPage';
+import { NetworkMapPage } from './pages/NetworkMapPage/NetworkMapPage';
 import { TerminalManagerProvider, useTerminalManager } from './contexts/TerminalManagerContext';
 import { TerminalTaskbar } from './components/organisms/TerminalTaskbar/TerminalTaskbar';
 import { TerminalWindow } from './components/organisms/TerminalWindow/TerminalWindow';
@@ -36,28 +38,6 @@ const AppContent: React.FC = () => {
     setActiveNav(nav);
   };
 
-  const handleExportConfig = async () => {
-    try {
-      const response = await fetch('/api/router/export');
-      if (!response.ok) {
-        throw new Error('Failed to export configuration');
-      }
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `router-config-${new Date().toISOString().split('T')[0]}.rsc`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-    } catch (error) {
-      console.error('Failed to export configuration:', error);
-      alert('Failed to export router configuration. Please try again.');
-    }
-  };
-
   const renderContent = () => {
     switch (activeNav) {
       case 'dashboard':
@@ -71,14 +51,16 @@ const AppContent: React.FC = () => {
       case 'network':
         return <NetworkPage />;
       case 'firewall':
-      case 'dhcp':
+        return <FirewallPage />;
       case 'analytics':
+        return <NetworkMapPage />;
+      case 'dhcp':
         return (
           <div className={styles.placeholder}>
             <h1>{activeNav.charAt(0).toUpperCase() + activeNav.slice(1)}</h1>
             <p>This section is under construction</p>
             <p style={{ marginTop: '16px', color: 'var(--color-text-secondary)' }}>
-              Implemented pages: Dashboard, Terminal, AI Assistant, Settings, Network
+              Implemented pages: Dashboard, Terminal, AI Assistant, Settings, Network, Firewall, Network Map
             </p>
           </div>
         );
@@ -106,7 +88,6 @@ const AppContent: React.FC = () => {
         router={routerInfo || defaultRouterInfo}
         activeNav={activeNav}
         onNavigate={handleNavigate}
-        onExportConfig={handleExportConfig}
       />
 
       <main className={styles.main} onClick={handleMainClick}>
