@@ -18,7 +18,7 @@ import styles from './App.module.css';
 const AppContent: React.FC = () => {
   const [activeNav, setActiveNav] = useState('dashboard');
   const { routerInfo } = useRouterInfo();
-  const { state } = useTerminalManager();
+  const { state, deactivateAllTerminals } = useTerminalManager();
 
   // Enable keyboard shortcuts
   useTerminalKeyboardShortcuts();
@@ -95,6 +95,11 @@ const AppContent: React.FC = () => {
   // Get terminals array
   const terminals = Array.from(state.terminals.values());
 
+  // Handle clicking on main content to deactivate terminals
+  const handleMainClick = () => {
+    deactivateAllTerminals();
+  };
+
   return (
     <div className={styles.app}>
       <Sidebar
@@ -104,7 +109,7 @@ const AppContent: React.FC = () => {
         onExportConfig={handleExportConfig}
       />
 
-      <main className={styles.main}>
+      <main className={styles.main} onClick={handleMainClick}>
         <Header currentPage={activeNav} />
         <div className={styles.content}>
           {renderContent()}

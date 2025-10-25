@@ -3,28 +3,32 @@
 .trafficIndicator {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
-  margin-right: 8px;
+  gap: 4px;
+  margin-right: 10px;
   vertical-align: middle;
-  contain: layout style;
+  /* Debug border to verify rendering */
+  /* border: 1px solid rgba(255, 0, 0, 0.3); */
 }
 
 .pixel {
-  width: 8px;
-  height: 8px;
+  width: 12px;
+  height: 12px;
   border-radius: 2px;
-  opacity: 0.3;
-  transition: opacity 150ms ease, transform 150ms ease;
+  opacity: 0.4;
+  /* Debug to verify pixels are rendering */
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* RX (Download) - Bright Success Green */
+/* RX (Download) - ULTRA Bright Success Green */
 .rx .pixel {
-  background-color: #12d994;
+  background-color: #00ff88;
+  box-shadow: 0 0 4px #00ff88;
 }
 
-/* TX (Upload) - Bright Blue */
+/* TX (Upload) - ULTRA Bright Blue */
 .tx .pixel {
-  background-color: #4b90ff;
+  background-color: #00b8ff;
+  box-shadow: 0 0 4px #00b8ff;
 }
 
 /* Active State - Normal Speed (1-10 MB/s) */
@@ -71,7 +75,7 @@
   animation-delay: 360ms;
 }
 
-/* Active State - Slow Speed (<1 MB/s) */
+/* Active State - Slow Speed (<1 MB/s) - ALSO ULTRA VISIBLE */
 .slow .pixel {
   animation: pixelFlow 1400ms cubic-bezier(0.4, 0, 0.2, 1) infinite;
   will-change: opacity, transform;
@@ -93,25 +97,30 @@
   animation-delay: 840ms;
 }
 
-/* Inactive State - No Animation */
+/* Inactive State - Static but visible */
 .inactive .pixel {
-  opacity: 0.25;
+  opacity: 0.3;
   animation: none;
   will-change: auto;
+  /* Make inactive pixels visible too */
+  background-color: #666 !important;
 }
 
-/* Pixel Flow Keyframe Animation */
+/* Pixel Flow Keyframe Animation - ULTRA VISIBLE VERSION */
 @keyframes pixelFlow {
-  0%,
-  100% {
-    opacity: 0.3;
+  0% {
+    opacity: 0.4;
     transform: scale(1);
-    box-shadow: none;
   }
   50% {
     opacity: 1;
-    transform: scale(1.4);
-    box-shadow: 0 0 10px currentColor;
+    transform: scale(2);
+    box-shadow: 0 0 20px currentColor, 0 0 30px currentColor;
+    filter: brightness(1.5);
+  }
+  100% {
+    opacity: 0.4;
+    transform: scale(1);
   }
 }
 

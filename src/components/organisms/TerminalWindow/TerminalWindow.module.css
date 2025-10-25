@@ -13,12 +13,14 @@
   border-radius: var(--radius-md);
   overflow: hidden;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
-  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  transition: all 0.2s ease;
+  opacity: 0.7;
 }
 
 .window.active {
   border-color: var(--color-accent-primary);
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), 0 0 0 2px rgba(255, 140, 0, 0.3);
+  opacity: 1;
 }
 
 .titleBar {
@@ -34,6 +36,18 @@
 
 .dragHandle {
   cursor: move !important;
+}
+
+.titleContent {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.terminalIcon {
+  font-size: 14px;
+  color: var(--color-accent-primary);
+  flex-shrink: 0;
 }
 
 .title {

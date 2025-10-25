@@ -415,13 +415,65 @@ export const NetworkPage: React.FC = () => {
   const inactiveInterfaces = interfaces.filter(i => i.status === 'down');
 
   const handleCopyToClipboard = async (text: string, label: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      antMessage.success(`${label} copied to clipboard`);
-    } catch (err) {
-      console.error('Failed to copy:', err);
-      antMessage.error('Failed to copy to clipboard');
+    // Method 1: Modern Clipboard API (works on HTTPS and localhost)
+    if (navigator.clipboard && window.isSecureContext) {
+      try {
+        await navigator.clipboard.writeText(text);
+        antMessage.success(`${label} copied to clipboard`);
+        return;
+      } catch (err) {
+        console.warn('Clipboard API failed, trying fallback...', err);
+      }
     }
+
+    // Method 2: Legacy execCommand fallback
+    try {
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-999999px';
+      textArea.style.top = '-999999px';
+      textArea.style.opacity = '0';
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      
+      const successful = document.execCommand('copy');
+      document.body.removeChild(textArea);
+      
+      if (successful) {
+        antMessage.success(`${label} copied: ${text}`);
+        return;
+      }
+    } catch (err) {
+      console.error('execCommand failed:', err);
+    }
+
+    // Method 3: Show in modal as last resort
+    antMessage.info({
+      content: (
+        <div>
+          <strong>{label}:</strong>
+          <div style={{ 
+            marginTop: '8px', 
+            padding: '8px', 
+            background: '#1a1a1a', 
+            borderRadius: '4px',
+            fontFamily: 'monospace',
+            fontSize: '12px',
+            color: '#ff6b35',
+            userSelect: 'all',
+            cursor: 'text'
+          }}>
+            {text}
+          </div>
+          <div style={{ marginTop: '8px', fontSize: '11px', color: '#888' }}>
+            Select the text above and press Ctrl+C (or Cmd+C on Mac)
+          </div>
+        </div>
+      ),
+      duration: 8
+    });
   };
 
   const renderContent = () => {

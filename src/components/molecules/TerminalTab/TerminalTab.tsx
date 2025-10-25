@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { CloseOutlined } from '@ant-design/icons';
+import { CloseOutlined, CodeOutlined } from '@ant-design/icons';
 import type { Terminal } from '../../../types/terminal-manager';
 import styles from './TerminalTab.module.css';
 
@@ -123,14 +123,9 @@ export const TerminalTab: React.FC<TerminalTabProps> = ({
         tabIndex={0}
         aria-label={`${terminal.name}, ${terminal.isActive ? 'active' : 'inactive'}`}
       >
-        {/* Connection Status Indicator */}
-        <div className={styles.statusIndicator}>
-          <div
-            className={`${styles.statusDot} ${
-              terminal.sessionId ? styles.connected : styles.connecting
-            }`}
-            title={terminal.sessionId ? 'Connected' : 'Connecting...'}
-          />
+        {/* Terminal Icon */}
+        <div className={styles.iconContainer}>
+          <CodeOutlined className={styles.terminalIcon} />
         </div>
 
         {/* Terminal Name */}

@@ -2,69 +2,53 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 12px;
-  background: var(--color-bg-tertiary);
-  border: 1px solid var(--color-border-primary);
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid transparent;
   border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: all 0.2s ease;
-  max-width: 200px;
-  min-width: 120px;
+  transition: all 0.15s ease;
+  max-width: 180px;
+  min-width: 100px;
+  height: 32px;
   user-select: none;
   position: relative;
+  font-size: 13px;
+  font-weight: 500;
 }
 
 .terminalTab:hover {
-  background: var(--color-bg-hover);
-  border-color: var(--color-accent-primary);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 140, 0, 0.2);
 }
 
 .terminalTab.active {
-  background: var(--color-accent-primary);
-  color: var(--color-bg-primary);
-  border-color: var(--color-accent-primary);
-  box-shadow: 0 0 12px rgba(255, 140, 0, 0.4);
+  background: rgba(255, 140, 0, 0.15);
+  color: var(--color-accent-primary);
+  border-color: rgba(255, 140, 0, 0.4);
+  box-shadow: 0 0 0 1px rgba(255, 140, 0, 0.2), 0 2px 8px rgba(255, 140, 0, 0.15);
 }
 
 .terminalTab.minimized {
-  opacity: 0.6;
+  opacity: 0.5;
   font-style: italic;
 }
 
-.statusIndicator {
+.iconContainer {
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
 
-.statusDot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  transition: all 0.3s ease;
+.terminalIcon {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+  transition: color 0.15s ease;
 }
 
-.statusDot.connected {
-  background: var(--color-accent-success);
-  box-shadow: 0 0 6px var(--color-accent-success);
-  animation: pulse 2s ease-in-out infinite;
-}
-
-.statusDot.connecting {
-  background: #60a5fa;
-  box-shadow: 0 0 6px #60a5fa;
-  animation: blink 1s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
-
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
+.terminalTab.active .terminalIcon {
+  color: var(--color-accent-primary);
 }
 
 .name {
@@ -72,68 +56,78 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: var(--font-size-xs);
-  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .terminalTab.active .name {
+  color: var(--color-accent-primary);
   font-weight: 600;
 }
 
 .nameInput {
   flex: 1;
-  background: var(--color-bg-primary);
-  border: 1px solid var(--color-accent-primary);
+  min-width: 0;
+  max-width: 100%;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 140, 0, 0.5);
   border-radius: var(--radius-sm);
   padding: 2px 6px;
   color: var(--color-text-primary);
-  font-size: var(--font-size-xs);
-  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
   outline: none;
+  box-sizing: border-box;
 }
 
 .closeButton {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   padding: 0;
   background: transparent;
   border: none;
-  border-radius: var(--radius-sm);
+  border-radius: 3px;
   cursor: pointer;
   opacity: 0;
   transition: all 0.15s ease;
   flex-shrink: 0;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 12px;
 }
 
 .terminalTab:hover .closeButton {
-  opacity: 0.7;
+  opacity: 0.6;
 }
 
 .closeButton:hover {
   opacity: 1 !important;
   background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .terminalTab.active .closeButton {
-  color: var(--color-bg-primary);
+  color: var(--color-accent-primary);
 }
 
 .terminalTab.active .closeButton:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 140, 0, 0.2);
+  color: var(--color-accent-primary);
 }
 
 /* Context Menu */
 .contextMenu {
   position: fixed;
-  background: var(--color-bg-secondary);
-  border: 1px solid var(--color-border-primary);
+  background: rgba(18, 18, 18, 0.98);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 140, 0, 0.2);
   border-radius: var(--radius-md);
-  padding: 4px;
-  min-width: 150px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  padding: 6px;
+  min-width: 160px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 140, 0, 0.1);
   z-index: 10000;
   animation: contextMenuFadeIn 0.15s ease-out;
 }
@@ -141,7 +135,7 @@
 @keyframes contextMenuFadeIn {
   from {
     opacity: 0;
-    transform: scale(0.95) translateY(-4px);
+    transform: scale(0.96) translateY(-4px);
   }
   to {
     opacity: 1;
@@ -156,21 +150,21 @@
   background: transparent;
   border: none;
   border-radius: var(--radius-sm);
-  color: var(--color-text-primary);
-  font-family: var(--font-mono);
-  font-size: var(--font-size-xs);
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 13px;
+  font-weight: 500;
   text-align: left;
   cursor: pointer;
   transition: all 0.1s ease;
 }
 
 .contextMenuItem:hover {
-  background: var(--color-bg-hover);
+  background: rgba(255, 140, 0, 0.15);
   color: var(--color-accent-primary);
 }
 
 .contextMenuDivider {
   height: 1px;
-  background: var(--color-border-primary);
+  background: rgba(255, 140, 0, 0.15);
   margin: 4px 0;
 }

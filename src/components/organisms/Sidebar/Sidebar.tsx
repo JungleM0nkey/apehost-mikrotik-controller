@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Menu } from 'antd';
 import {
   DashboardOutlined,
-  CodeOutlined,
   RobotOutlined,
   GlobalOutlined,
   SafetyOutlined,
@@ -54,11 +53,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
       key: 'dashboard',
       icon: <DashboardOutlined />,
       label: 'Dashboard',
-    },
-    {
-      key: 'terminal',
-      icon: <CodeOutlined />,
-      label: 'Terminal',
     },
     {
       key: 'chat',

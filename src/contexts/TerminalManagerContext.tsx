@@ -253,6 +253,21 @@ function terminalReducer(state: TerminalManagerState, action: TerminalAction): T
       };
     }
 
+    case 'DEACTIVATE_ALL_TERMINALS': {
+      const newTerminals = new Map(state.terminals);
+
+      // Deactivate all terminals
+      newTerminals.forEach(term => {
+        term.isActive = false;
+      });
+
+      return {
+        ...state,
+        terminals: newTerminals,
+        activeTerminalId: null,
+      };
+    }
+
     case 'UPDATE_TERMINAL_POSITION': {
       const terminal = state.terminals.get(action.id);
       if (!terminal) return state;
@@ -377,6 +392,29 @@ function terminalReducer(state: TerminalManagerState, action: TerminalAction): T
       };
     }
 
+    case 'RESET_TERMINAL': {
+      const terminal = state.terminals.get(action.id);
+      if (!terminal) return state;
+
+      // Disconnect old WebSocket
+      terminal.websocketConnection.disconnect();
+
+      // Create new WebSocket connection
+      const newTerminals = new Map(state.terminals);
+      const resetTerminal: Terminal = {
+        ...terminal,
+        websocketConnection: createWebSocketService(),
+        sessionId: null,
+        lastActivity: new Date(),
+      };
+      newTerminals.set(action.id, resetTerminal);
+
+      return {
+        ...state,
+        terminals: newTerminals,
+      };
+    }
+
     case 'RESTORE_FROM_STORAGE': {
       if (action.terminals.length === 0) {
         return state;
@@ -425,11 +463,13 @@ interface TerminalManagerContextValue {
   minimizeTerminal: (id: string) => void;
   restoreTerminal: (id: string) => void;
   setActiveTerminal: (id: string) => void;
+  deactivateAllTerminals: () => void;
   updateTerminalPosition: (id: string, position: Position) => void;
   updateTerminalSize: (id: string, size: Size) => void;
   updateSessionId: (id: string, sessionId: string) => void;
   duplicateTerminal: (id: string) => void;
   closeAllTerminals: () => void;
+  resetTerminal: (id: string) => void;
 }
 
 const TerminalManagerContext = createContext<TerminalManagerContextValue | undefined>(undefined);
@@ -443,18 +483,27 @@ export function TerminalManagerProvider({ children }: { children: ReactNode }) {
       if (stored) {
         const parsed: PersistedTerminalData[] = JSON.parse(stored);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          dispatch({ type: 'RESTORE_FROM_STORAGE', terminals: parsed });
-          return initial; // Reducer will handle the restoration
+          // Return initial state, will dispatch RESTORE action in useEffect
+          return { ...initial, _shouldRestore: parsed };
         }
       }
     } catch (error) {
       console.error('Failed to restore terminal state:', error);
     }
 
-    // Create default terminal
-    dispatch({ type: 'CREATE_TERMINAL' });
+    // Return initial state, will create default terminal in useEffect
     return initial;
   });
+
+  // Initialize terminals on mount
+  useEffect(() => {
+    if ((state as any)._shouldRestore) {
+      dispatch({ type: 'RESTORE_FROM_STORAGE', terminals: (state as any)._shouldRestore });
+    } else if (state.terminals.size === 0) {
+      // Create default terminal if none exist
+      dispatch({ type: 'CREATE_TERMINAL' });
+    }
+  }, []);
 
   // Persist to localStorage (debounced)
   useEffect(() => {
@@ -504,6 +553,10 @@ export function TerminalManagerProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'SET_ACTIVE_TERMINAL', id });
   }, []);
 
+  const deactivateAllTerminals = useCallback(() => {
+    dispatch({ type: 'DEACTIVATE_ALL_TERMINALS' });
+  }, []);
+
   const updateTerminalPosition = useCallback((id: string, position: Position) => {
     dispatch({ type: 'UPDATE_TERMINAL_POSITION', id, position });
   }, []);
@@ -524,6 +577,10 @@ export function TerminalManagerProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'CLOSE_ALL_TERMINALS' });
   }, []);
 
+  const resetTerminal = useCallback((id: string) => {
+    dispatch({ type: 'RESET_TERMINAL', id });
+  }, []);
+
   return (
     <TerminalManagerContext.Provider
       value={{
@@ -534,11 +591,13 @@ export function TerminalManagerProvider({ children }: { children: ReactNode }) {
         minimizeTerminal,
         restoreTerminal,
         setActiveTerminal,
+        deactivateAllTerminals,
         updateTerminalPosition,
         updateTerminalSize,
         updateSessionId,
         duplicateTerminal,
         closeAllTerminals,
+        resetTerminal,
       }}
     >
       {children}

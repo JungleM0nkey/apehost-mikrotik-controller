@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Rnd } from 'react-rnd';
-import { ExpandOutlined, CompressOutlined, MinusOutlined, CloseOutlined } from '@ant-design/icons';
+import { ExpandOutlined, CompressOutlined, MinusOutlined, CloseOutlined, CodeOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useTerminalManager } from '../../../contexts/TerminalManagerContext';
 import { TerminalPanel } from '../TerminalPanel/TerminalPanel';
 import type { Terminal } from '../../../types/terminal-manager';
@@ -18,6 +18,7 @@ export const TerminalWindow: React.FC<TerminalWindowProps> = ({ terminal }) => {
     updateTerminalPosition,
     updateTerminalSize,
     updateSessionId,
+    resetTerminal,
   } = useTerminalManager();
 
   const [isMaximized, setIsMaximized] = useState(false);
@@ -77,7 +78,12 @@ export const TerminalWindow: React.FC<TerminalWindowProps> = ({ terminal }) => {
     setIsMaximized(!isMaximized);
   };
 
-  const handleFocus = () => {
+  const handleReset = () => {
+    resetTerminal(terminal.id);
+  };
+
+  const handleFocus = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent deactivating when clicking on terminal
     if (!terminal.isActive) {
       setActiveTerminal(terminal.id);
     }
@@ -115,8 +121,19 @@ export const TerminalWindow: React.FC<TerminalWindowProps> = ({ terminal }) => {
         onClick={handleFocus}
       >
         <div className={styles.titleBar}>
-          <span className={styles.title}>{terminal.name}</span>
+          <div className={styles.titleContent}>
+            <CodeOutlined className={styles.terminalIcon} />
+            <span className={styles.title}>{terminal.name}</span>
+          </div>
           <div className={styles.windowControls}>
+            <button
+              className={styles.controlButton}
+              onClick={handleReset}
+              title="Reset Terminal"
+              aria-label="Reset terminal"
+            >
+              <ReloadOutlined />
+            </button>
             <button
               className={styles.controlButton}
               onClick={handleMaximize}
@@ -180,8 +197,19 @@ export const TerminalWindow: React.FC<TerminalWindowProps> = ({ terminal }) => {
         onClick={handleFocus}
       >
         <div className={`${styles.titleBar} ${styles.dragHandle}`}>
-          <span className={styles.title}>{terminal.name}</span>
+          <div className={styles.titleContent}>
+            <CodeOutlined className={styles.terminalIcon} />
+            <span className={styles.title}>{terminal.name}</span>
+          </div>
           <div className={styles.windowControls}>
+            <button
+              className={styles.controlButton}
+              onClick={handleReset}
+              title="Reset Terminal"
+              aria-label="Reset terminal"
+            >
+              <ReloadOutlined />
+            </button>
             <button
               className={styles.controlButton}
               onClick={handleMinimize}

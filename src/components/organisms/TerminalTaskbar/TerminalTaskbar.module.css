@@ -3,56 +3,58 @@
   bottom: 0;
   left: 0;
   right: 0;
-  height: 56px;
-  background: var(--color-bg-secondary);
-  border-top: 1px solid var(--color-border-primary);
+  height: 48px;
+  background: linear-gradient(180deg, rgba(18, 18, 18, 0.95) 0%, rgba(18, 18, 18, 0.98) 100%);
+  backdrop-filter: blur(12px);
+  border-top: 1px solid rgba(255, 140, 0, 0.1);
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 0 16px;
+  gap: 8px;
+  padding: 0 12px;
   z-index: 9999;
-  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.4);
 }
 
 .tabsContainer {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   flex: 1;
   overflow-x: auto;
   overflow-y: hidden;
-  padding: 4px 0;
+  padding: 6px 0;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 140, 0, 0.3) transparent;
 }
 
 /* Custom scrollbar for tabs */
 .tabsContainer::-webkit-scrollbar {
-  height: 6px;
+  height: 4px;
 }
 
 .tabsContainer::-webkit-scrollbar-track {
-  background: var(--color-bg-tertiary);
-  border-radius: 3px;
+  background: transparent;
 }
 
 .tabsContainer::-webkit-scrollbar-thumb {
-  background: var(--color-border-primary);
-  border-radius: 3px;
+  background: rgba(255, 140, 0, 0.3);
+  border-radius: 2px;
 }
 
 .tabsContainer::-webkit-scrollbar-thumb:hover {
-  background: var(--color-border-secondary);
+  background: rgba(255, 140, 0, 0.5);
 }
 
 .newTerminalButton {
-  width: 40px;
-  height: 40px;
-  min-width: 40px;
-  min-height: 40px;
-  border-radius: 50%;
-  background: var(--color-accent-primary);
-  border: none;
-  color: var(--color-bg-primary);
-  font-size: 20px;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 140, 0, 0.1);
+  border: 1px solid rgba(255, 140, 0, 0.3);
+  color: var(--color-accent-primary);
+  font-size: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -62,12 +64,14 @@
 }
 
 .newTerminalButton:hover {
-  transform: scale(1.1);
-  box-shadow: 0 4px 12px rgba(255, 140, 0, 0.5);
+  background: rgba(255, 140, 0, 0.2);
+  border-color: var(--color-accent-primary);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(255, 140, 0, 0.3);
 }
 
 .newTerminalButton:active {
-  transform: scale(1.05);
+  transform: translateY(0);
 }
 
 /* Responsive */

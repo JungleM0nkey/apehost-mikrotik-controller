@@ -46,9 +46,11 @@ export type TerminalAction =
   | { type: 'MINIMIZE_TERMINAL'; id: string }
   | { type: 'RESTORE_TERMINAL'; id: string }
   | { type: 'SET_ACTIVE_TERMINAL'; id: string }
+  | { type: 'DEACTIVATE_ALL_TERMINALS' }
   | { type: 'UPDATE_TERMINAL_POSITION'; id: string; position: Position }
   | { type: 'UPDATE_TERMINAL_SIZE'; id: string; size: Size }
   | { type: 'UPDATE_SESSION_ID'; id: string; sessionId: string }
   | { type: 'DUPLICATE_TERMINAL'; id: string }
   | { type: 'CLOSE_ALL_TERMINALS' }
+  | { type: 'RESET_TERMINAL'; id: string }
   | { type: 'RESTORE_FROM_STORAGE'; terminals: PersistedTerminalData[] };
