@@ -6,6 +6,9 @@ import type {
   TerminalCommandRequest,
   TerminalCommandResponse,
   UpdateInterfaceRequest,
+  IpAddress,
+  Route,
+  ArpEntry,
   ApiError
 } from '../types/api';
 
@@ -73,6 +76,21 @@ class ApiService {
       method: 'POST',
       body: JSON.stringify({ command } as TerminalCommandRequest),
     });
+  }
+
+  // IP Addresses
+  async getIpAddresses(): Promise<IpAddress[]> {
+    return this.request<IpAddress[]>('/router/ip/addresses');
+  }
+
+  // Routes
+  async getRoutes(): Promise<Route[]> {
+    return this.request<Route[]>('/router/ip/routes');
+  }
+
+  // ARP Table
+  async getArpTable(): Promise<ArpEntry[]> {
+    return this.request<ArpEntry[]>('/router/ip/arp');
   }
 }
 

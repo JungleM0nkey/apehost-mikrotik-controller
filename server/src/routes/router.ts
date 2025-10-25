@@ -105,6 +105,57 @@ routerRoutes.patch('/interfaces/:id', async (req: Request, res: Response) => {
 });
 
 /**
+ * GET /api/router/ip/addresses
+ * Get list of IP addresses
+ */
+routerRoutes.get('/ip/addresses', async (req: Request, res: Response) => {
+  try {
+    const addresses = await mikrotikService.getIpAddresses();
+    res.json(addresses);
+  } catch (error: any) {
+    console.error('Error fetching IP addresses:', error);
+    res.status(500).json({
+      error: 'Failed to fetch IP addresses',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/router/ip/routes
+ * Get routing table
+ */
+routerRoutes.get('/ip/routes', async (req: Request, res: Response) => {
+  try {
+    const routes = await mikrotikService.getRoutes();
+    res.json(routes);
+  } catch (error: any) {
+    console.error('Error fetching routes:', error);
+    res.status(500).json({
+      error: 'Failed to fetch routes',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/router/ip/arp
+ * Get ARP table
+ */
+routerRoutes.get('/ip/arp', async (req: Request, res: Response) => {
+  try {
+    const arpTable = await mikrotikService.getArpTable();
+    res.json(arpTable);
+  } catch (error: any) {
+    console.error('Error fetching ARP table:', error);
+    res.status(500).json({
+      error: 'Failed to fetch ARP table',
+      message: error.message
+    });
+  }
+});
+
+/**
  * GET /api/router/export
  * Export router configuration as .rsc file
  */

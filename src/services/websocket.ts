@@ -319,6 +319,14 @@ class WebSocketService {
   }
 }
 
-// Export singleton instance
+/**
+ * Create a new WebSocket service instance
+ * Use this for multiple independent terminal connections
+ */
+export function createWebSocketService(): WebSocketService {
+  return new WebSocketService();
+}
+
+// Export singleton instance for backward compatibility
 export const websocket = new WebSocketService();
 export default websocket;

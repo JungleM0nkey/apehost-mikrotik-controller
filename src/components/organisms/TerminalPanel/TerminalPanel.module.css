@@ -266,10 +266,8 @@
   font-family: var(--font-mono);
   font-size: var(--font-size-xs);
   padding: 0;
-  /* Blocky cursor styling */
-  caret-color: #ff8c00;
-  caret-width: thick;
-  filter: drop-shadow(0 0 2px #ff8c00);
+  /* Cursor styling */
+  caret-color: var(--color-accent-primary);
 }
 
 .input::placeholder {
@@ -515,12 +513,12 @@
 /* Context Menu */
 .contextMenu {
   position: fixed;
-  background: rgba(30, 41, 59, 0.98);
-  border: 1px solid #ff8c00;
-  border-radius: 6px;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-md);
   padding: 4px;
   min-width: 220px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), 0 0 12px rgba(255, 140, 0, 0.3);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
   z-index: 10000;
   animation: contextMenuFadeIn 0.15s ease-out;
   backdrop-filter: blur(8px);
@@ -545,23 +543,29 @@
   padding: 8px 12px;
   background: transparent;
   border: none;
-  border-radius: 4px;
-  color: #e0e0e0;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 13px;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-primary);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
   cursor: pointer;
   transition: all 0.1s ease;
   text-align: left;
 }
 
 .contextMenuItem:hover {
-  background: rgba(255, 140, 0, 0.15);
-  color: #ff8c00;
+  background: var(--color-bg-hover);
+  color: var(--color-accent-primary);
 }
 
 .contextMenuItem:active {
-  background: rgba(255, 140, 0, 0.25);
+  background: var(--color-bg-active);
   transform: scale(0.98);
+}
+
+.contextMenuItemDisabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 .contextMenuIcon {
@@ -575,12 +579,12 @@
 .contextMenuShortcut {
   margin-left: auto;
   font-size: 11px;
-  color: #9ca3af;
-  font-family: 'JetBrains Mono', monospace;
+  color: var(--color-text-secondary);
+  font-family: var(--font-mono);
 }
 
 .contextMenuDivider {
   height: 1px;
-  background: rgba(255, 140, 0, 0.2);
+  background: var(--color-border-primary);
   margin: 4px 8px;
 }

@@ -50,7 +50,7 @@ Want the complete product?
 cat ROADMAP.md
 ```
 
-**Result**: Production-ready MikroTik management platform
+**Result**: Complete MikroTik management platform
 
 ---
 

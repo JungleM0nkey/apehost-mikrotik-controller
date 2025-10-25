@@ -3,6 +3,7 @@ import { Progress, Badge, Tag } from 'antd';
 import { CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
 import api from '../../services/api';
 import type { RouterStatus, NetworkInterface } from '../../types/api';
+import { TrafficIndicator } from '../../components/atoms/TrafficIndicator/TrafficIndicator';
 import styles from './DashboardPage.module.css';
 
 interface StatCardProps {
@@ -81,9 +82,11 @@ interface InterfaceItemProps {
   status: 'up' | 'down';
   rx: string;
   tx: string;
+  rxRate: number;
+  txRate: number;
 }
 
-const InterfaceItem: React.FC<InterfaceItemProps> = ({ name, status, rx, tx }) => {
+const InterfaceItem: React.FC<InterfaceItemProps> = ({ name, status, rx, tx, rxRate, txRate }) => {
   const isActive = status === 'up';
 
   return (
@@ -95,8 +98,14 @@ const InterfaceItem: React.FC<InterfaceItemProps> = ({ name, status, rx, tx }) =
         />
       </div>
       <div className={styles.interfaceStats}>
-        <span className={isActive ? styles.interfaceRx : styles.interfaceInactive}>↓ {rx}</span>
-        <span className={isActive ? styles.interfaceTx : styles.interfaceInactive}>↑ {tx}</span>
+        <span className={isActive ? styles.interfaceRx : styles.interfaceInactive}>
+          <TrafficIndicator direction="rx" rate={rxRate} active={isActive} />
+          ↓ {rx}
+        </span>
+        <span className={isActive ? styles.interfaceTx : styles.interfaceInactive}>
+          <TrafficIndicator direction="tx" rate={txRate} active={isActive} />
+          ↑ {tx}
+        </span>
       </div>
     </div>
   );
@@ -175,7 +184,9 @@ export const DashboardPage: React.FC = () => {
   if (!routerStatus) return null;
 
   const memoryPercentage = (routerStatus.memoryUsed / routerStatus.memoryTotal) * 100;
-  const totalTraffic = interfaces.reduce((sum, iface) => sum + iface.rxRate + iface.txRate, 0);
+  // rxRate and txRate are in bytes per second, convert to Mbps (megabits per second)
+  const totalTrafficBytesPerSec = interfaces.reduce((sum, iface) => sum + iface.rxRate + iface.txRate, 0);
+  const totalTrafficMbps = (totalTrafficBytesPerSec * 8) / 1000000; // Convert bytes/sec to Mbps
 
   return (
     <div className={styles.container}>
@@ -210,9 +221,9 @@ export const DashboardPage: React.FC = () => {
         />
         <StatCard
           title="Traffic"
-          value={(totalTraffic / 1024 / 1024).toFixed(0)}
+          value={totalTrafficMbps.toFixed(1)}
           unit="Mbps"
-          status={totalTraffic > 100000000 ? 'warning' : 'good'}
+          status={totalTrafficMbps > 100 ? 'warning' : 'good'}
           icon="NET"
         />
       </div>
@@ -238,6 +249,8 @@ export const DashboardPage: React.FC = () => {
               status={iface.status}
               rx={formatBytes(iface.rxBytes)}
               tx={formatBytes(iface.txBytes)}
+              rxRate={iface.rxRate}
+              txRate={iface.txRate}
             />
           ))}
         </div>

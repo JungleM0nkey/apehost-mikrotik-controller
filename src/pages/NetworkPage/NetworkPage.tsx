@@ -6,7 +6,6 @@ import {
   ApiOutlined,
   CheckCircleOutlined,
   CloseCircleOutlined,
-  BuildOutlined,
   ReloadOutlined,
   EditOutlined,
   SaveOutlined,
@@ -16,7 +15,7 @@ import {
   EyeOutlined
 } from '@ant-design/icons';
 import api from '../../services/api';
-import type { NetworkInterface } from '../../types/api';
+import type { NetworkInterface, IpAddress, Route, ArpEntry } from '../../types/api';
 import styles from './NetworkPage.module.css';
 
 interface InterfaceCardProps {
@@ -310,6 +309,9 @@ const InterfaceCard: React.FC<InterfaceCardProps> = ({ iface, onUpdate, isEditin
 export const NetworkPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('interfaces');
   const [interfaces, setInterfaces] = useState<NetworkInterface[]>([]);
+  const [ipAddresses, setIpAddresses] = useState<IpAddress[]>([]);
+  const [routes, setRoutes] = useState<Route[]>([]);
+  const [arpEntries, setArpEntries] = useState<ArpEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editingInterfaceId, setEditingInterfaceId] = useState<string | null>(null);
@@ -328,6 +330,65 @@ export const NetworkPage: React.FC = () => {
     }
   };
 
+  const fetchIpAddresses = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await api.getIpAddresses();
+      setIpAddresses(data);
+    } catch (err) {
+      console.error('Failed to fetch IP addresses:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load IP addresses');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchRoutes = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await api.getRoutes();
+      setRoutes(data);
+    } catch (err) {
+      console.error('Failed to fetch routes:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load routes');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchArpTable = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await api.getArpTable();
+      setArpEntries(data);
+    } catch (err) {
+      console.error('Failed to fetch ARP table:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load ARP table');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchData = () => {
+    switch (activeTab) {
+      case 'interfaces':
+        fetchInterfaces();
+        break;
+      case 'addresses':
+        fetchIpAddresses();
+        break;
+      case 'routes':
+        fetchRoutes();
+        break;
+      case 'arp':
+        fetchArpTable();
+        break;
+    }
+  };
+
   const handleUpdateInterface = async (
     id: string,
     updates: { name?: string; comment?: string; disabled?: boolean }
@@ -342,13 +403,13 @@ export const NetworkPage: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchInterfaces();
+    fetchData();
 
     // Refresh every 3 seconds
-    const interval = setInterval(fetchInterfaces, 3000);
+    const interval = setInterval(fetchData, 3000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [activeTab]);
 
   const activeInterfaces = interfaces.filter(i => i.status === 'up');
   const inactiveInterfaces = interfaces.filter(i => i.status === 'down');
@@ -453,10 +514,68 @@ export const NetworkPage: React.FC = () => {
       case 'addresses':
         return (
           <div className={styles.content}>
-            <div className={styles.comingSoon}>
-              <BuildOutlined className={styles.comingSoonIcon} />
-              <h3>IP Addresses</h3>
-              <p>Coming soon - View and manage IP address assignments</p>
+            {/* Summary Stats */}
+            <div className={styles.summaryCards}>
+              <div className={styles.summaryCard}>
+                <ApiOutlined className={styles.summaryIcon} />
+                <div className={styles.summaryContent}>
+                  <div className={styles.summaryValue}>{ipAddresses.length}</div>
+                  <div className={styles.summaryLabel}>Total Addresses</div>
+                </div>
+              </div>
+              <div className={styles.summaryCard}>
+                <CheckCircleOutlined className={styles.summaryIcon} />
+                <div className={styles.summaryContent}>
+                  <div className={styles.summaryValue}>{ipAddresses.filter(a => a.status === 'active').length}</div>
+                  <div className={styles.summaryLabel}>Active</div>
+                </div>
+              </div>
+              <div className={styles.summaryCard}>
+                <CloseCircleOutlined className={styles.summaryIcon} />
+                <div className={styles.summaryContent}>
+                  <div className={styles.summaryValue}>{ipAddresses.filter(a => a.dynamic).length}</div>
+                  <div className={styles.summaryLabel}>Dynamic</div>
+                </div>
+              </div>
+            </div>
+
+            {/* IP Addresses Table */}
+            <div className={styles.section}>
+              <h2 className={styles.sectionTitle}>IP Addresses</h2>
+              <div className={styles.table}>
+                <div className={styles.tableHeader}>
+                  <div className={styles.tableCell}>Address</div>
+                  <div className={styles.tableCell}>Network</div>
+                  <div className={styles.tableCell}>Interface</div>
+                  <div className={styles.tableCell}>Status</div>
+                  <div className={styles.tableCell}>Type</div>
+                  <div className={styles.tableCell}>Comment</div>
+                </div>
+                {ipAddresses.map((addr) => (
+                  <div key={addr.id} className={styles.tableRow}>
+                    <div className={styles.tableCell}>
+                      <span className={styles.monospace}>{addr.address}</span>
+                    </div>
+                    <div className={styles.tableCell}>
+                      <span className={styles.monospace}>{addr.network}</span>
+                    </div>
+                    <div className={styles.tableCell}>{addr.interface}</div>
+                    <div className={styles.tableCell}>
+                      <span className={`${styles.badge} ${styles[addr.status === 'active' ? 'badgeSuccess' : 'badgeDefault']}`}>
+                        {addr.status}
+                      </span>
+                    </div>
+                    <div className={styles.tableCell}>
+                      <span className={`${styles.badge} ${addr.dynamic ? styles.badgeWarning : styles.badgeInfo}`}>
+                        {addr.dynamic ? 'Dynamic' : 'Static'}
+                      </span>
+                    </div>
+                    <div className={styles.tableCell}>
+                      <span className={styles.commentText}>{addr.comment || '—'}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         );
@@ -464,10 +583,76 @@ export const NetworkPage: React.FC = () => {
       case 'routes':
         return (
           <div className={styles.content}>
-            <div className={styles.comingSoon}>
-              <BuildOutlined className={styles.comingSoonIcon} />
-              <h3>Routing Table</h3>
-              <p>Coming soon - View and manage routing table entries</p>
+            {/* Summary Stats */}
+            <div className={styles.summaryCards}>
+              <div className={styles.summaryCard}>
+                <ApiOutlined className={styles.summaryIcon} />
+                <div className={styles.summaryContent}>
+                  <div className={styles.summaryValue}>{routes.length}</div>
+                  <div className={styles.summaryLabel}>Total Routes</div>
+                </div>
+              </div>
+              <div className={styles.summaryCard}>
+                <CheckCircleOutlined className={styles.summaryIcon} />
+                <div className={styles.summaryContent}>
+                  <div className={styles.summaryValue}>{routes.filter(r => r.active).length}</div>
+                  <div className={styles.summaryLabel}>Active</div>
+                </div>
+              </div>
+              <div className={styles.summaryCard}>
+                <CloseCircleOutlined className={styles.summaryIcon} />
+                <div className={styles.summaryContent}>
+                  <div className={styles.summaryValue}>{routes.filter(r => r.static).length}</div>
+                  <div className={styles.summaryLabel}>Static</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Routes Table */}
+            <div className={styles.section}>
+              <h2 className={styles.sectionTitle}>Routing Table</h2>
+              <div className={styles.table}>
+                <div className={styles.tableHeader}>
+                  <div className={styles.tableCell}>Destination</div>
+                  <div className={styles.tableCell}>Gateway</div>
+                  <div className={styles.tableCell}>Interface</div>
+                  <div className={styles.tableCell}>Distance</div>
+                  <div className={styles.tableCell}>Status</div>
+                  <div className={styles.tableCell}>Type</div>
+                  <div className={styles.tableCell}>Comment</div>
+                </div>
+                {routes.map((route) => (
+                  <div key={route.id} className={styles.tableRow}>
+                    <div className={styles.tableCell}>
+                      <span className={styles.monospace}>{route.dstAddress}</span>
+                    </div>
+                    <div className={styles.tableCell}>
+                      <span className={styles.monospace}>{route.gateway}</span>
+                      {route.gatewayStatus === 'reachable' && (
+                        <CheckCircleOutlined className={styles.statusIconGood} />
+                      )}
+                      {route.gatewayStatus === 'unreachable' && (
+                        <CloseCircleOutlined className={styles.statusIconBad} />
+                      )}
+                    </div>
+                    <div className={styles.tableCell}>{route.interface || '—'}</div>
+                    <div className={styles.tableCell}>{route.distance}</div>
+                    <div className={styles.tableCell}>
+                      <span className={`${styles.badge} ${route.active ? styles.badgeSuccess : styles.badgeDefault}`}>
+                        {route.active ? 'Active' : 'Inactive'}
+                      </span>
+                    </div>
+                    <div className={styles.tableCell}>
+                      <span className={`${styles.badge} ${route.static ? styles.badgeInfo : styles.badgeWarning}`}>
+                        {route.static ? 'Static' : 'Dynamic'}
+                      </span>
+                    </div>
+                    <div className={styles.tableCell}>
+                      <span className={styles.commentText}>{route.comment || '—'}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         );
@@ -475,10 +660,80 @@ export const NetworkPage: React.FC = () => {
       case 'arp':
         return (
           <div className={styles.content}>
-            <div className={styles.comingSoon}>
-              <BuildOutlined className={styles.comingSoonIcon} />
-              <h3>ARP Table</h3>
-              <p>Coming soon - View ARP cache and connected devices</p>
+            {/* Summary Stats */}
+            <div className={styles.summaryCards}>
+              <div className={styles.summaryCard}>
+                <ApiOutlined className={styles.summaryIcon} />
+                <div className={styles.summaryContent}>
+                  <div className={styles.summaryValue}>{arpEntries.length}</div>
+                  <div className={styles.summaryLabel}>Total Entries</div>
+                </div>
+              </div>
+              <div className={styles.summaryCard}>
+                <CheckCircleOutlined className={styles.summaryIcon} />
+                <div className={styles.summaryContent}>
+                  <div className={styles.summaryValue}>{arpEntries.filter(a => a.status === 'reachable').length}</div>
+                  <div className={styles.summaryLabel}>Reachable</div>
+                </div>
+              </div>
+              <div className={styles.summaryCard}>
+                <CloseCircleOutlined className={styles.summaryIcon} />
+                <div className={styles.summaryContent}>
+                  <div className={styles.summaryValue}>{arpEntries.filter(a => a.dynamic).length}</div>
+                  <div className={styles.summaryLabel}>Dynamic</div>
+                </div>
+              </div>
+            </div>
+
+            {/* ARP Table */}
+            <div className={styles.section}>
+              <h2 className={styles.sectionTitle}>ARP Cache</h2>
+              <div className={styles.table}>
+                <div className={styles.tableHeader}>
+                  <div className={styles.tableCell}>IP Address</div>
+                  <div className={styles.tableCell}>MAC Address</div>
+                  <div className={styles.tableCell}>Interface</div>
+                  <div className={styles.tableCell}>Status</div>
+                  <div className={styles.tableCell}>Type</div>
+                  <div className={styles.tableCell}>DHCP</div>
+                  <div className={styles.tableCell}>Comment</div>
+                </div>
+                {arpEntries.map((entry) => (
+                  <div key={entry.id} className={styles.tableRow}>
+                    <div className={styles.tableCell}>
+                      <span className={styles.monospace}>{entry.address}</span>
+                    </div>
+                    <div className={styles.tableCell}>
+                      <span className={styles.monospace}>{entry.macAddress}</span>
+                    </div>
+                    <div className={styles.tableCell}>{entry.interface}</div>
+                    <div className={styles.tableCell}>
+                      <span className={`${styles.badge} ${
+                        entry.status === 'reachable' ? styles.badgeSuccess :
+                        entry.status === 'stale' ? styles.badgeWarning :
+                        styles.badgeDefault
+                      }`}>
+                        {entry.status}
+                      </span>
+                    </div>
+                    <div className={styles.tableCell}>
+                      <span className={`${styles.badge} ${entry.dynamic ? styles.badgeWarning : styles.badgeInfo}`}>
+                        {entry.dynamic ? 'Dynamic' : 'Static'}
+                      </span>
+                    </div>
+                    <div className={styles.tableCell}>
+                      {entry.dhcp ? (
+                        <CheckCircleOutlined className={styles.statusIconGood} />
+                      ) : (
+                        <span className={styles.textMuted}>—</span>
+                      )}
+                    </div>
+                    <div className={styles.tableCell}>
+                      <span className={styles.commentText}>{entry.comment || '—'}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         );
@@ -503,7 +758,7 @@ export const NetworkPage: React.FC = () => {
           <h1 className={styles.title}>Network</h1>
           <p className={styles.subtitle}>Manage network interfaces, addresses, and routing</p>
         </div>
-        <button className={styles.refreshButton} onClick={fetchInterfaces}>
+        <button className={styles.refreshButton} onClick={fetchData}>
           <ReloadOutlined className={styles.refreshIcon} />
           Refresh
         </button>

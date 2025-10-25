@@ -799,6 +799,251 @@ class MikroTikService {
   }
 
   /**
+   * Get IP addresses
+   */
+  async getIpAddresses(): Promise<any[]> {
+    if (!this.isConnectionActive()) {
+      return this.getMockIpAddresses();
+    }
+
+    try {
+      const result = await this.executeCommand('/ip/address/print');
+      
+      return result.map((addr: any, index: number) => ({
+        id: addr['.id'] || `*${index}`,
+        address: addr.address || '',
+        network: addr.network || '',
+        interface: addr.interface || '',
+        status: addr.disabled ? 'inactive' : 'active',
+        dynamic: addr.dynamic === 'true',
+        disabled: addr.disabled === 'true',
+        invalid: addr.invalid === 'true',
+        comment: addr.comment || ''
+      }));
+    } catch (error) {
+      console.error('Failed to fetch IP addresses:', error);
+      return this.getMockIpAddresses();
+    }
+  }
+
+  /**
+   * Get routes
+   */
+  async getRoutes(): Promise<any[]> {
+    if (!this.isConnectionActive()) {
+      return this.getMockRoutes();
+    }
+
+    try {
+      const result = await this.executeCommand('/ip/route/print');
+      
+      return result.map((route: any, index: number) => ({
+        id: route['.id'] || `*${index}`,
+        dstAddress: route['dst-address'] || '0.0.0.0/0',
+        gateway: route.gateway || '',
+        gatewayStatus: route['gateway-status'] || 'reachable',
+        distance: parseInt(route.distance || '1'),
+        scope: parseInt(route.scope || '30'),
+        targetScope: parseInt(route['target-scope'] || '10'),
+        interface: route.interface || '',
+        dynamic: route.dynamic === 'true',
+        active: route.active === 'true',
+        static: route.static === 'true',
+        comment: route.comment || ''
+      }));
+    } catch (error) {
+      console.error('Failed to fetch routes:', error);
+      return this.getMockRoutes();
+    }
+  }
+
+  /**
+   * Get ARP table
+   */
+  async getArpTable(): Promise<any[]> {
+    if (!this.isConnectionActive()) {
+      return this.getMockArpTable();
+    }
+
+    try {
+      const result = await this.executeCommand('/ip/arp/print');
+      
+      return result.map((arp: any, index: number) => ({
+        id: arp['.id'] || `*${index}`,
+        address: arp.address || '',
+        macAddress: arp['mac-address'] || '',
+        interface: arp.interface || '',
+        status: arp.status || 'reachable',
+        dynamic: arp.dynamic === 'true',
+        published: arp.published === 'true',
+        invalid: arp.invalid === 'true',
+        dhcp: arp.DHCP === 'true',
+        complete: arp.complete === 'true',
+        disabled: arp.disabled === 'true',
+        comment: arp.comment || ''
+      }));
+    } catch (error) {
+      console.error('Failed to fetch ARP table:', error);
+      return this.getMockArpTable();
+    }
+  }
+
+  /**
+   * Mock IP addresses for development
+   */
+  private getMockIpAddresses(): any[] {
+    return [
+      {
+        id: '*1',
+        address: '192.168.88.1/24',
+        network: '192.168.88.0',
+        interface: 'ether1',
+        status: 'active',
+        dynamic: false,
+        disabled: false,
+        invalid: false,
+        comment: 'LAN Network'
+      },
+      {
+        id: '*2',
+        address: '10.0.0.1/8',
+        network: '10.0.0.0',
+        interface: 'ether2',
+        status: 'active',
+        dynamic: false,
+        disabled: false,
+        invalid: false,
+        comment: 'WAN Interface'
+      },
+      {
+        id: '*3',
+        address: '192.168.100.1/24',
+        network: '192.168.100.0',
+        interface: 'bridge1',
+        status: 'active',
+        dynamic: true,
+        disabled: false,
+        invalid: false,
+        comment: ''
+      }
+    ];
+  }
+
+  /**
+   * Mock routes for development
+   */
+  private getMockRoutes(): any[] {
+    return [
+      {
+        id: '*1',
+        dstAddress: '0.0.0.0/0',
+        gateway: '10.0.0.254',
+        gatewayStatus: 'reachable',
+        distance: 1,
+        scope: 30,
+        targetScope: 10,
+        interface: 'ether2',
+        dynamic: false,
+        active: true,
+        static: true,
+        comment: 'Default Route'
+      },
+      {
+        id: '*2',
+        dstAddress: '192.168.88.0/24',
+        gateway: '192.168.88.1',
+        gatewayStatus: 'reachable',
+        distance: 0,
+        scope: 10,
+        targetScope: 10,
+        interface: 'ether1',
+        dynamic: true,
+        active: true,
+        static: false,
+        comment: ''
+      },
+      {
+        id: '*3',
+        dstAddress: '10.0.0.0/8',
+        gateway: '10.0.0.1',
+        gatewayStatus: 'reachable',
+        distance: 0,
+        scope: 10,
+        targetScope: 10,
+        interface: 'ether2',
+        dynamic: true,
+        active: true,
+        static: false,
+        comment: ''
+      }
+    ];
+  }
+
+  /**
+   * Mock ARP table for development
+   */
+  private getMockArpTable(): any[] {
+    return [
+      {
+        id: '*1',
+        address: '192.168.88.10',
+        macAddress: '00:11:22:33:44:55',
+        interface: 'ether1',
+        status: 'reachable',
+        dynamic: true,
+        published: false,
+        invalid: false,
+        dhcp: true,
+        complete: true,
+        disabled: false,
+        comment: 'Desktop PC'
+      },
+      {
+        id: '*2',
+        address: '192.168.88.20',
+        macAddress: 'AA:BB:CC:DD:EE:FF',
+        interface: 'ether1',
+        status: 'reachable',
+        dynamic: true,
+        published: false,
+        invalid: false,
+        dhcp: true,
+        complete: true,
+        disabled: false,
+        comment: 'Laptop'
+      },
+      {
+        id: '*3',
+        address: '192.168.88.50',
+        macAddress: '11:22:33:44:55:66',
+        interface: 'ether1',
+        status: 'stale',
+        dynamic: true,
+        published: false,
+        invalid: false,
+        dhcp: false,
+        complete: true,
+        disabled: false,
+        comment: 'Printer'
+      },
+      {
+        id: '*4',
+        address: '10.0.0.254',
+        macAddress: 'FF:EE:DD:CC:BB:AA',
+        interface: 'ether2',
+        status: 'reachable',
+        dynamic: false,
+        published: false,
+        invalid: false,
+        dhcp: false,
+        complete: true,
+        disabled: false,
+        comment: 'Gateway'
+      }
+    ];
+  }
+
+  /**
    * Check connection status
    */
   public isConnectionActive(): boolean {

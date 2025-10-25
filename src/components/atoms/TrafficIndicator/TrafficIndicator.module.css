@@ -1,0 +1,145 @@
+/* Traffic Indicator - Pixel Flow Animation */
+
+.trafficIndicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-right: 6px;
+  vertical-align: middle;
+  contain: layout style;
+}
+
+.pixel {
+  width: 4px;
+  height: 4px;
+  border-radius: 1px;
+  opacity: 0.2;
+  transition: opacity 150ms ease;
+}
+
+/* RX (Download) - Success Green */
+.rx .pixel {
+  background-color: #10b981;
+}
+
+/* TX (Upload) - Blue */
+.tx .pixel {
+  background-color: #3b82f6;
+}
+
+/* Active State - Normal Speed (1-10 MB/s) */
+.normal .pixel {
+  animation: pixelFlow 1000ms cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  will-change: opacity, transform;
+}
+
+.normal .pixel1 {
+  animation-delay: 0ms;
+}
+
+.normal .pixel2 {
+  animation-delay: 200ms;
+}
+
+.normal .pixel3 {
+  animation-delay: 400ms;
+}
+
+.normal .pixel4 {
+  animation-delay: 600ms;
+}
+
+/* Active State - Fast Speed (>10 MB/s) */
+.fast .pixel {
+  animation: pixelFlow 600ms cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  will-change: opacity, transform;
+}
+
+.fast .pixel1 {
+  animation-delay: 0ms;
+}
+
+.fast .pixel2 {
+  animation-delay: 120ms;
+}
+
+.fast .pixel3 {
+  animation-delay: 240ms;
+}
+
+.fast .pixel4 {
+  animation-delay: 360ms;
+}
+
+/* Active State - Slow Speed (<1 MB/s) */
+.slow .pixel {
+  animation: pixelFlow 1400ms cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  will-change: opacity, transform;
+}
+
+.slow .pixel1 {
+  animation-delay: 0ms;
+}
+
+.slow .pixel2 {
+  animation-delay: 280ms;
+}
+
+.slow .pixel3 {
+  animation-delay: 560ms;
+}
+
+.slow .pixel4 {
+  animation-delay: 840ms;
+}
+
+/* Inactive State - No Animation */
+.inactive .pixel {
+  opacity: 0.15;
+  animation: none;
+  will-change: auto;
+}
+
+/* Pixel Flow Keyframe Animation */
+@keyframes pixelFlow {
+  0%,
+  100% {
+    opacity: 0.2;
+    transform: scale(1);
+    box-shadow: none;
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+    box-shadow: 0 0 6px currentColor;
+  }
+}
+
+/* Hover State - Pause animation for inspection */
+.trafficIndicator:hover .pixel {
+  animation-play-state: paused;
+}
+
+/* Accessibility: Respect Reduced Motion Preference */
+@media (prefers-reduced-motion: reduce) {
+  .pixel {
+    animation: none !important;
+    will-change: auto !important;
+  }
+
+  /* Show static bright state for active interfaces */
+  .normal .pixel,
+  .fast .pixel,
+  .slow .pixel {
+    opacity: 0.8;
+    transform: none;
+    box-shadow: none;
+  }
+}
+
+/* Responsive: Hide on very small screens */
+@media (max-width: 480px) {
+  .trafficIndicator {
+    display: none;
+  }
+}

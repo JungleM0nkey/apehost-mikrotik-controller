@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Slider } from 'antd';
 import {
   CopyOutlined,
@@ -34,6 +35,7 @@ export const TerminalPanel: React.FC<TerminalPanelProps> = ({
   const [hoveredLineId, setHoveredLineId] = useState<string | null>(null);
   const [copiedLineId, setCopiedLineId] = useState<string | null>(null);
   const [contextMenu, setContextMenu] = useState<{x: number; y: number} | null>(null);
+  const [canPaste, setCanPaste] = useState(false);
   const [fontSize, setFontSize] = useState(13);
   const terminalEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -443,8 +445,17 @@ Note: All RouterOS commands must start with a forward slash (/)`,
   };
 
   // Context menu handlers
-  const handleContextMenu = (e: React.MouseEvent) => {
+  const handleContextMenu = async (e: React.MouseEvent) => {
     e.preventDefault();
+
+    // Check if clipboard has content
+    try {
+      const text = await navigator.clipboard.readText();
+      setCanPaste(text.length > 0);
+    } catch (err) {
+      // If we can't read clipboard (permissions), disable paste
+      setCanPaste(false);
+    }
 
     // Menu dimensions (approximate)
     const menuWidth = 220;
@@ -454,26 +465,26 @@ Note: All RouterOS commands must start with a forward slash (/)`,
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
 
-    // Calculate position with boundary detection
+    // Use clientX/clientY since we're rendering in a portal with position:fixed
     let x = e.clientX;
     let y = e.clientY;
 
     // Prevent overflow on right edge
     if (x + menuWidth > viewportWidth) {
-      x = viewportWidth - menuWidth - 10; // 10px padding from edge
+      x = viewportWidth - menuWidth - 10;
     }
 
     // Prevent overflow on bottom edge
     if (y + menuHeight > viewportHeight) {
-      y = viewportHeight - menuHeight - 10; // 10px padding from edge
+      y = viewportHeight - menuHeight - 10;
     }
 
-    // Prevent overflow on left edge (unlikely but possible)
+    // Prevent overflow on left edge
     if (x < 10) {
       x = 10;
     }
 
-    // Prevent overflow on top edge (unlikely but possible)
+    // Prevent overflow on top edge
     if (y < 10) {
       y = 10;
     }
@@ -494,9 +505,10 @@ Note: All RouterOS commands must start with a forward slash (/)`,
 
     try {
       await navigator.clipboard.writeText(allText);
-      closeContextMenu();
     } catch (err) {
       console.error('Failed to copy:', err);
+    } finally {
+      closeContextMenu();
     }
   };
 
@@ -505,9 +517,10 @@ Note: All RouterOS commands must start with a forward slash (/)`,
       const text = await navigator.clipboard.readText();
       setCurrentCommand(text);
       inputRef.current?.focus();
-      closeContextMenu();
     } catch (err) {
       console.error('Failed to paste:', err);
+    } finally {
+      closeContextMenu();
     }
   };
 
@@ -667,8 +680,8 @@ Note: All RouterOS commands must start with a forward slash (/)`,
         </div>
       </div>
 
-      {/* Context Menu */}
-      {contextMenu && (
+      {/* Context Menu - Rendered in portal to avoid transform issues */}
+      {contextMenu && createPortal(
         <div
           className={styles.contextMenu}
           style={{
@@ -682,7 +695,11 @@ Note: All RouterOS commands must start with a forward slash (/)`,
             <span>Copy All</span>
             <span className={styles.contextMenuShortcut}>Ctrl+Shift+C</span>
           </button>
-          <button className={styles.contextMenuItem} onClick={handlePaste}>
+          <button
+            className={`${styles.contextMenuItem} ${!canPaste ? styles.contextMenuItemDisabled : ''}`}
+            onClick={handlePaste}
+            disabled={!canPaste}
+          >
             <PushpinOutlined className={styles.contextMenuIcon} />
             <span>Paste</span>
             <span className={styles.contextMenuShortcut}>Ctrl+V</span>
@@ -698,7 +715,8 @@ Note: All RouterOS commands must start with a forward slash (/)`,
             <span>Clear</span>
             <span className={styles.contextMenuShortcut}>Ctrl+L</span>
           </button>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

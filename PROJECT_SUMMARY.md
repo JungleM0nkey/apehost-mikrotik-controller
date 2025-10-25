@@ -122,7 +122,7 @@
 ---
 
 ### Path 3: Full Product (9 weeks full-time)
-**Goal**: Production-ready application
+**Goal**: Complete application
 
 Follow complete `ROADMAP.md`:
 - Week 1: Foundation + UI

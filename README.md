@@ -1,6 +1,6 @@
 # MikroTik Router Management Dashboard
 
-Production-ready React + TypeScript dashboard for MikroTik router management.
+React + TypeScript dashboard for MikroTik router management.
 
 ## Quick Start
 
