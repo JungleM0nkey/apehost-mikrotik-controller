@@ -8,18 +8,21 @@ import {
   ClearOutlined,
   FontSizeOutlined
 } from '@ant-design/icons';
-import websocket from '../../../services/websocket';
-import type { TerminalOutputEvent, TerminalErrorEvent, TerminalExecutingEvent } from '../../../services/websocket';
+import type { WebSocketService, TerminalOutputEvent, TerminalErrorEvent, TerminalExecutingEvent } from '../../../services/websocket';
 import { TerminalLine } from '../../../types/terminal';
 import styles from './TerminalPanel.module.css';
 
 export interface TerminalPanelProps {
+  websocket: WebSocketService;
+  terminalId: string;
   onCommand?: (command: string) => void;
   initialLines?: TerminalLine[];
   hideHeader?: boolean;
 }
 
 export const TerminalPanel: React.FC<TerminalPanelProps> = ({
+  websocket,
+  terminalId: _terminalId,
   onCommand,
   initialLines = [],
   hideHeader = false
@@ -91,8 +94,14 @@ export const TerminalPanel: React.FC<TerminalPanelProps> = ({
 
     const initWebSocket = async () => {
       try {
-        await websocket.connect();
-        setIsConnected(true);
+        // Connection should already be initialized by TerminalWindow
+        const connected = websocket.isConnected();
+        setIsConnected(connected);
+
+        if (!connected) {
+          await websocket.connect();
+          setIsConnected(true);
+        }
 
         // Add initial prompt
         if (lines.length === 0) {
@@ -197,13 +206,13 @@ Ready for commands. Happy routing!
 
     initWebSocket();
 
-    // Cleanup on unmount - only cleanup event listeners, keep connection alive
+    // Cleanup on unmount - only cleanup event listeners
     return () => {
       isInitialized.current = false;
       cleanupFns.forEach(fn => fn());
-      // Don't disconnect - websocket is a singleton that persists across component lifecycle
+      // Connection lifecycle managed by TerminalWindow component
     };
-  }, []);
+  }, [websocket]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

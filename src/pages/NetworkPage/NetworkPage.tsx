@@ -414,6 +414,16 @@ export const NetworkPage: React.FC = () => {
   const activeInterfaces = interfaces.filter(i => i.status === 'up');
   const inactiveInterfaces = interfaces.filter(i => i.status === 'down');
 
+  const handleCopyToClipboard = async (text: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      antMessage.success(`${label} copied to clipboard`);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+      antMessage.error('Failed to copy to clipboard');
+    }
+  };
+
   const renderContent = () => {
     if (loading && interfaces.length === 0) {
       return (
@@ -526,8 +536,8 @@ export const NetworkPage: React.FC = () => {
               <div className={styles.summaryCard}>
                 <CheckCircleOutlined className={styles.summaryIcon} />
                 <div className={styles.summaryContent}>
-                  <div className={styles.summaryValue}>{ipAddresses.filter(a => a.status === 'active').length}</div>
-                  <div className={styles.summaryLabel}>Active</div>
+                  <div className={styles.summaryValue}>{ipAddresses.filter(a => !a.dynamic).length}</div>
+                  <div className={styles.summaryLabel}>Static</div>
                 </div>
               </div>
               <div className={styles.summaryCard}>
@@ -547,30 +557,53 @@ export const NetworkPage: React.FC = () => {
                   <div className={styles.tableCell}>Address</div>
                   <div className={styles.tableCell}>Network</div>
                   <div className={styles.tableCell}>Interface</div>
-                  <div className={styles.tableCell}>Status</div>
                   <div className={styles.tableCell}>Type</div>
                   <div className={styles.tableCell}>Comment</div>
                 </div>
                 {ipAddresses.map((addr) => (
                   <div key={addr.id} className={styles.tableRow}>
                     <div className={styles.tableCell}>
-                      <span className={styles.monospace}>{addr.address}</span>
-                    </div>
-                    <div className={styles.tableCell}>
-                      <span className={styles.monospace}>{addr.network}</span>
-                    </div>
-                    <div className={styles.tableCell}>{addr.interface}</div>
-                    <div className={styles.tableCell}>
-                      <span className={`${styles.badge} ${styles[addr.status === 'active' ? 'badgeSuccess' : 'badgeDefault']}`}>
-                        {addr.status}
+                      <span 
+                        className={`${styles.monospace} ${styles.copyable}`}
+                        onClick={() => handleCopyToClipboard(addr.address, 'Address')}
+                        title="Click to copy"
+                      >
+                        {addr.address}
                       </span>
                     </div>
                     <div className={styles.tableCell}>
-                      <span className={`${styles.badge} ${addr.dynamic ? styles.badgeWarning : styles.badgeInfo}`}>
-                        {addr.dynamic ? 'Dynamic' : 'Static'}
+                      <span 
+                        className={`${styles.monospace} ${styles.copyable}`}
+                        onClick={() => handleCopyToClipboard(addr.network, 'Network')}
+                        title="Click to copy"
+                      >
+                        {addr.network}
                       </span>
                     </div>
+                    <div 
+                      className={`${styles.tableCell} ${styles.copyable}`}
+                      onClick={() => handleCopyToClipboard(addr.interface, 'Interface')}
+                      title="Click to copy"
+                    >
+                      {addr.interface}
+                    </div>
                     <div className={styles.tableCell}>
+                      {addr.dynamic ? (
+                        <span className={`${styles.badge} ${styles.badgeWarning}`}>
+                          <ReloadOutlined className={styles.badgeIcon} />
+                          Dynamic
+                        </span>
+                      ) : (
+                        <span className={`${styles.badge} ${styles.badgeInfo}`}>
+                          Static
+                        </span>
+                      )}
+                    </div>
+                    <div 
+                      className={`${styles.tableCell} ${addr.comment ? styles.copyable : ''}`}
+                      onClick={() => addr.comment && handleCopyToClipboard(addr.comment, 'Comment')}
+                      title={addr.comment ? 'Click to copy' : ''}
+                    >
                       <span className={styles.commentText}>{addr.comment || '—'}</span>
                     </div>
                   </div>
@@ -624,10 +657,22 @@ export const NetworkPage: React.FC = () => {
                 {routes.map((route) => (
                   <div key={route.id} className={styles.tableRow}>
                     <div className={styles.tableCell}>
-                      <span className={styles.monospace}>{route.dstAddress}</span>
+                      <span 
+                        className={`${styles.monospace} ${styles.copyable}`}
+                        onClick={() => handleCopyToClipboard(route.dstAddress, 'Destination')}
+                        title="Click to copy"
+                      >
+                        {route.dstAddress}
+                      </span>
                     </div>
                     <div className={styles.tableCell}>
-                      <span className={styles.monospace}>{route.gateway}</span>
+                      <span 
+                        className={`${styles.monospace} ${styles.copyable}`}
+                        onClick={() => handleCopyToClipboard(route.gateway, 'Gateway')}
+                        title="Click to copy"
+                      >
+                        {route.gateway}
+                      </span>
                       {route.gatewayStatus === 'reachable' && (
                         <CheckCircleOutlined className={styles.statusIconGood} />
                       )}
@@ -635,7 +680,13 @@ export const NetworkPage: React.FC = () => {
                         <CloseCircleOutlined className={styles.statusIconBad} />
                       )}
                     </div>
-                    <div className={styles.tableCell}>{route.interface || '—'}</div>
+                    <div 
+                      className={`${styles.tableCell} ${route.interface ? styles.copyable : ''}`}
+                      onClick={() => route.interface && handleCopyToClipboard(route.interface, 'Interface')}
+                      title={route.interface ? 'Click to copy' : ''}
+                    >
+                      {route.interface || '—'}
+                    </div>
                     <div className={styles.tableCell}>{route.distance}</div>
                     <div className={styles.tableCell}>
                       <span className={`${styles.badge} ${route.active ? styles.badgeSuccess : styles.badgeDefault}`}>
@@ -647,7 +698,11 @@ export const NetworkPage: React.FC = () => {
                         {route.static ? 'Static' : 'Dynamic'}
                       </span>
                     </div>
-                    <div className={styles.tableCell}>
+                    <div 
+                      className={`${styles.tableCell} ${route.comment ? styles.copyable : ''}`}
+                      onClick={() => route.comment && handleCopyToClipboard(route.comment, 'Comment')}
+                      title={route.comment ? 'Click to copy' : ''}
+                    >
                       <span className={styles.commentText}>{route.comment || '—'}</span>
                     </div>
                   </div>
@@ -701,12 +756,30 @@ export const NetworkPage: React.FC = () => {
                 {arpEntries.map((entry) => (
                   <div key={entry.id} className={styles.tableRow}>
                     <div className={styles.tableCell}>
-                      <span className={styles.monospace}>{entry.address}</span>
+                      <span 
+                        className={`${styles.monospace} ${styles.copyable}`}
+                        onClick={() => handleCopyToClipboard(entry.address, 'IP Address')}
+                        title="Click to copy"
+                      >
+                        {entry.address}
+                      </span>
                     </div>
                     <div className={styles.tableCell}>
-                      <span className={styles.monospace}>{entry.macAddress}</span>
+                      <span 
+                        className={`${styles.monospace} ${styles.copyable}`}
+                        onClick={() => handleCopyToClipboard(entry.macAddress, 'MAC Address')}
+                        title="Click to copy"
+                      >
+                        {entry.macAddress}
+                      </span>
                     </div>
-                    <div className={styles.tableCell}>{entry.interface}</div>
+                    <div 
+                      className={`${styles.tableCell} ${styles.copyable}`}
+                      onClick={() => handleCopyToClipboard(entry.interface, 'Interface')}
+                      title="Click to copy"
+                    >
+                      {entry.interface}
+                    </div>
                     <div className={styles.tableCell}>
                       <span className={`${styles.badge} ${
                         entry.status === 'reachable' ? styles.badgeSuccess :
@@ -728,7 +801,11 @@ export const NetworkPage: React.FC = () => {
                         <span className={styles.textMuted}>—</span>
                       )}
                     </div>
-                    <div className={styles.tableCell}>
+                    <div 
+                      className={`${styles.tableCell} ${entry.comment ? styles.copyable : ''}`}
+                      onClick={() => entry.comment && handleCopyToClipboard(entry.comment, 'Comment')}
+                      title={entry.comment ? 'Click to copy' : ''}
+                    >
                       <span className={styles.commentText}>{entry.comment || '—'}</span>
                     </div>
                   </div>

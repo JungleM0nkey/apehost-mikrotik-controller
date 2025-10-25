@@ -30,7 +30,7 @@ export interface TerminalHistoryEvent {
 
 type EventCallback<T> = (data: T) => void;
 
-class WebSocketService {
+export class WebSocketService {
   private socket: Socket | null = null;
   private sessionId: string | null = null;
   private isConnecting: boolean = false;

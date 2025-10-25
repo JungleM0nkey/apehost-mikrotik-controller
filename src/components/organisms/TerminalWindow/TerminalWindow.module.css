@@ -1,0 +1,170 @@
+.rndContainer {
+  display: flex;
+  flex-direction: column;
+}
+
+.window {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg-terminal);
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.window.active {
+  border-color: var(--color-accent-primary);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), 0 0 0 2px rgba(255, 140, 0, 0.3);
+}
+
+.titleBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 16px;
+  background: var(--color-bg-secondary);
+  border-bottom: 1px solid var(--color-border-primary);
+  cursor: move;
+  user-select: none;
+}
+
+.dragHandle {
+  cursor: move !important;
+}
+
+.title {
+  font-weight: 600;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
+  font-family: var(--font-mono);
+}
+
+.windowControls {
+  display: flex;
+  gap: 8px;
+}
+
+.controlButton {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.controlButton:hover {
+  background: var(--color-bg-hover);
+  color: var(--color-accent-primary);
+  border-color: var(--color-accent-primary);
+}
+
+.controlButton:active {
+  transform: scale(0.95);
+}
+
+.content {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Maximized mode */
+.maximized {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 56px; /* Account for taskbar */
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg-terminal);
+  border: none;
+  border-radius: 0;
+}
+
+.maximized .titleBar {
+  border-radius: 0;
+}
+
+/* Connection states */
+.connecting {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--color-text-secondary);
+  gap: 16px;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--color-border-primary);
+  border-top-color: var(--color-accent-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.connectionError {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--color-accent-error);
+  gap: 16px;
+  padding: 20px;
+  text-align: center;
+}
+
+.connectionError button {
+  padding: 8px 24px;
+  background: var(--color-accent-primary);
+  color: var(--color-bg-primary);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.connectionError button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 140, 0, 0.4);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .window {
+    min-width: 100% !important;
+    min-height: 100% !important;
+  }
+
+  .titleBar {
+    padding: 6px 12px;
+  }
+
+  .controlButton {
+    width: 24px;
+    height: 24px;
+  }
+}

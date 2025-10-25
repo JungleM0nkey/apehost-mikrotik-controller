@@ -3,28 +3,28 @@
 .trafficIndicator {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
-  margin-right: 6px;
+  gap: 3px;
+  margin-right: 8px;
   vertical-align: middle;
   contain: layout style;
 }
 
 .pixel {
-  width: 4px;
-  height: 4px;
-  border-radius: 1px;
-  opacity: 0.2;
-  transition: opacity 150ms ease;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  opacity: 0.3;
+  transition: opacity 150ms ease, transform 150ms ease;
 }
 
-/* RX (Download) - Success Green */
+/* RX (Download) - Bright Success Green */
 .rx .pixel {
-  background-color: #10b981;
+  background-color: #12d994;
 }
 
-/* TX (Upload) - Blue */
+/* TX (Upload) - Bright Blue */
 .tx .pixel {
-  background-color: #3b82f6;
+  background-color: #4b90ff;
 }
 
 /* Active State - Normal Speed (1-10 MB/s) */
@@ -95,7 +95,7 @@
 
 /* Inactive State - No Animation */
 .inactive .pixel {
-  opacity: 0.15;
+  opacity: 0.25;
   animation: none;
   will-change: auto;
 }
@@ -104,14 +104,14 @@
 @keyframes pixelFlow {
   0%,
   100% {
-    opacity: 0.2;
+    opacity: 0.3;
     transform: scale(1);
     box-shadow: none;
   }
   50% {
     opacity: 1;
-    transform: scale(1.15);
-    box-shadow: 0 0 6px currentColor;
+    transform: scale(1.4);
+    box-shadow: 0 0 10px currentColor;
   }
 }
 

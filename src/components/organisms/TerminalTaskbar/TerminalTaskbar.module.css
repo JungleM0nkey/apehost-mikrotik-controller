@@ -1,0 +1,88 @@
+.taskbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 56px;
+  background: var(--color-bg-secondary);
+  border-top: 1px solid var(--color-border-primary);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+  z-index: 9999;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.tabsContainer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 4px 0;
+}
+
+/* Custom scrollbar for tabs */
+.tabsContainer::-webkit-scrollbar {
+  height: 6px;
+}
+
+.tabsContainer::-webkit-scrollbar-track {
+  background: var(--color-bg-tertiary);
+  border-radius: 3px;
+}
+
+.tabsContainer::-webkit-scrollbar-thumb {
+  background: var(--color-border-primary);
+  border-radius: 3px;
+}
+
+.tabsContainer::-webkit-scrollbar-thumb:hover {
+  background: var(--color-border-secondary);
+}
+
+.newTerminalButton {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  border-radius: 50%;
+  background: var(--color-accent-primary);
+  border: none;
+  color: var(--color-bg-primary);
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.newTerminalButton:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(255, 140, 0, 0.5);
+}
+
+.newTerminalButton:active {
+  transform: scale(1.05);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .taskbar {
+    height: 48px;
+    padding: 0 12px;
+    gap: 8px;
+  }
+
+  .newTerminalButton {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    min-height: 36px;
+    font-size: 18px;
+  }
+}

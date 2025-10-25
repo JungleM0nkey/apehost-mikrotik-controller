@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Rnd } from 'react-rnd';
 import { ExpandOutlined, CompressOutlined, MinusOutlined } from '@ant-design/icons';
 import { TerminalPanel } from '../TerminalPanel/TerminalPanel';
+import websocket from '../../../services/websocket';
 import styles from './ResizableTerminal.module.css';
 
 export interface ResizableTerminalProps {
@@ -53,7 +54,12 @@ export const ResizableTerminal: React.FC<ResizableTerminalProps> = ({ onCommand 
             <MinusOutlined />
           </button>
         </div>
-        <TerminalPanel onCommand={onCommand} hideHeader />
+        <TerminalPanel
+          websocket={websocket}
+          terminalId="legacy-terminal"
+          onCommand={onCommand}
+          hideHeader
+        />
       </div>
     );
   }
@@ -97,7 +103,12 @@ export const ResizableTerminal: React.FC<ResizableTerminalProps> = ({ onCommand 
           </div>
         </div>
         <div className={styles.content}>
-          <TerminalPanel onCommand={onCommand} hideHeader />
+          <TerminalPanel
+          websocket={websocket}
+          terminalId="legacy-terminal"
+          onCommand={onCommand}
+          hideHeader
+        />
         </div>
       </div>
     </Rnd>

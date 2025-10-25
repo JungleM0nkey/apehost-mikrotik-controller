@@ -6,14 +6,22 @@ import { TerminalPage } from './pages/TerminalPage/TerminalPage';
 import { ChatPage } from './pages/ChatPage/ChatPage';
 import { SettingsPage } from './pages/SettingsPage/SettingsPage';
 import { NetworkPage } from './pages/NetworkPage/NetworkPage';
+import { TerminalManagerProvider, useTerminalManager } from './contexts/TerminalManagerContext';
+import { TerminalTaskbar } from './components/organisms/TerminalTaskbar/TerminalTaskbar';
+import { TerminalWindow } from './components/organisms/TerminalWindow/TerminalWindow';
+import { useTerminalKeyboardShortcuts } from './hooks/useTerminalKeyboardShortcuts';
 import { useRouterInfo } from './hooks/useRouterInfo';
 import './styles/tokens.css';
 import './styles/reset.css';
 import styles from './App.module.css';
 
-const App: React.FC = () => {
+const AppContent: React.FC = () => {
   const [activeNav, setActiveNav] = useState('dashboard');
   const { routerInfo } = useRouterInfo();
+  const { state } = useTerminalManager();
+
+  // Enable keyboard shortcuts
+  useTerminalKeyboardShortcuts();
 
   // Default router info while loading
   const defaultRouterInfo = {
@@ -84,6 +92,9 @@ const App: React.FC = () => {
     }
   };
 
+  // Get terminals array
+  const terminals = Array.from(state.terminals.values());
+
   return (
     <div className={styles.app}>
       <Sidebar
@@ -99,7 +110,23 @@ const App: React.FC = () => {
           {renderContent()}
         </div>
       </main>
+
+      {/* Render terminal windows */}
+      {terminals.map((terminal) => (
+        <TerminalWindow key={terminal.id} terminal={terminal} />
+      ))}
+
+      {/* Terminal taskbar (always visible at bottom) */}
+      <TerminalTaskbar />
     </div>
+  );
+};
+
+const App: React.FC = () => {
+  return (
+    <TerminalManagerProvider>
+      <AppContent />
+    </TerminalManagerProvider>
   );
 };
 

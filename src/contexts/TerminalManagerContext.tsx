@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useCallback, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useReducer, useCallback, useEffect, ReactNode } from 'react';
 import { createWebSocketService } from '../services/websocket';
 import type {
   Terminal,
@@ -26,7 +26,7 @@ function generateId(): string {
 }
 
 // Calculate staggered position
-function calculatePosition(terminalCount: number, lastPosition?: Position): Position {
+function calculatePosition(_terminalCount: number, lastPosition?: Position): Position {
   if (!lastPosition) {
     return { x: 100, y: 100 };
   }

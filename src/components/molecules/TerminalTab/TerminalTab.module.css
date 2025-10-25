@@ -1,0 +1,176 @@
+.terminalTab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  max-width: 200px;
+  min-width: 120px;
+  user-select: none;
+  position: relative;
+}
+
+.terminalTab:hover {
+  background: var(--color-bg-hover);
+  border-color: var(--color-accent-primary);
+}
+
+.terminalTab.active {
+  background: var(--color-accent-primary);
+  color: var(--color-bg-primary);
+  border-color: var(--color-accent-primary);
+  box-shadow: 0 0 12px rgba(255, 140, 0, 0.4);
+}
+
+.terminalTab.minimized {
+  opacity: 0.6;
+  font-style: italic;
+}
+
+.statusIndicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.statusDot.connected {
+  background: var(--color-accent-success);
+  box-shadow: 0 0 6px var(--color-accent-success);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.statusDot.connecting {
+  background: #60a5fa;
+  box-shadow: 0 0 6px #60a5fa;
+  animation: blink 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--font-size-xs);
+  font-family: var(--font-mono);
+}
+
+.terminalTab.active .name {
+  font-weight: 600;
+}
+
+.nameInput {
+  flex: 1;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-accent-primary);
+  border-radius: var(--radius-sm);
+  padding: 2px 6px;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-xs);
+  font-family: var(--font-mono);
+  outline: none;
+}
+
+.closeButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  opacity: 0;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.terminalTab:hover .closeButton {
+  opacity: 0.7;
+}
+
+.closeButton:hover {
+  opacity: 1 !important;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.terminalTab.active .closeButton {
+  color: var(--color-bg-primary);
+}
+
+.terminalTab.active .closeButton:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Context Menu */
+.contextMenu {
+  position: fixed;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-md);
+  padding: 4px;
+  min-width: 150px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  z-index: 10000;
+  animation: contextMenuFadeIn 0.15s ease-out;
+}
+
+@keyframes contextMenuFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.contextMenuItem {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-primary);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.1s ease;
+}
+
+.contextMenuItem:hover {
+  background: var(--color-bg-hover);
+  color: var(--color-accent-primary);
+}
+
+.contextMenuDivider {
+  height: 1px;
+  background: var(--color-border-primary);
+  margin: 4px 0;
+}
