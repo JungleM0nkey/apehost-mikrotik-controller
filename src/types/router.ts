@@ -8,6 +8,8 @@ export interface RouterInfo {
   status: 'online' | 'offline' | 'connecting';
   model: string;
   osVersion: string;
+  macAddress?: string;
+  subnet?: string;
 }
 
 export interface ConnectionStatus {

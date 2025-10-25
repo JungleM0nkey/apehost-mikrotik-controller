@@ -1,87 +1,80 @@
 import { Router, Request, Response } from 'express';
+import mikrotikService from '../services/mikrotik.js';
 
-const router = Router();
+export const routerRoutes = Router();
 
-// Mock router data - will be replaced with real MikroTik API calls
-const mockRouterData = {
-  name: 'RB4011',
-  ip: '192.168.88.1',
-  model: 'RB4011iGS+',
-  version: '7.11',
-  status: 'online'
-};
-
-// Get router status
-router.get('/status', (req: Request, res: Response) => {
-  res.json({
-    ...mockRouterData,
-    cpuLoad: 23,
-    memoryUsed: 1258291200, // 1.2GB in bytes
-    memoryTotal: 2147483648, // 2GB in bytes
-    uptime: 1324800, // 15 days 7 hours in seconds
-    timestamp: new Date().toISOString()
-  });
+/**
+ * GET /api/router/status
+ * Get router system status and information
+ */
+routerRoutes.get('/status', async (req: Request, res: Response) => {
+  try {
+    const status = await mikrotikService.getRouterStatus();
+    res.json(status);
+  } catch (error: any) {
+    console.error('Error fetching router status:', error);
+    res.status(500).json({
+      error: 'Failed to fetch router status',
+      message: error.message
+    });
+  }
 });
 
-// Get network interfaces
-router.get('/interfaces', (req: Request, res: Response) => {
-  res.json({
-    interfaces: [
-      {
-        name: 'ether1-gateway',
-        type: 'ether',
-        status: 'up',
-        rx: 1288490188, // 1.2 GB
-        tx: 897581056, // 856 MB
-        mtu: 1500
-      },
-      {
-        name: 'ether2-local',
-        type: 'ether',
-        status: 'up',
-        rx: 2684354560, // 2.5 GB
-        tx: 1181116006, // 1.1 GB
-        mtu: 1500
-      },
-      {
-        name: 'ether3',
-        type: 'ether',
-        status: 'down',
-        rx: 0,
-        tx: 0,
-        mtu: 1500
-      },
-      {
-        name: 'wlan1',
-        type: 'wlan',
-        status: 'up',
-        rx: 131072000, // 125 MB
-        tx: 93323264, // 89 MB
-        mtu: 1500
-      }
-    ],
-    timestamp: new Date().toISOString()
-  });
+/**
+ * GET /api/router/interfaces
+ * Get list of network interfaces
+ */
+routerRoutes.get('/interfaces', async (req: Request, res: Response) => {
+  try {
+    const interfaces = await mikrotikService.getInterfaces();
+    res.json(interfaces);
+  } catch (error: any) {
+    console.error('Error fetching interfaces:', error);
+    res.status(500).json({
+      error: 'Failed to fetch interfaces',
+      message: error.message
+    });
+  }
 });
 
-// Get resources (CPU, memory, etc.)
-router.get('/resources', (req: Request, res: Response) => {
-  res.json({
-    cpu: {
-      load: 23,
-      cores: 4
-    },
-    memory: {
-      used: 1258291200,
-      total: 2147483648,
-      percentage: 59
-    },
-    uptime: 1324800,
-    version: '7.11 (stable)',
-    boardName: 'RB4011iGS+',
-    architecture: 'arm',
-    timestamp: new Date().toISOString()
-  });
+/**
+ * GET /api/router/resources
+ * Get system resources (CPU, memory, etc.)
+ */
+routerRoutes.get('/resources', async (req: Request, res: Response) => {
+  try {
+    const resources = await mikrotikService.getSystemResources();
+    
+    // Parse and format resources
+    const totalMemory = mikrotikService.parseBytes(resources['total-memory'] || '0');
+    const freeMemory = mikrotikService.parseBytes(resources['free-memory'] || '0');
+    const usedMemory = totalMemory - freeMemory;
+    
+    const formatted = {
+      cpu: {
+        load: parseInt(String(resources['cpu-load'] || '0').replace('%', '')),
+        count: parseInt(resources['cpu-count'] || '1')
+      },
+      memory: {
+        used: usedMemory,
+        total: totalMemory,
+        percentage: Math.round((usedMemory / totalMemory) * 100)
+      },
+      disk: {
+        used: 0,
+        total: 0,
+        percentage: 0
+      },
+      uptime: mikrotikService.parseUptime(resources.uptime || '0s'),
+      timestamp: new Date().toISOString()
+    };
+    
+    res.json(formatted);
+  } catch (error: any) {
+    console.error('Error fetching resources:', error);
+    res.status(500).json({
+      error: 'Failed to fetch system resources',
+      message: error.message
+    });
+  }
 });
-
-export { router as routerRoutes };

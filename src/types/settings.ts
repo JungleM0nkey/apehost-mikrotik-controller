@@ -86,9 +86,9 @@ export const defaultSettings: Settings = {
     modelName: 'model-name'
   },
   routerApi: {
-    ipAddress: '192.168.88.1',
+    ipAddress: '192.168.100.2',
     port: 8728,
-    username: 'admin',
+    username: 'secureadmin',
     password: '',
     useSsl: false,
     keepAlive: true,

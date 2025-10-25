@@ -6,13 +6,20 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:full": "concurrently \"npm run dev\" \"npm run dev:backend\"",
+    "dev:backend": "cd server && npm run dev",
     "build": "tsc && vite build",
+    "build:all": "npm run build && cd server && npm run build",
     "preview": "vite preview",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
   },
   "dependencies": {
+    "@ant-design/icons": "^6.1.0",
+    "antd": "^5.27.6",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "react-rnd": "^10.5.2",
+    "socket.io-client": "^4.8.1"
   },
   "devDependencies": {
     "@types/react": "^18.3.3",
@@ -20,6 +27,7 @@
     "@typescript-eslint/eslint-plugin": "^7.13.1",
     "@typescript-eslint/parser": "^7.13.1",
     "@vitejs/plugin-react": "^4.3.1",
+    "concurrently": "^8.2.2",
     "eslint": "^8.57.0",
     "eslint-plugin-react-hooks": "^4.6.2",
     "eslint-plugin-react-refresh": "^0.4.7",

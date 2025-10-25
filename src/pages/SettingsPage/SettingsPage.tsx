@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { WarningOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { Settings, defaultSettings } from '../../types/settings';
 import { SettingsSection } from '../../components/organisms/SettingsSection/SettingsSection';
 import { FormField } from '../../components/molecules/FormField/FormField';
@@ -166,7 +167,7 @@ export const SettingsPage: React.FC = () => {
             </div>
           </div>
 
-          <WarningBox icon="⚠️">
+          <WarningBox icon={<WarningOutlined style={{ color: 'var(--color-warning)' }} />}>
             <WarningBoxText>
               <WarningBoxHighlight>Recommendation:</WarningBoxHighlight> Create a dedicated RouterOS user with limited API access rights instead of using admin credentials.
             </WarningBoxText>
@@ -236,7 +237,7 @@ export const SettingsPage: React.FC = () => {
               label="Auto-execute Safe Commands"
               checked={settings.aiAssistant.autoExecuteSafe}
               onChange={(checked) => updateSettings('aiAssistant', { autoExecuteSafe: checked })}
-              icon="ℹ️"
+              icon={<InfoCircleOutlined style={{ color: 'var(--color-accent-primary)' }} />}
             />
             <ToggleField
               label="Require Confirmation for Critical Commands"
@@ -306,7 +307,7 @@ export const SettingsPage: React.FC = () => {
             label="Store Credentials Locally"
             checked={settings.security.storeCredentials}
             onChange={(checked) => updateSettings('security', { storeCredentials: checked })}
-            icon="ℹ️"
+            icon={<InfoCircleOutlined style={{ color: 'var(--color-accent-primary)' }} />}
           />
           <ToggleField
             label="Encrypt Stored Credentials"

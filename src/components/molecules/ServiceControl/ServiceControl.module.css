@@ -1,0 +1,228 @@
+.container {
+  position: relative;
+}
+
+.badge {
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: var(--radius-md);
+  transition: background-color 0.2s ease;
+}
+
+.badge:hover {
+  background-color: var(--color-bg-tertiary);
+}
+
+.badgeText {
+  color: var(--color-text-primary);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 280px;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 10000;
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dropdownHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  border-bottom: 1px solid var(--color-border-primary);
+  background: var(--color-bg-tertiary);
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+}
+
+.headerIcon {
+  color: var(--color-accent-primary);
+  font-size: 16px;
+}
+
+.headerTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.dropdownContent {
+  padding: var(--space-md);
+}
+
+.infoRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--space-sm);
+  font-size: 13px;
+}
+
+.infoRow:last-child {
+  margin-bottom: 0;
+}
+
+.infoLabel {
+  color: var(--color-text-secondary);
+  font-weight: 500;
+  min-width: 80px;
+}
+
+.infoValue {
+  color: var(--color-text-primary);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-align: right;
+  flex: 1;
+}
+
+.infoValue.online {
+  color: var(--color-accent-success);
+  font-weight: 600;
+}
+
+.infoValue.offline {
+  color: var(--color-accent-error);
+  font-weight: 600;
+}
+
+.infoValue.connecting {
+  color: var(--color-accent-warning);
+  font-weight: 600;
+}
+
+.addressItem {
+  margin-bottom: 2px;
+}
+
+.divider {
+  height: 1px;
+  background: var(--color-border-primary);
+  margin: var(--space-md) 0;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.actionButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-primary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.actionButton:hover {
+  background: var(--color-bg-secondary);
+  border-color: var(--color-accent-primary);
+  color: var(--color-accent-primary);
+}
+
+.actionButton.refresh:hover {
+  border-color: var(--color-accent-primary);
+  color: var(--color-accent-primary);
+}
+
+.actionButton.restart:hover {
+  border-color: var(--color-accent-warning);
+  color: var(--color-accent-warning);
+}
+
+.actionButton.shutdown:hover {
+  border-color: var(--color-accent-error);
+  color: var(--color-accent-error);
+  background: rgba(239, 68, 68, 0.1);
+}
+
+/* Offline Help Section */
+.offlineHelp {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.offlineTitle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-accent-primary);
+  margin-bottom: var(--space-xs);
+}
+
+.offlineText {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+}
+
+.commandBox {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-xs);
+  padding: var(--space-sm);
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+}
+
+.commandBox code {
+  flex: 1;
+  font-size: 12px;
+  color: var(--color-accent-primary);
+  user-select: all;
+}
+
+.copyButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-secondary);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.copyButton:hover {
+  background: var(--color-accent-primary);
+  color: white;
+  border-color: var(--color-accent-primary);
+}

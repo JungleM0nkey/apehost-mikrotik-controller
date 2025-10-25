@@ -1,0 +1,113 @@
+.rndContainer {
+  z-index: 1000;
+}
+
+.window {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+}
+
+.titleBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 16px;
+  background: var(--color-bg-secondary);
+  border-bottom: 1px solid var(--color-border-primary);
+  cursor: move;
+  user-select: none;
+}
+
+.dragHandle {
+  cursor: move;
+}
+
+.title {
+  font-weight: 600;
+  color: var(--color-text-primary);
+  font-size: 14px;
+}
+
+.windowControls {
+  display: flex;
+  gap: 8px;
+}
+
+.controlButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-secondary);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 14px;
+}
+
+.controlButton:hover {
+  background: var(--color-bg-hover);
+  color: var(--color-text-primary);
+}
+
+.content {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Maximized state */
+.maximized {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
+  background: var(--color-bg-primary);
+  display: flex;
+  flex-direction: column;
+}
+
+.maximized .windowControls {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 10;
+}
+
+/* Minimized state */
+.minimizedBar {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 12px 24px;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-primary);
+  border-bottom: none;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  cursor: pointer;
+  z-index: 1000;
+  color: var(--color-text-primary);
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.minimizedBar:hover {
+  background: var(--color-bg-hover);
+  transform: translateX(-50%) translateY(-4px);
+}

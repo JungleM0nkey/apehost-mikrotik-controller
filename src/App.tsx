@@ -5,20 +5,22 @@ import { DashboardPage } from './pages/DashboardPage/DashboardPage';
 import { TerminalPage } from './pages/TerminalPage/TerminalPage';
 import { ChatPage } from './pages/ChatPage/ChatPage';
 import { SettingsPage } from './pages/SettingsPage/SettingsPage';
-import { RouterInfo } from './types/router';
+import { useRouterInfo } from './hooks/useRouterInfo';
 import './styles/tokens.css';
 import './styles/reset.css';
 import styles from './App.module.css';
 
 const App: React.FC = () => {
   const [activeNav, setActiveNav] = useState('dashboard');
+  const { routerInfo, loading } = useRouterInfo();
 
-  const routerInfo: RouterInfo = {
-    name: 'RB4011',
-    ipAddress: '192.168.88.1',
-    status: 'online',
-    model: 'RB4011',
-    osVersion: '7.11'
+  // Default router info while loading
+  const defaultRouterInfo = {
+    name: 'Loading...',
+    ipAddress: '...',
+    status: 'offline' as const,
+    model: '...',
+    osVersion: '...'
   };
 
   const handleNavigate = (nav: string) => {
@@ -68,7 +70,7 @@ const App: React.FC = () => {
   return (
     <div className={styles.app}>
       <Sidebar
-        router={routerInfo}
+        router={routerInfo || defaultRouterInfo}
         activeNav={activeNav}
         onNavigate={handleNavigate}
         onReboot={handleReboot}

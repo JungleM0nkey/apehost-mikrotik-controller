@@ -44,9 +44,18 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.statusConnected {
   background: var(--color-accent-success);
   box-shadow: 0 0 8px var(--color-accent-success);
-  animation: pulse 2s ease-in-out infinite;
+}
+
+.statusDisconnected {
+  background: var(--color-accent-error);
+  box-shadow: 0 0 8px var(--color-accent-error);
+  animation: none;
 }
 
 @keyframes pulse {
@@ -77,6 +86,8 @@
   padding: var(--space-lg);
   color: var(--color-text-primary);
   background: var(--color-bg-terminal);
+  user-select: text;
+  cursor: text;
 }
 
 /* Custom scrollbar */
@@ -103,6 +114,80 @@
   white-space: pre-wrap;
 }
 
+/* Copy functionality styles */
+.copyableLine {
+  position: relative;
+  padding-left: 4px;
+  border-left: 2px solid transparent;
+  transition: all 0.15s ease;
+  cursor: default;
+}
+
+.copyableLine:hover {
+  border-left-color: #ff8c00;
+  background: rgba(255, 140, 0, 0.05);
+}
+
+.lineHovered {
+  border-left-color: #ff8c00;
+}
+
+.lineCopied {
+  border-left-color: #10b981 !important;
+  background: rgba(16, 185, 129, 0.1) !important;
+  animation: copyFlash 0.3s ease;
+}
+
+@keyframes copyFlash {
+  0% {
+    background: rgba(16, 185, 129, 0.3);
+    border-left-color: #10b981;
+  }
+  100% {
+    background: rgba(16, 185, 129, 0.1);
+    border-left-color: #10b981;
+  }
+}
+
+.copyButton {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255, 140, 0, 0.1);
+  border: 1px solid #ff8c00;
+  border-radius: 4px;
+  padding: 4px 6px;
+  cursor: pointer;
+  color: #ff8c00;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  opacity: 0.8;
+}
+
+.copyButton:hover {
+  background: rgba(255, 140, 0, 0.2);
+  opacity: 1;
+  box-shadow: 0 0 8px rgba(255, 140, 0, 0.4);
+}
+
+.copyButton:active {
+  transform: translateY(-50%) scale(0.95);
+}
+
+.copyButton svg {
+  display: block;
+}
+
+.lineCopied .copyButton {
+  color: #10b981;
+  border-color: #10b981;
+  background: rgba(16, 185, 129, 0.2);
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+}
+
 .line.command {
   color: var(--color-accent-primary);
   font-weight: 500;
@@ -110,6 +195,11 @@
 
 .line.output {
   color: #e0e0e0;
+}
+
+.line.error {
+  color: var(--color-accent-error);
+  font-weight: 500;
 }
 
 .line.prompt {
@@ -124,6 +214,8 @@
 
 .content {
   color: inherit;
+  user-select: text;
+  white-space: pre-wrap;
 }
 
 /* Input Form */
@@ -145,7 +237,10 @@
   font-family: var(--font-mono);
   font-size: var(--font-size-xs);
   padding: 0;
-  caret-color: var(--color-accent-primary);
+  /* Blocky cursor styling */
+  caret-color: #ff8c00;
+  caret-width: thick;
+  filter: drop-shadow(0 0 2px #ff8c00);
 }
 
 .input::placeholder {
@@ -155,6 +250,62 @@
 
 .input:focus::placeholder {
   opacity: 0.3;
+}
+
+/* Autocomplete */
+.inputContainer {
+  position: relative;
+}
+
+.autocomplete {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-accent-primary);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.3);
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000;
+  animation: slideUp 0.15s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.suggestion {
+  padding: var(--space-sm) var(--space-md);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  transition: all 0.1s ease;
+  border-bottom: 1px solid var(--color-border-primary);
+}
+
+.suggestion:last-child {
+  border-bottom: none;
+}
+
+.suggestion:hover {
+  background: var(--color-bg-secondary);
+  color: var(--color-accent-primary);
+}
+
+.suggestion.selected {
+  background: var(--color-accent-primary);
+  color: var(--color-bg-primary);
+  font-weight: 600;
 }
 
 /* Footer */
@@ -222,4 +373,62 @@
 @keyframes blink-caret {
   from, to { border-color: transparent; }
   50% { border-color: var(--color-accent-primary); }
+}
+
+/* MikroTik ASCII Art Styling - Terminal Style */
+:global(.bard-logo) {
+  display: block;
+  color: #ff8c00;
+  font-weight: bold;
+  font-family: 'Courier New', Courier, monospace;
+  text-shadow:
+    0 0 10px rgba(255, 140, 0, 0.95),
+    0 0 20px rgba(255, 140, 0, 0.7),
+    0 0 30px rgba(255, 140, 0, 0.4),
+    0 0 40px rgba(255, 140, 0, 0.2);
+  line-height: 1.2;
+  letter-spacing: 0;
+  font-size: 1em;
+  margin-bottom: 8px;
+  margin-top: 4px;
+  white-space: pre;
+  animation: terminalGlow 2.5s ease-in-out infinite alternate;
+}
+
+:global(.terminal-info) {
+  display: block;
+  color: #ff8c00;
+  font-family: 'Courier New', Courier, monospace;
+  margin-top: 12px;
+  margin-bottom: 16px;
+  line-height: 1.6;
+  font-size: 0.9em;
+  text-align: left;
+  white-space: pre-wrap;
+  opacity: 0.9;
+}
+
+@keyframes terminalGlow {
+  from {
+    text-shadow:
+      0 0 10px rgba(255, 140, 0, 0.9),
+      0 0 20px rgba(255, 140, 0, 0.6),
+      0 0 30px rgba(255, 140, 0, 0.3);
+  }
+  to {
+    text-shadow:
+      0 0 15px rgba(255, 140, 0, 1),
+      0 0 25px rgba(255, 140, 0, 0.8),
+      0 0 35px rgba(255, 140, 0, 0.5),
+      0 0 45px rgba(255, 140, 0, 0.3);
+  }
+}
+
+@keyframes statusBlink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
 }

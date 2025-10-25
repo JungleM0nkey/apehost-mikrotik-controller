@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { ServiceControl, ServiceInfo } from '../../molecules/ServiceControl/ServiceControl';
 import api from '../../../services/api';
-import type { RouterStatus } from '../../../types/api';
 import styles from './Header.module.css';
 
 export interface HeaderProps {
@@ -8,63 +8,102 @@ export interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ currentPage }) => {
-  const [routerStatus, setRouterStatus] = useState<RouterStatus | null>(null);
-  const [connectionStatus, setConnectionStatus] = useState<'online' | 'offline' | 'connecting'>('connecting');
+  const [frontendStatus, setFrontendStatus] = useState<'online' | 'offline'>('online');
+  const [backendStatus, setBackendStatus] = useState<'online' | 'offline' | 'connecting'>('connecting');
+  const [frontendInfo, setFrontendInfo] = useState<ServiceInfo | undefined>();
+  const [backendInfo, setBackendInfo] = useState<ServiceInfo | undefined>();
+
+  const fetchServiceInfo = async () => {
+    try {
+      const response = await fetch('/api/service/info');
+      const data = await response.json();
+      setBackendInfo(data);
+      setBackendStatus('online');
+    } catch (error) {
+      console.error('Failed to fetch backend service info:', error);
+      setBackendStatus('offline');
+      setBackendInfo(undefined);
+    }
+  };
+
+  const checkBackendConnection = async () => {
+    try {
+      await api.getRouterStatus();
+      setBackendStatus('online');
+    } catch (error) {
+      setBackendStatus('offline');
+    }
+  };
 
   useEffect(() => {
-    const checkConnection = async () => {
-      try {
-        const status = await api.getRouterStatus();
-        setRouterStatus(status);
-        setConnectionStatus(status.status === 'online' ? 'online' : 'offline');
-      } catch (error) {
-        console.error('Failed to fetch router status:', error);
-        setConnectionStatus('offline');
-      }
-    };
+    // Frontend is always online if this code is running
+    setFrontendStatus('online');
 
-    checkConnection();
-    
-    // Check connection every 10 seconds
-    const interval = setInterval(checkConnection, 10000);
-    
+    // Set frontend info
+    const frontendPort = window.location.port || '5173';
+    const frontendHost = window.location.hostname;
+    setFrontendInfo({
+      service: 'frontend',
+      status: 'online',
+      addresses: [frontendHost],
+      port: frontendPort,
+    });
+
+    // Initial backend check and info fetch
+    checkBackendConnection();
+    fetchServiceInfo();
+
+    // Check backend every 5 seconds
+    const interval = setInterval(() => {
+      checkBackendConnection();
+      fetchServiceInfo();
+    }, 5000);
+
     return () => clearInterval(interval);
   }, []);
 
-  const statusColors = {
-    online: '#10b981',
-    offline: '#ef4444',
-    connecting: '#f59e0b'
+  const handleBackendRestart = async () => {
+    try {
+      setBackendStatus('connecting');
+      await fetch('/api/service/restart', { method: 'POST' });
+
+      // Wait 2 seconds before checking status
+      setTimeout(() => {
+        checkBackendConnection();
+        fetchServiceInfo();
+      }, 2000);
+    } catch (error) {
+      console.error('Failed to restart backend:', error);
+      setBackendStatus('offline');
+    }
   };
 
-  const statusLabels = {
-    online: 'Connected',
-    offline: 'Disconnected',
-    connecting: 'Connecting...'
+  const handleBackendShutdown = async () => {
+    try {
+      await fetch('/api/service/shutdown', { method: 'POST' });
+      setBackendStatus('offline');
+    } catch (error) {
+      console.error('Failed to shutdown backend:', error);
+    }
   };
 
   return (
     <header className={styles.header}>
-      <div className={styles.left}>
-        <h2 className={styles.pageTitle}>
-          {currentPage.charAt(0).toUpperCase() + currentPage.slice(1)}
-        </h2>
-      </div>
-
       <div className={styles.right}>
-        <div className={styles.connectionStatus}>
-          <span 
-            className={styles.statusDot}
-            style={{ background: statusColors[connectionStatus] }}
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <ServiceControl
+            serviceName="Frontend"
+            status={frontendStatus}
+            serviceInfo={frontendInfo}
           />
-          <span className={styles.statusText}>
-            {statusLabels[connectionStatus]} {routerStatus ? `to ${routerStatus.name}` : ''}
-          </span>
-        </div>
-
-        <div className={styles.userProfile}>
-          <div className={styles.avatar}>USR</div>
-          <span className={styles.username}>Admin</span>
+          <ServiceControl
+            serviceName="Backend"
+            status={backendStatus}
+            serviceInfo={backendInfo}
+            onRestart={handleBackendRestart}
+            onShutdown={handleBackendShutdown}
+            onRefresh={fetchServiceInfo}
+          />
         </div>
       </div>
     </header>

@@ -24,6 +24,8 @@ export interface RouterStatus {
   memoryTotal: number;
   uptime: number;
   timestamp: string;
+  macAddress?: string;
+  subnet?: string;
 }
 
 export interface NetworkInterface {
