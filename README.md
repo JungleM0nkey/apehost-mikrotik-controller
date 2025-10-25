@@ -87,7 +87,7 @@ All design values are centralized in `src/styles/tokens.css`:
 --color-bg-primary: #0a0a0a
 --color-accent-primary: #ff6b35
 --space-lg: 16px
---size-sidebar: 260px
+--size-sidebar: 267px
 ```
 
 ## 📐 Layout Structure

@@ -44,12 +44,12 @@ routerRoutes.get('/interfaces', async (req: Request, res: Response) => {
 routerRoutes.get('/resources', async (req: Request, res: Response) => {
   try {
     const resources = await mikrotikService.getSystemResources();
-    
+
     // Parse and format resources
     const totalMemory = mikrotikService.parseBytes(resources['total-memory'] || '0');
     const freeMemory = mikrotikService.parseBytes(resources['free-memory'] || '0');
     const usedMemory = totalMemory - freeMemory;
-    
+
     const formatted = {
       cpu: {
         load: parseInt(String(resources['cpu-load'] || '0').replace('%', '')),
@@ -68,12 +68,59 @@ routerRoutes.get('/resources', async (req: Request, res: Response) => {
       uptime: mikrotikService.parseUptime(resources.uptime || '0s'),
       timestamp: new Date().toISOString()
     };
-    
+
     res.json(formatted);
   } catch (error: any) {
     console.error('Error fetching resources:', error);
     res.status(500).json({
       error: 'Failed to fetch system resources',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * PATCH /api/router/interfaces/:id
+ * Update interface properties (name, comment, disabled status)
+ */
+routerRoutes.patch('/interfaces/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { name, comment, disabled } = req.body;
+
+    const updatedInterface = await mikrotikService.updateInterface(id, {
+      name,
+      comment,
+      disabled
+    });
+
+    res.json(updatedInterface);
+  } catch (error: any) {
+    console.error('Error updating interface:', error);
+    res.status(500).json({
+      error: 'Failed to update interface',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/router/export
+ * Export router configuration as .rsc file
+ */
+routerRoutes.get('/export', async (req: Request, res: Response) => {
+  try {
+    const config = await mikrotikService.exportConfig();
+
+    // Set headers for file download
+    res.setHeader('Content-Type', 'text/plain');
+    res.setHeader('Content-Disposition', 'attachment; filename="router-config.rsc"');
+
+    res.send(config);
+  } catch (error: any) {
+    console.error('Error exporting configuration:', error);
+    res.status(500).json({
+      error: 'Failed to export configuration',
       message: error.message
     });
   }

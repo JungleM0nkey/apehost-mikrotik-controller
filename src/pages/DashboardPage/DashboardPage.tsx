@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { Progress, Badge, Tag } from 'antd';
+import { CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
 import api from '../../services/api';
 import type { RouterStatus, NetworkInterface } from '../../types/api';
 import styles from './DashboardPage.module.css';
@@ -26,6 +28,54 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, unit, status = 'good'
   );
 };
 
+interface ProgressStatCardProps {
+  title: string;
+  percentage: number;
+  details: string;
+  icon: string;
+}
+
+const ProgressStatCard: React.FC<ProgressStatCardProps> = ({ title, percentage, details, icon }) => {
+  const getStatus = (percent: number): 'good' | 'warning' | 'critical' => {
+    if (percent < 60) return 'good';
+    if (percent < 80) return 'warning';
+    return 'critical';
+  };
+
+  const getStrokeColor = (percent: number): string => {
+    if (percent < 60) return '#10b981';
+    if (percent < 80) return '#f59e0b';
+    return '#ef4444';
+  };
+
+  const status = getStatus(percentage);
+
+  return (
+    <div className={`${styles.statCard} ${styles[status]}`}>
+      <div className={styles.progressContainer}>
+        <Progress
+          type="circle"
+          percent={Math.round(percentage)}
+          strokeColor={getStrokeColor(percentage)}
+          trailColor="var(--color-bg-tertiary)"
+          strokeWidth={8}
+          width={100}
+          format={(percent) => (
+            <div className={styles.progressText}>
+              <div className={styles.progressPercent}>{percent}%</div>
+              <div className={styles.progressIcon}>{icon}</div>
+            </div>
+          )}
+        />
+      </div>
+      <div className={styles.progressInfo}>
+        <h3 className={styles.statTitle}>{title}</h3>
+        <div className={styles.progressDetails}>{details}</div>
+      </div>
+    </div>
+  );
+};
+
 interface InterfaceItemProps {
   name: string;
   status: 'up' | 'down';
@@ -34,15 +84,19 @@ interface InterfaceItemProps {
 }
 
 const InterfaceItem: React.FC<InterfaceItemProps> = ({ name, status, rx, tx }) => {
+  const isActive = status === 'up';
+
   return (
     <div className={styles.interfaceItem}>
       <div className={styles.interfaceStatus}>
-        <span className={`${styles.statusDot} ${status === 'up' ? styles.statusUp : styles.statusDown}`} />
-        <span className={styles.interfaceName}>{name}</span>
+        <Badge
+          status={isActive ? 'success' : 'default'}
+          text={<span className={styles.interfaceName}>{name}</span>}
+        />
       </div>
       <div className={styles.interfaceStats}>
-        <span className={styles.interfaceRx}>↓ {rx}</span>
-        <span className={styles.interfaceTx}>↑ {tx}</span>
+        <span className={isActive ? styles.interfaceRx : styles.interfaceInactive}>↓ {rx}</span>
+        <span className={isActive ? styles.interfaceTx : styles.interfaceInactive}>↑ {tx}</span>
       </div>
     </div>
   );
@@ -62,13 +116,6 @@ const formatUptime = (seconds: number): string => {
   const days = Math.floor(seconds / 86400);
   const hours = Math.floor((seconds % 86400) / 3600);
   return `${days}d ${hours}h`;
-};
-
-// Determine status based on percentage
-const getStatus = (percentage: number): 'good' | 'warning' | 'critical' => {
-  if (percentage < 60) return 'good';
-  if (percentage < 80) return 'warning';
-  return 'critical';
 };
 
 export const DashboardPage: React.FC = () => {
@@ -139,18 +186,20 @@ export const DashboardPage: React.FC = () => {
 
       {/* Stats Grid */}
       <div className={styles.statsGrid}>
-        <StatCard
+        <ProgressStatCard
           title="CPU Usage"
-          value={routerStatus.cpuLoad.toString()}
-          unit="%"
-          status={getStatus(routerStatus.cpuLoad)}
+          percentage={routerStatus.cpuLoad}
+          details={
+            routerStatus.cpuArchitecture
+              ? `${routerStatus.cpuArchitecture}${routerStatus.cpuCount ? ` (${routerStatus.cpuCount} core${routerStatus.cpuCount > 1 ? 's' : ''})` : ''}`
+              : `${routerStatus.cpuLoad}% utilization`
+          }
           icon="CPU"
         />
-        <StatCard
+        <ProgressStatCard
           title="Memory"
-          value={(routerStatus.memoryUsed / 1024 / 1024 / 1024).toFixed(1)}
-          unit="GB"
-          status={getStatus(memoryPercentage)}
+          percentage={memoryPercentage}
+          details={`${(routerStatus.memoryUsed / 1024 / 1024 / 1024).toFixed(2)} GB / ${(routerStatus.memoryTotal / 1024 / 1024 / 1024).toFixed(2)} GB`}
           icon="MEM"
         />
         <StatCard
@@ -172,9 +221,14 @@ export const DashboardPage: React.FC = () => {
       <div className={styles.section}>
         <div className={styles.sectionHeader}>
           <h2 className={styles.sectionTitle}>Network Interfaces</h2>
-          <span className={styles.sectionBadge}>
-            {interfaces.filter(i => i.status === 'up').length} Active
-          </span>
+          <div className={styles.sectionTags}>
+            <Tag icon={<CheckCircleOutlined />} color="success">
+              {interfaces.filter(i => i.status === 'up').length} Active
+            </Tag>
+            <Tag icon={<CloseCircleOutlined />} color="default">
+              {interfaces.filter(i => i.status === 'down').length} Inactive
+            </Tag>
+          </div>
         </div>
         <div className={styles.interfacesList}>
           {interfaces.map((iface) => (

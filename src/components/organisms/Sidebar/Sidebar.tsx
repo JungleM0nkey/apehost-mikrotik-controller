@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { Menu } from 'antd';
 import {
   DashboardOutlined,
   CodeOutlined,
@@ -7,7 +8,8 @@ import {
   SafetyOutlined,
   ApiOutlined,
   LineChartOutlined,
-  SettingOutlined
+  SettingOutlined,
+  ClusterOutlined
 } from '@ant-design/icons';
 import { RouterInfo } from '../../molecules/RouterInfo/RouterInfo';
 import { RouterInfo as RouterInfoType } from '../../../types/router';
@@ -18,26 +20,85 @@ export interface SidebarProps {
   router: RouterInfoType;
   activeNav: string;
   onNavigate: (nav: string) => void;
-  onReboot: () => void;
+  onExportConfig: () => void;
 }
-
-const navItems = [
-  { id: 'dashboard', label: 'Dashboard', Icon: DashboardOutlined },
-  { id: 'terminal', label: 'Terminal', Icon: CodeOutlined },
-  { id: 'chat', label: 'AI Assistant', Icon: RobotOutlined },
-  { id: 'network', label: 'Network', Icon: GlobalOutlined },
-  { id: 'firewall', label: 'Firewall', Icon: SafetyOutlined },
-  { id: 'dhcp', label: 'DHCP', Icon: ApiOutlined },
-  { id: 'analytics', label: 'Analytics', Icon: LineChartOutlined },
-  { id: 'settings', label: 'Settings', Icon: SettingOutlined },
-];
 
 export const Sidebar: React.FC<SidebarProps> = ({
   router,
   activeNav,
   onNavigate,
-  onReboot
+  onExportConfig
 }) => {
+  const [openKeys, setOpenKeys] = useState<string[]>(activeNav === 'settings' ? ['settings'] : []);
+
+  const handleMenuClick = (key: string) => {
+    // If it's a settings sub-item, scroll to that section
+    if (key.startsWith('settings-')) {
+      const sectionId = key.replace('settings-', '');
+      const element = document.getElementById(sectionId);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+      onNavigate('settings');
+    } else {
+      onNavigate(key);
+    }
+  };
+
+  const handleSubMenuChange = (keys: string[]) => {
+    setOpenKeys(keys);
+  };
+
+  const menuItems = [
+    {
+      key: 'dashboard',
+      icon: <DashboardOutlined />,
+      label: 'Dashboard',
+    },
+    {
+      key: 'terminal',
+      icon: <CodeOutlined />,
+      label: 'Terminal',
+    },
+    {
+      key: 'chat',
+      icon: <RobotOutlined />,
+      label: 'AI Assistant',
+    },
+    {
+      key: 'network',
+      icon: <GlobalOutlined />,
+      label: 'Network',
+    },
+    {
+      key: 'firewall',
+      icon: <SafetyOutlined />,
+      label: 'Firewall',
+    },
+    {
+      key: 'dhcp',
+      icon: <ApiOutlined />,
+      label: 'DHCP',
+    },
+    {
+      key: 'analytics',
+      icon: <LineChartOutlined />,
+      label: 'Analytics',
+    },
+    {
+      key: 'settings',
+      icon: <SettingOutlined />,
+      label: 'Settings',
+      children: [
+        { key: 'settings-router-api', label: 'RouterOS API' },
+        { key: 'settings-ai-assistant', label: 'AI Assistant' },
+        { key: 'settings-display', label: 'Display' },
+        { key: 'settings-terminal', label: 'Terminal' },
+        { key: 'settings-security', label: 'Security' },
+      ],
+    },
+  ];
+
   return (
     <aside className={styles.sidebar} role="navigation" aria-label="Main navigation">
       <div className={styles.logo}>
@@ -55,34 +116,36 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       <div className={styles.routerSection}>
-        <h2 className={styles.sectionTitle}>Connected Router</h2>
+        <h2 className={styles.sectionTitle}>
+          <ClusterOutlined className={styles.sectionIcon} />
+          Connected Router
+        </h2>
         <RouterInfo router={router} />
       </div>
 
       <nav className={styles.navigation}>
-        {navItems.map((item) => {
-          const { Icon } = item;
-          return (
-            <button
-              key={item.id}
-              className={`${styles.navButton} ${activeNav === item.id ? styles.active : ''}`}
-              onClick={() => onNavigate(item.id)}
-              aria-current={activeNav === item.id ? 'page' : undefined}
-            >
-              <Icon className={styles.navIcon} aria-hidden="true" />
-              <span>{item.label}</span>
-            </button>
-          );
-        })}
+        <Menu
+          mode="inline"
+          selectedKeys={[activeNav]}
+          openKeys={openKeys}
+          onOpenChange={handleSubMenuChange}
+          onClick={({ key }) => handleMenuClick(key)}
+          items={menuItems}
+          className={styles.menu}
+          style={{
+            background: 'transparent',
+            border: 'none',
+          }}
+        />
       </nav>
 
       <div className={styles.footer}>
         <button
-          className={styles.rebootButton}
-          onClick={onReboot}
-          aria-label="Reboot router"
+          className={styles.exportButton}
+          onClick={onExportConfig}
+          aria-label="Export router configuration"
         >
-          Reboot Router
+          Export Config
         </button>
       </div>
     </aside>

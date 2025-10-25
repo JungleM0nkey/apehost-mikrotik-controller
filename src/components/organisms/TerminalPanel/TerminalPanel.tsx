@@ -1,4 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { Slider } from 'antd';
+import {
+  CopyOutlined,
+  PushpinOutlined,
+  SelectOutlined,
+  ClearOutlined,
+  FontSizeOutlined
+} from '@ant-design/icons';
 import websocket from '../../../services/websocket';
 import type { TerminalOutputEvent, TerminalErrorEvent, TerminalExecutingEvent } from '../../../services/websocket';
 import { TerminalLine } from '../../../types/terminal';
@@ -25,8 +33,19 @@ export const TerminalPanel: React.FC<TerminalPanelProps> = ({
   const [selectedSuggestion, setSelectedSuggestion] = useState(-1);
   const [hoveredLineId, setHoveredLineId] = useState<string | null>(null);
   const [copiedLineId, setCopiedLineId] = useState<string | null>(null);
+  const [contextMenu, setContextMenu] = useState<{x: number; y: number} | null>(null);
+  const [fontSize, setFontSize] = useState(13);
   const terminalEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const outputRef = useRef<HTMLDivElement>(null);
+  const lineIdCounter = useRef<number>(0);
+  const isInitialized = useRef<boolean>(false);
+
+  // Generate unique line ID
+  const generateLineId = (): string => {
+    lineIdCounter.current += 1;
+    return `${Date.now()}-${lineIdCounter.current}`;
+  };
 
   // Common MikroTik commands for autocomplete
   const commonCommands = [
@@ -60,6 +79,12 @@ export const TerminalPanel: React.FC<TerminalPanelProps> = ({
 
   // Initialize WebSocket connection
   useEffect(() => {
+    // Prevent double initialization in React Strict Mode
+    if (isInitialized.current) {
+      return;
+    }
+    isInitialized.current = true;
+
     let cleanupFns: Array<() => void> = [];
 
     const initWebSocket = async () => {
@@ -81,12 +106,10 @@ export const TerminalPanel: React.FC<TerminalPanelProps> = ({
   MMM      MMM  III  KKK  KKK  RRR  RRR   OOOOOO      TTT     III  KKK  KKK
 </span>
 <span class="terminal-info">
-MikroTik RouterOS v7.12 (STABLE)
-Terminal Interface v1.0.0 - WebSocket Edition
+MikroTik RouterOS 7.20 (c) 1999-2025       https://www.mikrotik.com/
 
-Developed by: BARD Labs
-Infrastructure: apehost.net
-WebSocket: Connected & Ready
+BARD Terminal v1.0.0
+Developed by: Ilya Shevchenko
 
 Quick Start:
   • Type /help to see available RouterOS commands
@@ -103,7 +126,7 @@ Ready for commands. Happy routing!
         // Listen for command output
         const cleanupOutput = websocket.onOutput((data: TerminalOutputEvent) => {
           const responseLine: TerminalLine = {
-            id: Date.now().toString(),
+            id: generateLineId(),
             type: 'output',
             content: data.output,
             timestamp: data.timestamp
@@ -116,7 +139,7 @@ Ready for commands. Happy routing!
         // Listen for errors
         const cleanupError = websocket.onError((data: TerminalErrorEvent) => {
           const errorLine: TerminalLine = {
-            id: Date.now().toString(),
+            id: generateLineId(),
             type: 'error',
             content: `Error: ${data.error}`,
             timestamp: data.timestamp
@@ -136,7 +159,7 @@ Ready for commands. Happy routing!
         const cleanupDisconnect = websocket.onDisconnect((reason: string) => {
           setIsConnected(false);
           const disconnectLine: TerminalLine = {
-            id: Date.now().toString(),
+            id: generateLineId(),
             type: 'error',
             content: `Disconnected: ${reason}`,
             timestamp: new Date().toISOString()
@@ -149,7 +172,7 @@ Ready for commands. Happy routing!
         const cleanupConnect = websocket.onConnect(() => {
           setIsConnected(true);
           const reconnectLine: TerminalLine = {
-            id: Date.now().toString(),
+            id: generateLineId(),
             type: 'output',
             content: 'Reconnected to server',
             timestamp: new Date().toISOString()
@@ -174,6 +197,7 @@ Ready for commands. Happy routing!
 
     // Cleanup on unmount - only cleanup event listeners, keep connection alive
     return () => {
+      isInitialized.current = false;
       cleanupFns.forEach(fn => fn());
       // Don't disconnect - websocket is a singleton that persists across component lifecycle
     };
@@ -197,7 +221,7 @@ Ready for commands. Happy routing!
     // Handle /help command
     if (cmdLower === '/help' || cmdLower === 'help') {
       const helpLine: TerminalLine = {
-        id: Date.now().toString(),
+        id: generateLineId(),
         type: 'output',
         content: `MikroTik RouterOS Terminal Commands:
 
@@ -222,7 +246,7 @@ Note: All RouterOS commands must start with a forward slash (/)`,
         timestamp: new Date().toISOString()
       };
       setLines(prev => [...prev,
-        { id: Date.now().toString(), type: 'command', content: cmd, timestamp: new Date().toISOString() },
+        { id: generateLineId(), type: 'command', content: cmd, timestamp: new Date().toISOString() },
         helpLine
       ]);
       setCurrentCommand('');
@@ -232,13 +256,13 @@ Note: All RouterOS commands must start with a forward slash (/)`,
     // Validate RouterOS command format
     if (!cmd.startsWith('/')) {
       const errorLine: TerminalLine = {
-        id: Date.now().toString(),
+        id: generateLineId(),
         type: 'error',
         content: `Error: RouterOS commands must start with /\nExample: /system resource print\nType /help for available commands`,
         timestamp: new Date().toISOString()
       };
       setLines(prev => [...prev,
-        { id: Date.now().toString(), type: 'command', content: cmd, timestamp: new Date().toISOString() },
+        { id: generateLineId(), type: 'command', content: cmd, timestamp: new Date().toISOString() },
         errorLine
       ]);
       setCurrentCommand('');
@@ -258,13 +282,13 @@ Note: All RouterOS commands must start with a forward slash (/)`,
 
     if (incompleteCmds[cmd]) {
       const suggestionLine: TerminalLine = {
-        id: Date.now().toString(),
+        id: generateLineId(),
         type: 'error',
         content: `Error: "${cmd}" is incomplete. Did you mean:\n${incompleteCmds[cmd]}\n\nType /help for more commands`,
         timestamp: new Date().toISOString()
       };
       setLines(prev => [...prev,
-        { id: Date.now().toString(), type: 'command', content: cmd, timestamp: new Date().toISOString() },
+        { id: generateLineId(), type: 'command', content: cmd, timestamp: new Date().toISOString() },
         suggestionLine
       ]);
       setCurrentCommand('');
@@ -278,7 +302,7 @@ Note: All RouterOS commands must start with a forward slash (/)`,
 
     // Add command line to terminal
     const commandLine: TerminalLine = {
-      id: Date.now().toString(),
+      id: generateLineId(),
       type: 'command',
       content: cmd,
       timestamp: new Date().toISOString()
@@ -298,7 +322,7 @@ Note: All RouterOS commands must start with a forward slash (/)`,
       }
     } catch (error) {
       const errorLine: TerminalLine = {
-        id: (Date.now() + 1).toString(),
+        id: generateLineId(),
         type: 'error',
         content: error instanceof Error ? error.message : 'Command execution failed',
         timestamp: new Date().toISOString()
@@ -418,6 +442,108 @@ Note: All RouterOS commands must start with a forward slash (/)`,
     }
   };
 
+  // Context menu handlers
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+
+    // Menu dimensions (approximate)
+    const menuWidth = 220;
+    const menuHeight = 180;
+
+    // Viewport dimensions
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    // Calculate position with boundary detection
+    let x = e.clientX;
+    let y = e.clientY;
+
+    // Prevent overflow on right edge
+    if (x + menuWidth > viewportWidth) {
+      x = viewportWidth - menuWidth - 10; // 10px padding from edge
+    }
+
+    // Prevent overflow on bottom edge
+    if (y + menuHeight > viewportHeight) {
+      y = viewportHeight - menuHeight - 10; // 10px padding from edge
+    }
+
+    // Prevent overflow on left edge (unlikely but possible)
+    if (x < 10) {
+      x = 10;
+    }
+
+    // Prevent overflow on top edge (unlikely but possible)
+    if (y < 10) {
+      y = 10;
+    }
+
+    setContextMenu({ x, y });
+  };
+
+  const closeContextMenu = () => {
+    setContextMenu(null);
+  };
+
+  const handleCopyAll = async () => {
+    const allText = lines.map(line => {
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = line.content;
+      return tempDiv.textContent || tempDiv.innerText || '';
+    }).join('\n');
+
+    try {
+      await navigator.clipboard.writeText(allText);
+      closeContextMenu();
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
+
+  const handlePaste = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      setCurrentCommand(text);
+      inputRef.current?.focus();
+      closeContextMenu();
+    } catch (err) {
+      console.error('Failed to paste:', err);
+    }
+  };
+
+  const handleSelectAll = () => {
+    const selection = window.getSelection();
+    const range = document.createRange();
+    if (outputRef.current) {
+      range.selectNodeContents(outputRef.current);
+      selection?.removeAllRanges();
+      selection?.addRange(range);
+    }
+    closeContextMenu();
+  };
+
+  const handleClearTerminal = () => {
+    setLines([]);
+    closeContextMenu();
+  };
+
+  // Close context menu when clicking outside
+  React.useEffect(() => {
+    const handleClick = () => closeContextMenu();
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeContextMenu();
+    };
+
+    if (contextMenu) {
+      document.addEventListener('click', handleClick);
+      document.addEventListener('keydown', handleEscape);
+      return () => {
+        document.removeEventListener('click', handleClick);
+        document.removeEventListener('keydown', handleEscape);
+      };
+    }
+  }, [contextMenu]);
+
   return (
     <div className={styles.container} onClick={handleTerminalClick}>
       {!hideHeader && (
@@ -425,6 +551,17 @@ Note: All RouterOS commands must start with a forward slash (/)`,
           <div className={styles.headerLeft}>
             <span className={styles.headerIcon}>TRM</span>
             <span className={styles.headerTitle}>Terminal</span>
+          </div>
+          <div className={styles.headerCenter}>
+            <FontSizeOutlined className={styles.fontSizeIcon} />
+            <Slider
+              min={10}
+              max={20}
+              value={fontSize}
+              onChange={setFontSize}
+              className={styles.fontSizeSlider}
+              tooltip={{ formatter: (value) => `${value}px` }}
+            />
           </div>
           <div className={styles.headerRight}>
             <span className={`${styles.statusDot} ${isConnected ? styles.statusConnected : styles.statusDisconnected}`} />
@@ -435,8 +572,12 @@ Note: All RouterOS commands must start with a forward slash (/)`,
         </div>
       )}
 
-      <div className={styles.terminal}>
-        <div className={styles.output}>
+      <div className={styles.terminal} style={{ fontSize: `${fontSize}px` }}>
+        <div
+          className={styles.output}
+          ref={outputRef}
+          onContextMenu={handleContextMenu}
+        >
           {lines.map((line) => (
             <div
               key={line.id}
@@ -461,13 +602,13 @@ Note: All RouterOS commands must start with a forward slash (/)`,
                   aria-label="Copy line to clipboard"
                 >
                   {copiedLineId === line.id ? (
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <polyline points="20 6 9 17 4 12"></polyline>
                     </svg>
                   ) : (
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="8" y="8" width="12" height="12" rx="2"></rect>
+                      <path d="M16 8v-2a2 2 0 0 0-2-2h-8a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"></path>
                     </svg>
                   )}
                 </button>
@@ -525,6 +666,40 @@ Note: All RouterOS commands must start with a forward slash (/)`,
           Type <code>/help</code> for commands
         </div>
       </div>
+
+      {/* Context Menu */}
+      {contextMenu && (
+        <div
+          className={styles.contextMenu}
+          style={{
+            left: `${contextMenu.x}px`,
+            top: `${contextMenu.y}px`,
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button className={styles.contextMenuItem} onClick={handleCopyAll}>
+            <CopyOutlined className={styles.contextMenuIcon} />
+            <span>Copy All</span>
+            <span className={styles.contextMenuShortcut}>Ctrl+Shift+C</span>
+          </button>
+          <button className={styles.contextMenuItem} onClick={handlePaste}>
+            <PushpinOutlined className={styles.contextMenuIcon} />
+            <span>Paste</span>
+            <span className={styles.contextMenuShortcut}>Ctrl+V</span>
+          </button>
+          <div className={styles.contextMenuDivider} />
+          <button className={styles.contextMenuItem} onClick={handleSelectAll}>
+            <SelectOutlined className={styles.contextMenuIcon} />
+            <span>Select All</span>
+            <span className={styles.contextMenuShortcut}>Ctrl+A</span>
+          </button>
+          <button className={styles.contextMenuItem} onClick={handleClearTerminal}>
+            <ClearOutlined className={styles.contextMenuIcon} />
+            <span>Clear</span>
+            <span className={styles.contextMenuShortcut}>Ctrl+L</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 };

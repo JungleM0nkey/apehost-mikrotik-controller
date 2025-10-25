@@ -6,16 +6,18 @@ export interface SettingsSectionProps {
   description: string;
   children: React.ReactNode;
   twoColumn?: boolean;
+  id?: string;
 }
 
 export const SettingsSection: React.FC<SettingsSectionProps> = ({
   title,
   description,
   children,
-  twoColumn = false
+  twoColumn = false,
+  id
 }) => {
   return (
-    <section className={styles.section}>
+    <section className={styles.section} id={id}>
       <div className={styles.header}>
         <h2 className={styles.heading}>{title}</h2>
         <p className={styles.description}>{description}</p>

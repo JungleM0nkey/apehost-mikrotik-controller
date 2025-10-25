@@ -36,13 +36,7 @@
   padding: var(--space-lg);
   display: flex;
   align-items: center;
-  gap: var(--space-md);
-  transition: all 0.2s ease;
-}
-
-.statCard:hover {
-  border-color: var(--color-accent-primary);
-  transform: translateY(-2px);
+  gap: var(--space-lg);
 }
 
 .statCard.good {
@@ -90,6 +84,48 @@
   font-weight: 400;
 }
 
+.progressDetails {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin-top: var(--space-xs);
+}
+
+/* Circular Progress Styles */
+.progressContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.progressInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.progressText {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.progressPercent {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  line-height: 1;
+}
+
+.progressIcon {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  margin-top: var(--space-xs);
+  opacity: 0.7;
+}
+
 /* Section */
 .section {
   background: var(--color-bg-secondary);
@@ -113,13 +149,9 @@
   margin: 0;
 }
 
-.sectionBadge {
-  background: var(--color-accent-primary);
-  color: var(--color-bg-primary);
-  padding: var(--space-xs) var(--space-md);
-  border-radius: var(--radius-full);
-  font-size: var(--font-size-sm);
-  font-weight: 500;
+.sectionTags {
+  display: flex;
+  gap: var(--space-sm);
 }
 
 /* Interfaces */
@@ -148,23 +180,6 @@
 .interfaceStatus {
   display: flex;
   align-items: center;
-  gap: var(--space-md);
-}
-
-.statusDot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.statusUp {
-  background: #10b981;
-  box-shadow: 0 0 8px #10b981;
-}
-
-.statusDown {
-  background: #6b7280;
 }
 
 .interfaceName {
@@ -187,6 +202,11 @@
 
 .interfaceTx {
   color: #3b82f6;
+}
+
+.interfaceInactive {
+  color: var(--color-text-secondary);
+  opacity: 0.5;
 }
 
 /* Quick Actions */

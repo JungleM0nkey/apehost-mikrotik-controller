@@ -47,6 +47,12 @@ export interface TerminalConfig {
   colorScheme: ColorScheme;
 }
 
+export interface DisplayConfig {
+  timezone: string;
+  timeFormat: '12h' | '24h';
+  dateFormat: string;
+}
+
 export interface SecurityConfig {
   storeCredentials: boolean;
   encryptCredentials: boolean;
@@ -73,6 +79,7 @@ export interface Settings {
   routerApi: RouterAPIConfig;
   aiAssistant: AIAssistantConfig;
   terminal: TerminalConfig;
+  display: DisplayConfig;
   security: SecurityConfig;
   advanced: AdvancedConfig;
 }
@@ -116,6 +123,11 @@ export const defaultSettings: Settings = {
     lineNumbers: false,
     historyLimit: 1000,
     colorScheme: 'dark-orange'
+  },
+  display: {
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    timeFormat: '12h',
+    dateFormat: 'MMM DD, YYYY'
   },
   security: {
     storeCredentials: false,

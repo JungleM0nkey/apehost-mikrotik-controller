@@ -1,24 +1,67 @@
 .container {
-  padding: var(--space-lg);
+  padding: 0;
   background-color: var(--color-bg-tertiary);
   border: 1px solid var(--color-border-primary);
+  
+  overflow: hidden;
 }
 
-.name {
-  font-size: var(--font-size-sm);
-  line-height: var(--line-height-normal);
-  color: var(--color-text-primary);
-  margin-bottom: var(--space-md);
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-xs);
+  line-height: 1.5715;
 }
 
-.ip {
-  font-size: var(--font-size-sm);
-  line-height: var(--line-height-normal);
+.table tbody tr {
+  transition: background-color var(--transition-fast);
+}
+
+.table tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+.table tr {
+  border-bottom: 1px solid var(--color-border-secondary);
+}
+
+.table tr:last-child {
+  border-bottom: none;
+}
+
+.label {
+  padding: var(--space-md) var(--space-lg);
   color: var(--color-text-secondary);
-  margin-bottom: var(--space-md);
+  font-weight: 500;
+  font-size: var(--font-size-xs);
+  background-color: rgba(0, 0, 0, 0.2);
+  width: 35%;
+  vertical-align: middle;
+  text-align: left;
 }
 
-.status {
-  display: flex;
-  align-items: center;
+.value {
+  padding: var(--space-md) var(--space-lg);
+  color: var(--color-text-primary);
+  font-weight: 400;
+  font-size: var(--font-size-xs);
+  vertical-align: middle;
+  word-break: break-word;
+  cursor: pointer;
+  position: relative;
+  user-select: none;
+  transition: color var(--transition-fast);
+}
+
+.value:hover {
+  color: var(--color-accent-primary);
+}
+
+.value:active {
+  transform: scale(0.98);
+}
+
+/* Badge status text override */
+.value :global(.ant-badge-status-text) {
+  color: var(--color-text-primary) !important;
 }

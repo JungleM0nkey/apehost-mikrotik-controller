@@ -37,7 +37,7 @@
   --size-avatar: 40px;
   --size-button-lg: 48px;
   --size-header: 56px;
-  --size-sidebar: 260px;
+  --size-sidebar: 267px;
 
   /* Typography */
   --font-family-primary: Arial, sans-serif;
@@ -83,4 +83,179 @@
 
   /* Font family aliases */
   --font-mono: var(--font-family-mono);
+}
+
+/* Ant Design Badge Overrides */
+.ant-badge-status-success {
+  background-color: var(--color-accent-success);
+}
+
+.ant-badge-status-processing {
+  background-color: var(--color-accent-primary);
+}
+
+.ant-badge-status-text {
+  color: var(--color-text-primary);
+  font-size: var(--font-size-xs);
+}
+
+/* Ant Design Slider Overrides */
+.ant-slider {
+  padding: 8px 0 !important;
+}
+
+.ant-slider-rail {
+  background-color: var(--color-border-primary) !important;
+  height: 6px !important;
+}
+
+.ant-slider-track {
+  background-color: var(--color-accent-primary) !important;
+  height: 6px !important;
+}
+
+.ant-slider-handle::after {
+  background-color: var(--color-accent-primary) !important;
+  box-shadow: 0 0 0 2px var(--color-accent-primary) !important;
+  width: 16px !important;
+  height: 16px !important;
+  inset-inline-start: 0 !important;
+  inset-block-start: 0 !important;
+}
+
+.ant-slider-handle:hover::after,
+.ant-slider-handle:focus::after {
+  box-shadow: 0 0 0 4px rgba(255, 107, 53, 0.3) !important;
+}
+
+.ant-slider:hover .ant-slider-rail {
+  background-color: var(--color-border-secondary) !important;
+}
+
+.ant-slider:hover .ant-slider-track {
+  background-color: var(--color-accent-primary) !important;
+}
+
+/* Ant Design Tabs Overrides */
+.ant-tabs {
+  color: var(--color-text-primary) !important;
+}
+
+.ant-tabs-nav {
+  margin-bottom: var(--space-lg) !important;
+}
+
+.ant-tabs-nav::before {
+  border-bottom: 1px solid var(--color-border-primary) !important;
+}
+
+.ant-tabs-nav-wrap {
+  padding: 0 !important;
+}
+
+.ant-tabs-tab {
+  padding: var(--space-sm) var(--space-lg) !important;
+  color: var(--color-text-secondary) !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  transition: all var(--transition-fast) !important;
+}
+
+.ant-tabs-tab:hover {
+  color: var(--color-text-primary) !important;
+}
+
+.ant-tabs-tab-active {
+  background: transparent !important;
+}
+
+.ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: var(--color-accent-primary) !important;
+  font-weight: 600 !important;
+}
+
+.ant-tabs-ink-bar {
+  background: var(--color-accent-primary) !important;
+  height: 3px !important;
+  border-radius: 3px 3px 0 0 !important;
+}
+
+.ant-tabs-tab-btn {
+  transition: color var(--transition-fast) !important;
+}
+
+.ant-tabs-tab-btn:hover,
+.ant-tabs-tab-btn:active,
+.ant-tabs-tab-btn:focus {
+  color: var(--color-accent-primary) !important;
+}
+
+.ant-tabs-content {
+  color: var(--color-text-primary) !important;
+}
+
+/* Ant Design Tag Overrides */
+.ant-tag {
+  border-radius: var(--radius-sm) !important;
+  padding: 4px 12px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  line-height: 20px !important;
+  border: 1px solid transparent !important;
+}
+
+/* Success Tag (Active) */
+.ant-tag-success {
+  background-color: rgba(16, 185, 129, 0.15) !important;
+  border-color: rgba(16, 185, 129, 0.3) !important;
+  color: #10b981 !important;
+}
+
+.ant-tag-success .anticon {
+  color: #10b981 !important;
+}
+
+/* Default Tag (Inactive) */
+.ant-tag-default {
+  background-color: rgba(160, 160, 160, 0.1) !important;
+  border-color: rgba(160, 160, 160, 0.2) !important;
+  color: var(--color-text-secondary) !important;
+}
+
+.ant-tag-default .anticon {
+  color: var(--color-text-secondary) !important;
+}
+
+/* Ant Design Badge Overrides */
+.ant-badge-status-dot {
+  width: 8px !important;
+  height: 8px !important;
+}
+
+/* Success Badge (Online) */
+.ant-badge-status-success {
+  background-color: #10b981 !important;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.5) !important;
+}
+
+/* Error Badge (Offline) */
+.ant-badge-status-error {
+  background-color: #ef4444 !important;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.5) !important;
+}
+
+/* Processing Badge (Connecting) */
+.ant-badge-status-processing {
+  background-color: var(--color-accent-primary) !important;
+  box-shadow: 0 0 8px rgba(255, 107, 53, 0.5) !important;
+}
+
+.ant-badge-status-processing::after {
+  border: 1px solid var(--color-accent-primary) !important;
+}
+
+/* Badge Text */
+.ant-badge-status-text {
+  color: var(--color-text-primary) !important;
+  font-size: 14px !important;
 }

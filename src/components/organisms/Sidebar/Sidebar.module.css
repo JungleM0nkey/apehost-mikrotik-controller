@@ -30,6 +30,14 @@
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
   margin-bottom: var(--space-lg);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.sectionIcon {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
 }
 
 .navigation {
@@ -78,7 +86,7 @@
   border-top: 1px solid var(--color-border-primary);
 }
 
-.rebootButton {
+.exportButton {
   width: 100%;
   height: 42px;
   background-color: var(--color-bg-secondary);
@@ -88,11 +96,62 @@
   transition: all var(--transition-fast);
 }
 
-.rebootButton:hover {
+.exportButton:hover {
   background-color: var(--color-bg-tertiary);
 }
 
-.rebootButton:focus-visible {
+.exportButton:focus-visible {
   outline: 2px solid var(--color-accent-primary);
   outline-offset: 2px;
+}
+
+/* Ant Design Menu Overrides */
+.navigation :global(.ant-menu-item),
+.navigation :global(.ant-menu-submenu-title) {
+  height: var(--size-button-lg) !important;
+  line-height: var(--size-button-lg) !important;
+  margin: 0 !important;
+  padding: 0 var(--space-lg) !important;
+  color: var(--color-text-secondary) !important;
+  font-size: var(--font-size-sm) !important;
+  border-radius: 0 !important;
+}
+
+.navigation :global(.ant-menu-item:hover),
+.navigation :global(.ant-menu-submenu-title:hover) {
+  background-color: var(--color-bg-tertiary) !important;
+  color: var(--color-text-primary) !important;
+}
+
+.navigation :global(.ant-menu-item-selected) {
+  background-color: var(--color-accent-primary) !important;
+  color: var(--color-text-primary) !important;
+}
+
+.navigation :global(.ant-menu-item-selected::after) {
+  display: none !important;
+}
+
+.navigation :global(.ant-menu-submenu-open) > :global(.ant-menu-submenu-title) {
+  color: var(--color-text-primary) !important;
+}
+
+.navigation :global(.ant-menu-sub) {
+  background-color: rgba(0, 0, 0, 0.2) !important;
+}
+
+.navigation :global(.ant-menu-sub .ant-menu-item) {
+  padding-left: calc(var(--space-lg) + var(--space-xl)) !important;
+  height: 40px !important;
+  line-height: 40px !important;
+}
+
+.navigation :global(.ant-menu-item-icon),
+.navigation :global(.ant-menu-submenu-arrow) {
+  color: inherit !important;
+  font-size: var(--size-icon-md) !important;
+}
+
+.navigation :global(.ant-menu-submenu-arrow) {
+  right: var(--space-lg) !important;
 }

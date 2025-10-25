@@ -25,7 +25,54 @@
 .right {
   display: flex;
   align-items: center;
-  gap: var(--space-xl);
+  gap: var(--space-md);
+}
+
+.timeDisplay {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-bg-tertiary);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-primary);
+}
+
+.timeIcon {
+  font-size: 16px;
+  color: var(--color-accent-primary);
+}
+
+.timeText {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  font-family: var(--font-mono);
+}
+
+.serverButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.serverButton:hover {
+  background: var(--color-bg-secondary);
+  border-color: var(--color-accent-primary);
+  transform: scale(1.05);
+}
+
+.serverIcon {
+  font-size: 20px;
+  transition: color 0.3s ease;
 }
 
 .connectionStatus {

@@ -14,10 +14,14 @@ export const useRouterInfo = () => {
 
       const status = await api.getRouterStatus();
 
+      // Map API status to RouterInfo status type
+      const routerStatus: 'online' | 'offline' | 'connecting' =
+        status.status === 'online' ? 'online' : 'offline';
+
       setRouterInfo({
         name: status.name || 'Unknown',
         ipAddress: status.ip || '192.168.100.2',
-        status: status.status || 'offline',
+        status: routerStatus,
         model: status.model || 'Unknown',
         osVersion: status.version || 'Unknown',
         macAddress: status.macAddress,

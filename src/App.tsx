@@ -5,6 +5,7 @@ import { DashboardPage } from './pages/DashboardPage/DashboardPage';
 import { TerminalPage } from './pages/TerminalPage/TerminalPage';
 import { ChatPage } from './pages/ChatPage/ChatPage';
 import { SettingsPage } from './pages/SettingsPage/SettingsPage';
+import { NetworkPage } from './pages/NetworkPage/NetworkPage';
 import { useRouterInfo } from './hooks/useRouterInfo';
 import './styles/tokens.css';
 import './styles/reset.css';
@@ -12,7 +13,7 @@ import styles from './App.module.css';
 
 const App: React.FC = () => {
   const [activeNav, setActiveNav] = useState('dashboard');
-  const { routerInfo, loading } = useRouterInfo();
+  const { routerInfo } = useRouterInfo();
 
   // Default router info while loading
   const defaultRouterInfo = {
@@ -27,10 +28,25 @@ const App: React.FC = () => {
     setActiveNav(nav);
   };
 
-  const handleReboot = () => {
-    if (window.confirm('Are you sure you want to reboot the router?')) {
-      console.log('Rebooting router...');
-      // Implement reboot logic
+  const handleExportConfig = async () => {
+    try {
+      const response = await fetch('/api/router/export');
+      if (!response.ok) {
+        throw new Error('Failed to export configuration');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `router-config-${new Date().toISOString().split('T')[0]}.rsc`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Failed to export configuration:', error);
+      alert('Failed to export router configuration. Please try again.');
     }
   };
 
@@ -45,6 +61,7 @@ const App: React.FC = () => {
       case 'settings':
         return <SettingsPage />;
       case 'network':
+        return <NetworkPage />;
       case 'firewall':
       case 'dhcp':
       case 'analytics':
@@ -53,7 +70,7 @@ const App: React.FC = () => {
             <h1>{activeNav.charAt(0).toUpperCase() + activeNav.slice(1)}</h1>
             <p>This section is under construction</p>
             <p style={{ marginTop: '16px', color: 'var(--color-text-secondary)' }}>
-              Implemented pages: Dashboard, Terminal, AI Assistant, Settings
+              Implemented pages: Dashboard, Terminal, AI Assistant, Settings, Network
             </p>
           </div>
         );
@@ -73,7 +90,7 @@ const App: React.FC = () => {
         router={routerInfo || defaultRouterInfo}
         activeNav={activeNav}
         onNavigate={handleNavigate}
-        onReboot={handleReboot}
+        onExportConfig={handleExportConfig}
       />
 
       <main className={styles.main}>

@@ -18,7 +18,7 @@ const httpServer = createServer(app);
 let server: any = null;
 
 // Log configuration on startup
-console.log('\n📋 Configuration:');
+console.log('\n[CONFIG] Configuration:');
 console.log(`   MikroTik Host: ${process.env.MIKROTIK_HOST}`);
 console.log(`   MikroTik Port: ${process.env.MIKROTIK_PORT}`);
 console.log(`   MikroTik User: ${process.env.MIKROTIK_USERNAME}`);

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Rnd } from 'react-rnd';
-import { ExpandOutlined, CompressOutlined, CloseOutlined, MinusOutlined } from '@ant-design/icons';
+import { ExpandOutlined, CompressOutlined, MinusOutlined } from '@ant-design/icons';
 import { TerminalPanel } from '../TerminalPanel/TerminalPanel';
 import styles from './ResizableTerminal.module.css';
 
@@ -62,8 +62,8 @@ export const ResizableTerminal: React.FC<ResizableTerminalProps> = ({ onCommand 
     <Rnd
       size={size}
       position={position}
-      onDragStop={(e, d) => setPosition({ x: d.x, y: d.y })}
-      onResizeStop={(e, direction, ref, delta, position) => {
+      onDragStop={(_e, d) => setPosition({ x: d.x, y: d.y })}
+      onResizeStop={(_e, _direction, ref, _delta, _position) => {
         setSize({
           width: parseInt(ref.style.width),
           height: parseInt(ref.style.height),

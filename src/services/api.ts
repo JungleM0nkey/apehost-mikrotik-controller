@@ -5,6 +5,7 @@ import type {
   SystemResources,
   TerminalCommandRequest,
   TerminalCommandResponse,
+  UpdateInterfaceRequest,
   ApiError
 } from '../types/api';
 
@@ -49,6 +50,16 @@ class ApiService {
   // Network Interfaces
   async getInterfaces(): Promise<NetworkInterface[]> {
     return this.request<NetworkInterface[]>('/router/interfaces');
+  }
+
+  async updateInterface(
+    id: string,
+    updates: UpdateInterfaceRequest
+  ): Promise<NetworkInterface> {
+    return this.request<NetworkInterface>(`/router/interfaces/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(updates),
+    });
   }
 
   // System Resources

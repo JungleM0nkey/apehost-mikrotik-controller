@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
-import { WarningOutlined, InfoCircleOutlined } from '@ant-design/icons';
+import { InfoCircleOutlined } from '@ant-design/icons';
+import { Slider } from 'antd';
 import { Settings, defaultSettings } from '../../types/settings';
 import { SettingsSection } from '../../components/organisms/SettingsSection/SettingsSection';
 import { FormField } from '../../components/molecules/FormField/FormField';
 import { ToggleField } from '../../components/molecules/ToggleField/ToggleField';
-import { WarningBox, WarningBoxText, WarningBoxHighlight, WarningBoxLink } from '../../components/molecules/WarningBox/WarningBox';
 import { Input } from '../../components/atoms/Input/Input';
 import { Textarea } from '../../components/atoms/Textarea/Textarea';
 import { Button } from '../../components/atoms/Button/Button';
-import { Slider } from '../../components/atoms/Slider/Slider';
 import styles from './SettingsPage.module.css';
 
 export const SettingsPage: React.FC = () => {
@@ -55,6 +54,7 @@ export const SettingsPage: React.FC = () => {
       <div className={styles.content}>
         {/* RouterOS API Configuration */}
         <SettingsSection
+          id="router-api"
           title="RouterOS API Configuration"
           description="Configure connection to MikroTik RouterOS via API"
         >
@@ -167,15 +167,6 @@ export const SettingsPage: React.FC = () => {
             </div>
           </div>
 
-          <WarningBox icon={<WarningOutlined style={{ color: 'var(--color-warning)' }} />}>
-            <WarningBoxText>
-              <WarningBoxHighlight>Recommendation:</WarningBoxHighlight> Create a dedicated RouterOS user with limited API access rights instead of using admin credentials.
-            </WarningBoxText>
-            <WarningBoxLink href="https://help.mikrotik.com/docs/display/ROS/User">
-              Learn how to create API user
-            </WarningBoxLink>
-          </WarningBox>
-
           <Button variant="primary" style={{ width: '100%' }}>
             Test API Connection
           </Button>
@@ -183,6 +174,7 @@ export const SettingsPage: React.FC = () => {
 
         {/* AI Assistant Behavior */}
         <SettingsSection
+          id="ai-assistant"
           title="AI Assistant Behavior"
           description="Configure how the AI assistant responds"
         >
@@ -194,15 +186,14 @@ export const SettingsPage: React.FC = () => {
             />
           </FormField>
 
-          <FormField label={`Temperature: ${settings.aiAssistant.temperature}`}>
+          <FormField label={`Temperature: ${settings.aiAssistant.temperature.toFixed(1)}`}>
             <Slider
               value={settings.aiAssistant.temperature}
               min={0}
               max={2}
               step={0.1}
-              onChange={(value) => updateSettings('aiAssistant', { temperature: value })}
-              formatValue={(v) => v.toFixed(1)}
-              aria-label="Temperature"
+              onChange={(value) => updateSettings('aiAssistant', { temperature: value as number })}
+              tooltip={{ formatter: (v) => v?.toFixed(1) }}
             />
           </FormField>
 
@@ -247,8 +238,91 @@ export const SettingsPage: React.FC = () => {
           </div>
         </SettingsSection>
 
+        {/* Display Settings */}
+        <SettingsSection
+          id="display"
+          title="Display Settings"
+          description="Customize date, time, and timezone preferences"
+        >
+          <FormField
+            label="Timezone"
+            helpText="Select your preferred timezone for time display"
+          >
+            <select
+              value={settings.display.timezone}
+              onChange={(e) => {
+                updateSettings('display', { timezone: e.target.value });
+                localStorage.setItem('timezone', e.target.value);
+              }}
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                background: 'var(--color-bg-tertiary)',
+                border: '1px solid var(--color-border-primary)',
+                borderRadius: 'var(--radius-sm)',
+                color: 'var(--color-text-primary)',
+                fontSize: '14px',
+                fontFamily: 'inherit',
+              }}
+            >
+              <optgroup label="Common Timezones">
+                <option value="America/New_York">Eastern Time (ET)</option>
+                <option value="America/Chicago">Central Time (CT)</option>
+                <option value="America/Denver">Mountain Time (MT)</option>
+                <option value="America/Los_Angeles">Pacific Time (PT)</option>
+                <option value="America/Anchorage">Alaska Time (AKT)</option>
+                <option value="Pacific/Honolulu">Hawaii Time (HT)</option>
+              </optgroup>
+              <optgroup label="Europe">
+                <option value="Europe/London">London (GMT/BST)</option>
+                <option value="Europe/Paris">Paris (CET/CEST)</option>
+                <option value="Europe/Berlin">Berlin (CET/CEST)</option>
+                <option value="Europe/Rome">Rome (CET/CEST)</option>
+                <option value="Europe/Moscow">Moscow (MSK)</option>
+              </optgroup>
+              <optgroup label="Asia">
+                <option value="Asia/Dubai">Dubai (GST)</option>
+                <option value="Asia/Kolkata">India (IST)</option>
+                <option value="Asia/Shanghai">China (CST)</option>
+                <option value="Asia/Tokyo">Tokyo (JST)</option>
+                <option value="Asia/Seoul">Seoul (KST)</option>
+                <option value="Asia/Singapore">Singapore (SGT)</option>
+              </optgroup>
+              <optgroup label="Pacific">
+                <option value="Australia/Sydney">Sydney (AEDT/AEST)</option>
+                <option value="Australia/Melbourne">Melbourne (AEDT/AEST)</option>
+                <option value="Pacific/Auckland">Auckland (NZDT/NZST)</option>
+              </optgroup>
+              <optgroup label="Other">
+                <option value="UTC">UTC (Coordinated Universal Time)</option>
+              </optgroup>
+            </select>
+          </FormField>
+
+          <FormField label="Time Format">
+            <select
+              value={settings.display.timeFormat}
+              onChange={(e) => updateSettings('display', { timeFormat: e.target.value as '12h' | '24h' })}
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                background: 'var(--color-bg-tertiary)',
+                border: '1px solid var(--color-border-primary)',
+                borderRadius: 'var(--radius-sm)',
+                color: 'var(--color-text-primary)',
+                fontSize: '14px',
+                fontFamily: 'inherit',
+              }}
+            >
+              <option value="12h">12-hour (AM/PM)</option>
+              <option value="24h">24-hour</option>
+            </select>
+          </FormField>
+        </SettingsSection>
+
         {/* Terminal Configuration */}
         <SettingsSection
+          id="terminal"
           title="Terminal Configuration"
           description="Customize terminal appearance and behavior"
         >
@@ -258,21 +332,19 @@ export const SettingsPage: React.FC = () => {
               min={8}
               max={24}
               step={1}
-              onChange={(value) => updateSettings('terminal', { fontSize: value })}
-              formatValue={(v) => `${v}px`}
-              aria-label="Font size"
+              onChange={(value) => updateSettings('terminal', { fontSize: value as number })}
+              tooltip={{ formatter: (v) => `${v}px` }}
             />
           </FormField>
 
-          <FormField label={`Line Height: ${settings.terminal.lineHeight}`}>
+          <FormField label={`Line Height: ${settings.terminal.lineHeight.toFixed(1)}`}>
             <Slider
               value={settings.terminal.lineHeight}
               min={1.0}
               max={2.0}
               step={0.1}
-              onChange={(value) => updateSettings('terminal', { lineHeight: value })}
-              formatValue={(v) => v.toFixed(1)}
-              aria-label="Line height"
+              onChange={(value) => updateSettings('terminal', { lineHeight: value as number })}
+              tooltip={{ formatter: (v) => v?.toFixed(1) }}
             />
           </FormField>
 
@@ -300,6 +372,7 @@ export const SettingsPage: React.FC = () => {
 
         {/* Security Settings */}
         <SettingsSection
+          id="security"
           title="Security Settings"
           description="Manage security and privacy preferences"
         >

@@ -1,4 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
+import {
+  BarChartOutlined,
+  GlobalOutlined,
+  SafetyOutlined,
+  SaveOutlined,
+  RobotOutlined,
+  UserOutlined
+} from '@ant-design/icons';
 import { ChatMessage } from '../../../types/chat';
 import { Button } from '../../atoms/Button/Button';
 import styles from './ChatPanel.module.css';
@@ -124,10 +132,10 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
   };
 
   const quickActions = [
-    { id: 'status', label: 'Router Status', icon: '📊' },
-    { id: 'interfaces', label: 'Check Interfaces', icon: '🌐' },
-    { id: 'firewall', label: 'Firewall Rules', icon: '🛡️' },
-    { id: 'backup', label: 'Create Backup', icon: '💾' }
+    { id: 'status', label: 'Router Status', icon: <BarChartOutlined /> },
+    { id: 'interfaces', label: 'Check Interfaces', icon: <GlobalOutlined /> },
+    { id: 'firewall', label: 'Firewall Rules', icon: <SafetyOutlined /> },
+    { id: 'backup', label: 'Create Backup', icon: <SaveOutlined /> }
   ];
 
   const handleQuickAction = (action: string) => {
@@ -146,7 +154,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
     <div className={styles.container}>
       <div className={styles.header}>
         <div className={styles.headerLeft}>
-          <span className={styles.headerIcon}>🤖</span>
+          <RobotOutlined className={styles.headerIcon} />
           <div>
             <h3 className={styles.headerTitle}>AI Assistant</h3>
             <span className={styles.headerSubtitle}>Powered by Claude</span>
@@ -165,7 +173,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
             className={`${styles.message} ${styles[message.sender]}`}
           >
             <div className={styles.messageAvatar}>
-              {message.sender === 'user' ? '👤' : '🤖'}
+              {message.sender === 'user' ? <UserOutlined /> : <RobotOutlined />}
             </div>
             <div className={styles.messageContent}>
               <div className={styles.messageText}>{message.content}</div>
@@ -178,7 +186,9 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
         
         {isTyping && (
           <div className={`${styles.message} ${styles.assistant}`}>
-            <div className={styles.messageAvatar}>🤖</div>
+            <div className={styles.messageAvatar}>
+              <RobotOutlined />
+            </div>
             <div className={styles.messageContent}>
               <div className={styles.typingIndicator}>
                 <span></span>

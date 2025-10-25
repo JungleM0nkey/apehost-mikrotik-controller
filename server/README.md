@@ -5,7 +5,7 @@
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### 1. Install Dependencies
 ```bash
@@ -28,7 +28,7 @@ Server runs on http://localhost:3000
 
 ---
 
-## 📡 API Endpoints
+## API Endpoints
 
 ### Health Check
 ```
@@ -63,7 +63,7 @@ Executes RouterOS command and returns output
 
 ---
 
-## 🏗️ Project Structure
+## Project Structure
 
 ```
 server/
@@ -89,7 +89,7 @@ server/
 
 ---
 
-## 🔧 Configuration
+## Configuration
 
 ### Environment Variables
 
@@ -106,7 +106,7 @@ server/
 
 ---
 
-## 📝 Scripts
+## Scripts
 
 | Command | Description |
 |---------|-------------|
@@ -117,7 +117,7 @@ server/
 
 ---
 
-## 🔌 Current Implementation
+## Current Implementation
 
 ### Phase 2 Foundation (Complete)
 - ✅ Express server setup
@@ -133,7 +133,7 @@ All endpoints currently return mock data matching the frontend expectations. Thi
 
 ---
 
-## 🚧 TODO (Phase 2 Continued)
+## TODO (Phase 2 Continued)
 
 ### High Priority
 - [ ] Real MikroTik RouterOS API integration
@@ -156,13 +156,13 @@ All endpoints currently return mock data matching the frontend expectations. Thi
 
 ---
 
-## 🔐 Security Notes
+## Security Notes
 
 ### Current Status (Development Only)
-- ⚠️ No authentication implemented yet
-- ⚠️ Mock data only, no real router access
-- ⚠️ CORS open to frontend origin
-- ⚠️ Passwords in .env (not committed)
+- ⚠ No authentication implemented yet
+- ⚠ Mock data only, no real router access
+- ⚠ CORS open to frontend origin
+- ⚠ Passwords in .env (not committed)
 
 ### Production Requirements
 - Implement JWT authentication
@@ -174,7 +174,7 @@ All endpoints currently return mock data matching the frontend expectations. Thi
 
 ---
 
-## 🧪 Testing
+## Testing
 
 ### Test API Endpoints
 
@@ -202,7 +202,7 @@ curl -X POST http://localhost:3000/api/terminal/execute \
 
 ---
 
-## 📚 Dependencies
+## Dependencies
 
 ### Production
 - **express**: Web framework
@@ -218,7 +218,7 @@ curl -X POST http://localhost:3000/api/terminal/execute \
 
 ---
 
-## 🔗 Integration with Frontend
+## Integration with Frontend
 
 ### Frontend API Service
 Update frontend to call backend endpoints:
@@ -238,7 +238,7 @@ Frontend (http://localhost:5173) is allowed by default. Update `CORS_ORIGIN` in 
 
 ---
 
-## 🎯 Next Steps
+## Next Steps
 
 1. **Test Mock API**: Verify all endpoints return expected data
 2. **Frontend Integration**: Connect Dashboard to real API
@@ -249,7 +249,7 @@ Frontend (http://localhost:5173) is allowed by default. Update `CORS_ORIGIN` in 
 
 ---
 
-## 💡 Development Tips
+## Development Tips
 
 ### Hot Reload
 The `npm run dev` command watches for file changes and automatically restarts the server.

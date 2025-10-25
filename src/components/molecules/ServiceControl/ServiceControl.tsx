@@ -25,6 +25,7 @@ export interface ServiceControlProps {
   onRestart?: () => void;
   onShutdown?: () => void;
   onRefresh?: () => void;
+  expanded?: boolean;
 }
 
 export const ServiceControl: React.FC<ServiceControlProps> = ({
@@ -34,6 +35,7 @@ export const ServiceControl: React.FC<ServiceControlProps> = ({
   onRestart,
   onShutdown,
   onRefresh,
+  expanded = false,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -77,32 +79,11 @@ export const ServiceControl: React.FC<ServiceControlProps> = ({
     return 'error';
   };
 
-  return (
-    <div className={styles.container} ref={dropdownRef}>
-      <div
-        className={styles.badge}
-        onClick={() => setIsOpen(!isOpen)}
-      >
-        <Badge
-          status={getBadgeStatus()}
-          text={
-            <span className={styles.badgeText}>
-              {serviceName}
-            </span>
-          }
-        />
-      </div>
-
-      {isOpen && (
-        <div className={styles.dropdown}>
-          <div className={styles.dropdownHeader}>
-            <InfoCircleOutlined className={styles.headerIcon} />
-            <span className={styles.headerTitle}>{serviceName} Service</span>
-          </div>
-
-          <div className={styles.dropdownContent}>
-            {/* Status */}
-            <div className={styles.infoRow}>
+  // Render content section (reusable for both dropdown and expanded modes)
+  const renderContent = () => (
+    <>
+      {/* Status */}
+      <div className={styles.infoRow}>
               <span className={styles.infoLabel}>Status:</span>
               <span className={`${styles.infoValue} ${styles[status]}`}>
                 {status.toUpperCase()}
@@ -265,6 +246,55 @@ export const ServiceControl: React.FC<ServiceControlProps> = ({
                 </div>
               </>
             )}
+    </>
+  );
+
+  // Expanded mode (for modal)
+  if (expanded) {
+    return (
+      <div className={styles.expandedContainer}>
+        <div className={styles.statusHeader}>
+          <Badge
+            status={getBadgeStatus()}
+            text={
+              <span className={styles.statusText}>
+                {status.toUpperCase()}
+              </span>
+            }
+          />
+        </div>
+        <div className={styles.expandedContent}>
+          {renderContent()}
+        </div>
+      </div>
+    );
+  }
+
+  // Dropdown mode (for header)
+  return (
+    <div className={styles.container} ref={dropdownRef}>
+      <div
+        className={styles.badge}
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        <Badge
+          status={getBadgeStatus()}
+          text={
+            <span className={styles.badgeText}>
+              {serviceName}
+            </span>
+          }
+        />
+      </div>
+
+      {isOpen && (
+        <div className={styles.dropdown}>
+          <div className={styles.dropdownHeader}>
+            <InfoCircleOutlined className={styles.headerIcon} />
+            <span className={styles.headerTitle}>{serviceName} Service</span>
+          </div>
+          <div className={styles.dropdownContent}>
+            {renderContent()}
           </div>
         </div>
       )}

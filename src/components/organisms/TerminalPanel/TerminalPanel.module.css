@@ -1,6 +1,7 @@
 .container {
   display: flex;
   flex-direction: column;
+  min-height: 600px;
   height: 100%;
   background: var(--color-bg-terminal);
   border: 1px solid var(--color-border-primary);
@@ -16,12 +17,14 @@
   padding: var(--space-md) var(--space-lg);
   background: var(--color-bg-secondary);
   border-bottom: 1px solid var(--color-border-primary);
+  gap: var(--space-lg);
 }
 
 .headerLeft {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
+  flex-shrink: 0;
 }
 
 .headerIcon {
@@ -34,10 +37,30 @@
   font-size: var(--font-size-sm);
 }
 
+.headerCenter {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex: 1;
+  max-width: 200px;
+}
+
+.fontSizeIcon {
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.fontSizeSlider {
+  flex: 1;
+  margin: 0;
+}
+
 .headerRight {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
+  flex-shrink: 0;
 }
 
 .statusDot {
@@ -75,9 +98,10 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  font-family: var(--font-mono);
-  font-size: var(--font-size-xs);
-  line-height: 1.5;
+  font-family: 'JetBrains Mono', 'SF Mono', Consolas, 'Liberation Mono', 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  font-variant-ligatures: none;
 }
 
 .output {
@@ -165,6 +189,8 @@
   justify-content: center;
   transition: all 0.15s ease;
   opacity: 0.8;
+  z-index: 10;
+  pointer-events: auto;
 }
 
 .copyButton:hover {
@@ -179,6 +205,9 @@
 
 .copyButton svg {
   display: block;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
 }
 
 .lineCopied .copyButton {
@@ -380,7 +409,7 @@
   display: block;
   color: #ff8c00;
   font-weight: bold;
-  font-family: 'Courier New', Courier, monospace;
+  font-family: 'JetBrains Mono', 'Courier New', Courier, monospace;
   text-shadow:
     0 0 10px rgba(255, 140, 0, 0.95),
     0 0 20px rgba(255, 140, 0, 0.7),
@@ -431,4 +460,127 @@
   50% {
     opacity: 0.6;
   }
+}
+
+/* Terminal Output Value Colorization */
+:global(.key) {
+  color: #60a5fa;
+  font-weight: 500;
+}
+
+:global(.value-ip) {
+  color: #10b981;
+  font-weight: 500;
+}
+
+:global(.value-mac) {
+  color: #60a5fa;
+}
+
+:global(.value-true) {
+  color: #10b981;
+  font-weight: 600;
+}
+
+:global(.value-false) {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+:global(.value-number) {
+  color: #fbbf24;
+}
+
+:global(.value-time) {
+  color: #9ca3af;
+}
+
+:global(.value-interface) {
+  color: #fbbf24;
+  font-weight: 500;
+}
+
+:global(.value-default) {
+  color: #e0e0e0;
+}
+
+:global(.section-header) {
+  color: #ff8c00;
+  font-weight: 700;
+  display: block;
+  margin: 12px 0 8px 0;
+  letter-spacing: 0.5px;
+}
+
+/* Context Menu */
+.contextMenu {
+  position: fixed;
+  background: rgba(30, 41, 59, 0.98);
+  border: 1px solid #ff8c00;
+  border-radius: 6px;
+  padding: 4px;
+  min-width: 220px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), 0 0 12px rgba(255, 140, 0, 0.3);
+  z-index: 10000;
+  animation: contextMenuFadeIn 0.15s ease-out;
+  backdrop-filter: blur(8px);
+}
+
+@keyframes contextMenuFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.contextMenuItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  color: #e0e0e0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  text-align: left;
+}
+
+.contextMenuItem:hover {
+  background: rgba(255, 140, 0, 0.15);
+  color: #ff8c00;
+}
+
+.contextMenuItem:active {
+  background: rgba(255, 140, 0, 0.25);
+  transform: scale(0.98);
+}
+
+.contextMenuIcon {
+  font-size: 14px;
+  width: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.contextMenuShortcut {
+  margin-left: auto;
+  font-size: 11px;
+  color: #9ca3af;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.contextMenuDivider {
+  height: 1px;
+  background: rgba(255, 140, 0, 0.2);
+  margin: 4px 8px;
 }

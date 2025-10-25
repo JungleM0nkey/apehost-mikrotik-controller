@@ -461,6 +461,10 @@ class MikroTikService {
       // Parse CPU load (remove % if present)
       const cpuLoad = parseInt(String(resourceData['cpu-load'] || '0').replace('%', ''));
 
+      // Get CPU architecture and count
+      const cpuArchitecture = resourceData['architecture-name'] || resourceData.architecture || 'Unknown';
+      const cpuCount = parseInt(String(resourceData['cpu-count'] || resourceData.cpu || '1'));
+
           return {
             name: identityData.name || 'MikroTik',
             ip: config.host,
@@ -474,6 +478,8 @@ class MikroTikService {
             timestamp: new Date().toISOString(),
             macAddress,
             subnet,
+            cpuArchitecture,
+            cpuCount,
           };
         } catch (error) {
           console.error('[MikroTik] Error getting router status:', error);
@@ -492,19 +498,34 @@ class MikroTikService {
       'interfaces',
       async () => {
         try {
+          // Get interface list and stats separately
           const interfaces = await this.executeCommand('/interface/print');
-      
-          return interfaces.map((iface: any, index: number) => ({
-            id: iface['.id'] || `iface-${index}`,
-            name: iface.name || 'unknown',
-            type: iface.type || 'unknown',
-            status: (iface.running === 'true' || iface.disabled === 'false') ? 'up' : 'down',
-            rxRate: parseInt(iface['rx-rate'] || '0'),
-            txRate: parseInt(iface['tx-rate'] || '0'),
-            rxBytes: parseInt(iface['rx-byte'] || '0'),
-            txBytes: parseInt(iface['tx-byte'] || '0'),
-            comment: iface.comment,
-          }));
+
+          // Get traffic stats for all interfaces
+          let trafficStats: any[] = [];
+          try {
+            trafficStats = await this.executeCommand('/interface/print stats');
+          } catch (error) {
+            console.warn('Failed to get interface stats, using fallback:', error);
+          }
+
+          return interfaces.map((iface: any, index: number) => {
+            // Find matching stats entry
+            const stats = trafficStats.find((s: any) => s.name === iface.name) || {};
+
+            return {
+              id: iface['.id'] || `iface-${index}`,
+              name: iface.name || 'unknown',
+              type: iface.type || 'unknown',
+              status: (iface.running === 'true' || iface.disabled === 'false') ? 'up' : 'down',
+              // Try multiple possible field names for rates (in bytes per second)
+              rxRate: parseInt(stats['rx-bits-per-second'] || stats['rx-rate'] || '0') / 8,
+              txRate: parseInt(stats['tx-bits-per-second'] || stats['tx-rate'] || '0') / 8,
+              rxBytes: parseInt(stats['rx-byte'] || iface['rx-byte'] || '0'),
+              txBytes: parseInt(stats['tx-byte'] || iface['tx-byte'] || '0'),
+              comment: iface.comment,
+            };
+          });
         } catch (error) {
           console.error('Error getting interfaces:', error);
           throw error;
@@ -512,6 +533,52 @@ class MikroTikService {
       },
       5000 // Cache interfaces for 5 seconds
     );
+  }
+
+  /**
+   * Update network interface properties
+   */
+  async updateInterface(
+    id: string,
+    updates: { name?: string; comment?: string; disabled?: boolean }
+  ): Promise<NetworkInterface> {
+    try {
+      const params: string[] = [];
+
+      if (updates.name !== undefined) {
+        params.push(`=name=${updates.name}`);
+      }
+      if (updates.comment !== undefined) {
+        params.push(`=comment=${updates.comment}`);
+      }
+      if (updates.disabled !== undefined) {
+        params.push(`=disabled=${updates.disabled ? 'yes' : 'no'}`);
+      }
+
+      if (params.length === 0) {
+        throw new Error('No updates provided');
+      }
+
+      // Execute the set command
+      const command = `/interface/set\n=.id=${id}\n${params.join('\n')}`;
+      await this.executeCommand(command);
+
+      // Clear cache to force refresh
+      this.clearCache('interfaces');
+
+      // Get updated interface list
+      const interfaces = await this.getInterfaces();
+      const updatedInterface = interfaces.find(iface => iface.id === id);
+
+      if (!updatedInterface) {
+        throw new Error('Interface not found after update');
+      }
+
+      return updatedInterface;
+    } catch (error) {
+      console.error('Error updating interface:', error);
+      throw error;
+    }
   }
 
   /**
@@ -573,6 +640,81 @@ class MikroTikService {
   }
 
   /**
+   * Colorize value based on type detection
+   */
+  private colorizeValue(key: string, value: any): string {
+    const valueStr = String(value);
+
+    // IP Address (192.168.1.1 or 10.0.0.1/24)
+    if (/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(\/\d{1,2})?$/.test(valueStr)) {
+      return `<span class="value-ip">${valueStr}</span>`;
+    }
+
+    // MAC Address (AA:BB:CC:DD:EE:FF)
+    if (/^([0-9A-F]{2}:){5}[0-9A-F]{2}$/i.test(valueStr)) {
+      return `<span class="value-mac">${valueStr}</span>`;
+    }
+
+    // Boolean/Status - True/Enabled
+    if (/^(true|enabled|running|yes|up|active)$/i.test(valueStr)) {
+      return `<span class="value-true">${valueStr}</span>`;
+    }
+
+    // Boolean/Status - False/Disabled
+    if (/^(false|disabled|stopped|no|down|inactive)$/i.test(valueStr)) {
+      return `<span class="value-false">${valueStr}</span>`;
+    }
+
+    // Numbers and Metrics (1234, 50%, 1.5GHz, 100KiB)
+    if (/^\d+(\.\d+)?[KMGT]?(iB|B|Hz|bps|%)?$/.test(valueStr)) {
+      return `<span class="value-number">${valueStr}</span>`;
+    }
+
+    // Time/Uptime (1w2d3h4m5s)
+    if (/\d+[wdhms]/.test(valueStr)) {
+      return `<span class="value-time">${valueStr}</span>`;
+    }
+
+    // Interface Names (ether1, wlan1, bridge1)
+    if (/^(ether|wlan|bridge|vlan|pppoe|sfp)/i.test(valueStr)) {
+      return `<span class="value-interface">${valueStr}</span>`;
+    }
+
+    // Default - plain white text
+    return `<span class="value-default">${valueStr}</span>`;
+  }
+
+  /**
+   * Format single item output with aligned key-value pairs
+   */
+  private formatSingleItem(item: any): string {
+    if (typeof item === 'string') return item;
+
+    const entries = Object.entries(item).filter(([key]) => !key.startsWith('.'));
+    if (entries.length === 0) return '';
+
+    // Calculate max key length for alignment
+    const maxKeyLength = Math.max(...entries.map(([key]) => key.length));
+
+    return entries.map(([key, value]) => {
+      const paddedKey = key.padEnd(maxKeyLength);
+      const coloredValue = this.colorizeValue(key, value);
+      return `  <span class="key">${paddedKey}</span> : ${coloredValue}`;
+    }).join('\n');
+  }
+
+  /**
+   * Format multiple items with section separators
+   */
+  private formatMultipleItems(items: any[]): string {
+    return items.map((item, index) => {
+      const header = `<span class="section-header">━━━ Item ${index + 1} ${'━'.repeat(50)}</span>`;
+      const content = this.formatSingleItem(item);
+      return `${header}\n${content}`;
+    }).join('\n\n');
+  }
+
+  /**
    * Execute terminal command and format output
    */
   async executeTerminalCommand(command: string): Promise<string> {
@@ -584,22 +726,42 @@ class MikroTikService {
 
       // Format the result as a readable string
       if (!result || result.length === 0) {
-        return 'Command executed successfully (no output)';
+        return '<span class="value-true">Command executed successfully (no output)</span>';
       }
 
-      // Convert result array to formatted string
-      return result.map((item: any) => {
-        if (typeof item === 'string') return item;
-
-        // Format object as key-value pairs
-        return Object.entries(item)
-          .filter(([key]) => !key.startsWith('.'))
-          .map(([key, value]) => `${key}: ${value}`)
-          .join('\n');
-      }).join('\n\n');
+      // Format based on number of items
+      if (result.length === 1) {
+        return this.formatSingleItem(result[0]);
+      } else {
+        return this.formatMultipleItems(result);
+      }
     } catch (error: any) {
       console.error('Error executing terminal command:', error);
       throw new Error(error.message || 'Command execution failed');
+    }
+  }
+
+  /**
+   * Export router configuration
+   */
+  async exportConfig(): Promise<string> {
+    try {
+      const result = await this.executeCommand('/export');
+
+      if (!result || result.length === 0) {
+        throw new Error('No configuration data received');
+      }
+
+      // The export command typically returns the configuration as a single string
+      // or as an array with the configuration split into parts
+      if (Array.isArray(result)) {
+        return result.join('\n');
+      }
+
+      return String(result);
+    } catch (error) {
+      console.error('Error exporting configuration:', error);
+      throw error;
     }
   }
 

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { ServiceControl, ServiceInfo } from '../../molecules/ServiceControl/ServiceControl';
+import { CloudServerOutlined, ClockCircleOutlined } from '@ant-design/icons';
+import { ServiceInfo } from '../../molecules/ServiceControl/ServiceControl';
+import { ServerModal } from '../../molecules/ServerModal/ServerModal';
 import api from '../../../services/api';
 import styles from './Header.module.css';
 
@@ -7,7 +9,9 @@ export interface HeaderProps {
   currentPage: string;
 }
 
-export const Header: React.FC<HeaderProps> = ({ currentPage }) => {
+export const Header: React.FC<HeaderProps> = () => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
   const [frontendStatus, setFrontendStatus] = useState<'online' | 'offline'>('online');
   const [backendStatus, setBackendStatus] = useState<'online' | 'offline' | 'connecting'>('connecting');
   const [frontendInfo, setFrontendInfo] = useState<ServiceInfo | undefined>();
@@ -54,12 +58,20 @@ export const Header: React.FC<HeaderProps> = ({ currentPage }) => {
     fetchServiceInfo();
 
     // Check backend every 5 seconds
-    const interval = setInterval(() => {
+    const backendInterval = setInterval(() => {
       checkBackendConnection();
       fetchServiceInfo();
     }, 5000);
 
-    return () => clearInterval(interval);
+    // Update time every second
+    const timeInterval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+
+    return () => {
+      clearInterval(backendInterval);
+      clearInterval(timeInterval);
+    };
   }, []);
 
   const handleBackendRestart = async () => {
@@ -87,25 +99,60 @@ export const Header: React.FC<HeaderProps> = ({ currentPage }) => {
     }
   };
 
+  const getTimezone = () => {
+    return localStorage.getItem('timezone') || Intl.DateTimeFormat().resolvedOptions().timeZone;
+  };
+
+  const formatTime = () => {
+    const timezone = getTimezone();
+    return currentTime.toLocaleTimeString('en-US', {
+      timeZone: timezone,
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true,
+    });
+  };
+
+  const getServerStatusColor = () => {
+    if (backendStatus === 'online') return 'var(--color-accent-success)';
+    if (backendStatus === 'connecting') return 'var(--color-accent-warning)';
+    return 'var(--color-accent-error)';
+  };
+
   return (
-    <header className={styles.header}>
-      <div className={styles.right}>
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-          <ServiceControl
-            serviceName="Frontend"
-            status={frontendStatus}
-            serviceInfo={frontendInfo}
-          />
-          <ServiceControl
-            serviceName="Backend"
-            status={backendStatus}
-            serviceInfo={backendInfo}
-            onRestart={handleBackendRestart}
-            onShutdown={handleBackendShutdown}
-            onRefresh={fetchServiceInfo}
-          />
+    <>
+      <header className={styles.header}>
+        <div className={styles.right}>
+          <div className={styles.timeDisplay}>
+            <ClockCircleOutlined className={styles.timeIcon} />
+            <span className={styles.timeText}>{formatTime()}</span>
+          </div>
+
+          <button
+            className={styles.serverButton}
+            onClick={() => setIsModalOpen(true)}
+            title="Server Status"
+          >
+            <CloudServerOutlined
+              className={styles.serverIcon}
+              style={{ color: getServerStatusColor() }}
+            />
+          </button>
         </div>
-      </div>
-    </header>
+      </header>
+
+      <ServerModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        frontendStatus={frontendStatus}
+        backendStatus={backendStatus}
+        frontendInfo={frontendInfo}
+        backendInfo={backendInfo}
+        onBackendRestart={handleBackendRestart}
+        onBackendShutdown={handleBackendShutdown}
+        onBackendRefresh={fetchServiceInfo}
+      />
+    </>
   );
 };

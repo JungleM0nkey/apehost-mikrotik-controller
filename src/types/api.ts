@@ -26,6 +26,8 @@ export interface RouterStatus {
   timestamp: string;
   macAddress?: string;
   subnet?: string;
+  cpuArchitecture?: string;
+  cpuCount?: number;
 }
 
 export interface NetworkInterface {
@@ -38,6 +40,12 @@ export interface NetworkInterface {
   rxBytes: number;
   txBytes: number;
   comment?: string;
+}
+
+export interface UpdateInterfaceRequest {
+  name?: string;
+  comment?: string;
+  disabled?: boolean;
 }
 
 export interface SystemResources {
