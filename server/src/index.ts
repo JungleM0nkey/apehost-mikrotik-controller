@@ -17,6 +17,7 @@ import { terminalRoutes } from './routes/terminal.js';
 import { healthRoutes } from './routes/health.js';
 import { serviceRoutes } from './routes/service.js';
 import { settingsRoutes } from './routes/settings.js';
+import agentRoutes from './routes/agent.js';
 import mikrotikService from './services/mikrotik.js';
 import { Server as SocketIOServer } from 'socket.io';
 import terminalSessionManager from './services/terminal-session.js';
@@ -25,6 +26,7 @@ import { getGlobalProvider } from './services/ai/provider-factory.js';
 import { AIServiceError } from './services/ai/errors/index.js';
 import { globalMCPExecutor } from './services/ai/mcp/mcp-executor.js';
 import { createServer } from 'http';
+import { getHealthMonitor } from './services/agent/monitor/health-monitor.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -59,6 +61,7 @@ app.use('/api/router', routerRoutes);
 app.use('/api/terminal', terminalRoutes);
 app.use('/api/service', serviceRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/agent', agentRoutes);
 
 // Root endpoint
 app.get('/', (req: Request, res: Response) => {
@@ -96,23 +99,32 @@ let shutdownInProgress = false;
 const gracefulShutdown = async (signal: string) => {
   if (shutdownInProgress) return;
   shutdownInProgress = true;
-  
+
   console.log(`\n[Server] Received ${signal}, starting graceful shutdown...`);
-  
+
+  // Stop Health Monitor
+  try {
+    const healthMonitor = getHealthMonitor();
+    healthMonitor.stop();
+    console.log('[Server] Health Monitor stopped');
+  } catch (error) {
+    console.error('[Server] Error stopping Health Monitor:', error);
+  }
+
   // Close HTTP server
   if (server) {
     server.close(() => {
       console.log('[Server] HTTP server closed');
     });
   }
-  
+
   // Disconnect from MikroTik
   try {
     await mikrotikService.disconnect('shutdown');
   } catch (error) {
     console.error('[Server] Error disconnecting from MikroTik:', error);
   }
-  
+
   console.log('[Server] Graceful shutdown complete');
   process.exit(0);
 };
@@ -160,7 +172,7 @@ const interfaceStreamingIntervals = new Map<string, NodeJS.Timeout>();
 
 // Initialize AI provider (will be loaded async at startup)
 console.log('[Server] AI provider will be initialized at startup...');
-let aiProvider: Awaited<ReturnType<typeof getGlobalProvider>> = null;
+export let aiProvider: Awaited<ReturnType<typeof getGlobalProvider>> = null;
 
 // Socket.IO connection handler
 io.on('connection', (socket) => {
@@ -385,17 +397,19 @@ When asked about the network, devices, or configuration - use the appropriate to
           console.log(`[Assistant] LLM response - finishReason: ${response.finishReason}, hasToolCalls: ${!!response.toolCalls}`);
           console.log(`[Assistant] LLM content preview: ${response.content.substring(0, 200)}...`);
 
-          // If no tool calls OR finish reason is stop, we have the final response
-          if (!response.toolCalls || response.toolCalls.length === 0 || response.finishReason === 'stop') {
+          // If no tool calls, we have the final response
+          if (!response.toolCalls || response.toolCalls.length === 0) {
             fullResponse = response.content;
 
-            // Stream the final response to the client character by character
+            // Stream the final response to the client character by character with delay
             for (const char of fullResponse) {
               socket.emit('assistant:stream', {
                 chunk: char,
                 conversationId,
                 messageId: assistantMessageId,
               });
+              // Add small delay for realistic typing animation (5ms per character)
+              await new Promise(resolve => setTimeout(resolve, 5));
             }
             break;
           }
@@ -590,6 +604,15 @@ const startServer = async () => {
   } else {
     console.warn('[Server] AI Provider not configured - assistant features disabled');
   }
+
+  // Initialize Health Monitor
+  console.log('[Server] Initializing Health Monitor...');
+  const healthMonitor = getHealthMonitor();
+  healthMonitor.setWebSocketEmitter((event: string, data: any) => {
+    io.emit(event, data); // Broadcast to all connected clients
+  });
+  healthMonitor.start();
+  console.log('[Server] Health Monitor started - running health checks every 5 minutes');
 
   server = httpServer.listen(Number(PORT), '0.0.0.0', () => {
     console.log(`\n[Server] MikroTik Dashboard API Server`);

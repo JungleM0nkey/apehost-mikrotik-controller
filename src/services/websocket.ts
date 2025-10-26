@@ -399,6 +399,30 @@ export class WebSocketService {
       this.socket?.off('interfaces:error', callback);
     };
   }
+
+  /**
+   * Generic event subscription method for custom events
+   * @param event - Event name to subscribe to
+   * @param callback - Callback function to execute when event is received
+   * @returns Cleanup function to unsubscribe
+   */
+  on<T = any>(event: string, callback: (data: T) => void): () => void {
+    if (!this.socket) return () => {};
+
+    this.socket.on(event, callback);
+    return () => this.socket?.off(event, callback);
+  }
+
+  /**
+   * Generic event unsubscription method for custom events
+   * @param event - Event name to unsubscribe from
+   * @param callback - Callback function to remove
+   */
+  off<T = any>(event: string, callback: (data: T) => void): void {
+    if (!this.socket) return;
+
+    this.socket.off(event, callback);
+  }
 }
 
 /**

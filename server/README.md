@@ -1,7 +1,7 @@
 # MikroTik Dashboard - Backend Server
 
-**Status**: Phase 2 Foundation Complete  
-**Stack**: Node.js + Express + TypeScript + MikroTik RouterOS API
+**Status**: Phase 3 - Network Troubleshooting Enhancement Complete
+**Stack**: Node.js + Express + TypeScript + MikroTik RouterOS API + Claude AI
 
 ---
 
@@ -25,6 +25,65 @@ npm run dev
 ```
 
 Server runs on http://localhost:3000
+
+---
+
+## 🤖 AI Assistant & Network Troubleshooting
+
+The backend includes a **Claude AI-powered assistant** with **14 specialized MCP (Model Context Protocol) tools** for comprehensive network troubleshooting:
+
+### Network Troubleshooting Tools (NEW ✨)
+
+#### 1. analyze_firewall
+**Intelligent firewall path analysis** - Diagnoses why traffic is blocked/allowed
+- Matches traffic against firewall rules with CIDR/port range support
+- Returns exact blocking rule with actionable recommendations
+- Confidence scoring: high/medium/low
+- Example: "Why can't 192.168.1.100 access 10.0.0.50 on port 443?"
+
+#### 2. test_connectivity
+**Active connectivity testing** - Tests network reachability and performance
+- **ping**: Packet loss, latency, quality assessment (excellent→unreachable)
+- **traceroute**: Hop-by-hop path discovery, routing loop detection
+- **bandwidth-test**: Upload/download throughput measurement
+- Example: "Ping 8.8.8.8" or "Trace route to google.com"
+
+#### 3. query_network
+**Network layer diagnostics** - Layer 2/3 information lookup
+- **arp**: IP-to-MAC mapping, duplicate IP detection
+- **dns**: Hostname resolution testing
+- **dhcp**: Lease information and status
+- **addresses**: IP address configuration by interface
+- Example: "What's the MAC for 192.168.1.100?" or "Resolve google.com"
+
+### Systematic Troubleshooting Workflow
+
+The AI follows a **5-phase diagnostic approach**:
+1. **Understand Problem**: Gather src/dst/port/error details
+2. **Test Connectivity**: Ping to check basic reachability
+3. **Analyze Firewall**: Check if rules are blocking (80% of issues)
+4. **Check Network Layer**: ARP, DNS, DHCP diagnostics
+5. **Trace Path**: Identify routing issues
+
+### Example AI Interactions
+
+```
+User: "Why can't 192.168.1.100 access 10.0.0.50 on HTTPS?"
+AI: → analyze_firewall(analyze_path, src=192.168.1.100, dst=10.0.0.50, service=https)
+    Returns: "Blocked by rule #42 'drop-external' - Recommendation: Add ACCEPT rule before it"
+
+User: "Device 192.168.1.50 not appearing on network"
+AI: → query_network(dhcp, address=192.168.1.50)
+    → query_network(arp, address=192.168.1.50)
+    → test_connectivity(ping, address=192.168.1.50)
+    Returns: Comprehensive diagnosis with specific recommendations
+
+User: "Is my internet connection good?"
+AI: → test_connectivity(ping, address=8.8.8.8)
+    Returns: "Excellent - 0% packet loss, 12ms avg latency"
+```
+
+See [MCP_TOOLS_QUICK_REFERENCE.md](./MCP_TOOLS_QUICK_REFERENCE.md) for complete tool documentation.
 
 ---
 

@@ -12,8 +12,11 @@ import {
   CloseOutlined,
   CopyOutlined,
   PoweroffOutlined,
-  EyeOutlined
+  EyeOutlined,
+  UpOutlined,
+  DownOutlined
 } from '@ant-design/icons';
+import { InterfaceTypeIcon } from '../../components/atoms/InterfaceTypeIcon/InterfaceTypeIcon';
 import api from '../../services/api';
 import type { NetworkInterface, IpAddress, Route, ArpEntry } from '../../types/api';
 import styles from './NetworkPage.module.css';
@@ -167,6 +170,7 @@ const InterfaceCard: React.FC<InterfaceCardProps> = ({
       <div className={styles.interfaceHeader}>
         <div className={styles.interfaceTitle}>
           <span className={`${styles.statusIndicator} ${styles[iface.status]}`} />
+          <InterfaceTypeIcon type={iface.type} size={20} className={styles.interfaceTypeIcon} />
           {isEditing ? (
             <input
               type="text"
@@ -295,6 +299,31 @@ export const NetworkPage: React.FC = () => {
     interfaceId: string;
     position: {x: number; y: number};
   } | null>(null);
+
+  // Load collapsed state from localStorage
+  const [showActiveInterfaces, setShowActiveInterfaces] = useState(() => {
+    const saved = localStorage.getItem('network-show-active');
+    const value = saved !== null ? JSON.parse(saved) : true;
+    console.log('Loading showActiveInterfaces from localStorage:', value);
+    return value;
+  });
+  const [showInactiveInterfaces, setShowInactiveInterfaces] = useState(() => {
+    const saved = localStorage.getItem('network-show-inactive');
+    const value = saved !== null ? JSON.parse(saved) : true;
+    console.log('Loading showInactiveInterfaces from localStorage:', value);
+    return value;
+  });
+
+  // Save collapsed state to localStorage when it changes
+  useEffect(() => {
+    console.log('Saving showActiveInterfaces to localStorage:', showActiveInterfaces);
+    localStorage.setItem('network-show-active', JSON.stringify(showActiveInterfaces));
+  }, [showActiveInterfaces]);
+
+  useEffect(() => {
+    console.log('Saving showInactiveInterfaces to localStorage:', showInactiveInterfaces);
+    localStorage.setItem('network-show-inactive', JSON.stringify(showInactiveInterfaces));
+  }, [showInactiveInterfaces]);
 
   const fetchInterfaces = async () => {
     try {
@@ -518,50 +547,86 @@ export const NetworkPage: React.FC = () => {
             {/* Active Interfaces */}
             {activeInterfaces.length > 0 && (
               <div className={styles.section}>
-                <h2 className={styles.sectionTitle}>
-                  Active Interfaces
-                  <span className={styles.sectionCount}>{activeInterfaces.length}</span>
+                <h2
+                  className={`${styles.sectionTitle} ${styles.collapsible}`}
+                  onClick={() => setShowActiveInterfaces(!showActiveInterfaces)}
+                >
+                  <span className={styles.sectionTitleContent}>
+                    Active Interfaces
+                    <span className={styles.sectionCount}>{activeInterfaces.length}</span>
+                  </span>
+                  <button
+                    type="button"
+                    className={styles.collapseButton}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowActiveInterfaces(!showActiveInterfaces);
+                    }}
+                    aria-label={showActiveInterfaces ? 'Collapse active interfaces' : 'Expand active interfaces'}
+                  >
+                    {showActiveInterfaces ? <UpOutlined /> : <DownOutlined />}
+                  </button>
                 </h2>
-                <div className={styles.interfaceGrid}>
-                  {activeInterfaces.map((iface) => (
-                    <InterfaceCard
-                      key={iface.id}
-                      iface={iface}
-                      onUpdate={handleUpdateInterface}
-                      isEditing={editingInterfaceId === iface.id}
-                      onEditStart={() => setEditingInterfaceId(iface.id)}
-                      onEditEnd={() => setEditingInterfaceId(null)}
-                      contextMenu={contextMenuState?.interfaceId === iface.id ? contextMenuState.position : null}
-                      onContextMenuOpen={handleContextMenuOpen}
-                      onContextMenuClose={handleContextMenuClose}
-                    />
-                  ))}
-                </div>
+                {showActiveInterfaces && (
+                  <div className={styles.interfaceGrid}>
+                    {activeInterfaces.map((iface) => (
+                      <InterfaceCard
+                        key={iface.id}
+                        iface={iface}
+                        onUpdate={handleUpdateInterface}
+                        isEditing={editingInterfaceId === iface.id}
+                        onEditStart={() => setEditingInterfaceId(iface.id)}
+                        onEditEnd={() => setEditingInterfaceId(null)}
+                        contextMenu={contextMenuState?.interfaceId === iface.id ? contextMenuState.position : null}
+                        onContextMenuOpen={handleContextMenuOpen}
+                        onContextMenuClose={handleContextMenuClose}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
             {/* Inactive Interfaces */}
             {inactiveInterfaces.length > 0 && (
               <div className={styles.section}>
-                <h2 className={styles.sectionTitle}>
-                  Inactive Interfaces
-                  <span className={styles.sectionCount}>{inactiveInterfaces.length}</span>
+                <h2
+                  className={`${styles.sectionTitle} ${styles.collapsible}`}
+                  onClick={() => setShowInactiveInterfaces(!showInactiveInterfaces)}
+                >
+                  <span className={styles.sectionTitleContent}>
+                    Inactive Interfaces
+                    <span className={styles.sectionCount}>{inactiveInterfaces.length}</span>
+                  </span>
+                  <button
+                    type="button"
+                    className={styles.collapseButton}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowInactiveInterfaces(!showInactiveInterfaces);
+                    }}
+                    aria-label={showInactiveInterfaces ? 'Collapse inactive interfaces' : 'Expand inactive interfaces'}
+                  >
+                    {showInactiveInterfaces ? <UpOutlined /> : <DownOutlined />}
+                  </button>
                 </h2>
-                <div className={styles.interfaceGrid}>
-                  {inactiveInterfaces.map((iface) => (
-                    <InterfaceCard
-                      key={iface.id}
-                      iface={iface}
-                      onUpdate={handleUpdateInterface}
-                      isEditing={editingInterfaceId === iface.id}
-                      onEditStart={() => setEditingInterfaceId(iface.id)}
-                      onEditEnd={() => setEditingInterfaceId(null)}
-                      contextMenu={contextMenuState?.interfaceId === iface.id ? contextMenuState.position : null}
-                      onContextMenuOpen={handleContextMenuOpen}
-                      onContextMenuClose={handleContextMenuClose}
-                    />
-                  ))}
-                </div>
+                {showInactiveInterfaces && (
+                  <div className={styles.interfaceGrid}>
+                    {inactiveInterfaces.map((iface) => (
+                      <InterfaceCard
+                        key={iface.id}
+                        iface={iface}
+                        onUpdate={handleUpdateInterface}
+                        isEditing={editingInterfaceId === iface.id}
+                        onEditStart={() => setEditingInterfaceId(iface.id)}
+                        onEditEnd={() => setEditingInterfaceId(null)}
+                        contextMenu={contextMenuState?.interfaceId === iface.id ? contextMenuState.position : null}
+                        onContextMenuOpen={handleContextMenuOpen}
+                        onContextMenuClose={handleContextMenuClose}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>

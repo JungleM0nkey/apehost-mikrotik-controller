@@ -1,0 +1,29 @@
+.severityBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-xs) var(--space-md);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+}
+
+.label {
+  color: var(--color-text-primary);
+}
+
+.critical {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.high {
+  background: rgba(245, 158, 11, 0.1);
+}
+
+.medium {
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.low {
+  background: rgba(107, 114, 128, 0.1);
+}

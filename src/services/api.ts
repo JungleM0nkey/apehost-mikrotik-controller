@@ -116,6 +116,43 @@ class ApiService {
   async getFirewallAddressLists(): Promise<FirewallAddressList[]> {
     return this.request<FirewallAddressList[]>('/router/firewall/address-list');
   }
+
+  // AI Agent Methods
+  async getAgentIssues(params?: string): Promise<any> {
+    const endpoint = params ? `/agent/issues?${params}` : '/agent/issues';
+    return this.request<any>(endpoint);
+  }
+
+  async getAgentMetrics(): Promise<any> {
+    return this.request<any>('/agent/metrics');
+  }
+
+  async updateAgentIssueStatus(id: string, status: string): Promise<any> {
+    return this.request<any>(`/agent/issues/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    });
+  }
+
+  async triggerAgentScan(deepScan: boolean = false): Promise<any> {
+    return this.request<any>('/agent/scan', {
+      method: 'POST',
+      body: JSON.stringify({ deep_scan: deepScan }),
+    });
+  }
+
+  // Service Information
+  async getMCPTools(): Promise<any> {
+    return this.request<any>('/service/mcp-tools');
+  }
+
+  async getServiceInfo(): Promise<any> {
+    return this.request<any>('/service/info');
+  }
+
+  async getAIInfo(): Promise<any> {
+    return this.request<any>('/service/ai-info');
+  }
 }
 
 // Export singleton instance

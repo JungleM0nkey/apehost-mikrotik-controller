@@ -9,6 +9,22 @@ import type { Terminal } from '../../../types/terminal-manager';
 import type { TerminalTab } from '../../../types/terminal';
 import styles from './TerminalWindow.module.css';
 
+interface AIModelInfo {
+  available: boolean;
+  provider: string;
+  model: string;
+  context_window: number | string;
+  features: {
+    streaming: boolean;
+    function_calling: boolean;
+  };
+  token_costs: {
+    prompt_per_1m: number;
+    completion_per_1m: number;
+    note: string;
+  };
+}
+
 export interface TerminalWindowProps {
   terminal: Terminal;
 }
@@ -32,6 +48,7 @@ export const TerminalWindow: React.FC<TerminalWindowProps> = ({ terminal }) => {
   const [isClosing, setIsClosing] = useState(false);
   const [isMinimizing, setIsMinimizing] = useState(false);
   const [activeTab, setActiveTab] = useState<TerminalTab>('terminal');
+  const [modelInfo, setModelInfo] = useState<AIModelInfo | null>(null);
 
   // Initialize WebSocket connection
   useEffect(() => {
@@ -73,6 +90,25 @@ export const TerminalWindow: React.FC<TerminalWindowProps> = ({ terminal }) => {
       // Don't disconnect - let the context handle cleanup
     };
   }, [terminal.id, terminal.websocketConnection, updateSessionId]);
+
+  // Fetch AI model information
+  useEffect(() => {
+    const fetchModelInfo = async () => {
+      try {
+        const response = await fetch('/api/service/ai-info');
+        if (response.ok) {
+          const data = await response.json();
+          setModelInfo(data);
+        }
+      } catch (err) {
+        console.error('[TerminalWindow] Failed to fetch AI model info:', err);
+      }
+    };
+
+    if (llmStatus.configured) {
+      fetchModelInfo();
+    }
+  }, [llmStatus.configured]);
 
   const handleMinimize = () => {
     setIsMinimizing(true);
@@ -224,7 +260,14 @@ export const TerminalWindow: React.FC<TerminalWindowProps> = ({ terminal }) => {
             disabled={!llmStatus.configured}
             title={!llmStatus.configured ? 'AI Assistant requires LLM configuration. Please configure in Settings.' : 'AI Assistant'}
           >
-            AI Assistant
+            <div className={styles.tabContent}>
+              <span>AI Assistant</span>
+              {modelInfo && modelInfo.available && activeTab === 'assistant' && (
+                <span className={styles.tabModelInfo}>
+                  {modelInfo.model} • {typeof modelInfo.context_window === 'number' ? `${modelInfo.context_window.toLocaleString()}` : modelInfo.context_window} tokens
+                </span>
+              )}
+            </div>
           </button>
         </div>
         {renderTabContent()}
@@ -305,7 +348,14 @@ export const TerminalWindow: React.FC<TerminalWindowProps> = ({ terminal }) => {
             disabled={!llmStatus.configured}
             title={!llmStatus.configured ? 'AI Assistant requires LLM configuration. Please configure in Settings.' : 'AI Assistant'}
           >
-            AI Assistant
+            <div className={styles.tabContent}>
+              <span>AI Assistant</span>
+              {modelInfo && modelInfo.available && activeTab === 'assistant' && (
+                <span className={styles.tabModelInfo}>
+                  {modelInfo.model} • {typeof modelInfo.context_window === 'number' ? `${modelInfo.context_window.toLocaleString()}` : modelInfo.context_window} tokens
+                </span>
+              )}
+            </div>
           </button>
         </div>
         <div className={styles.content}>

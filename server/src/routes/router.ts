@@ -244,3 +244,71 @@ routerRoutes.get('/firewall/address-list', async (req: Request, res: Response) =
     });
   }
 });
+
+/**
+ * GET /api/router/scan/dhcp-leases
+ * Get DHCP server leases with hostname information
+ */
+routerRoutes.get('/scan/dhcp-leases', async (req: Request, res: Response) => {
+  try {
+    const leases = await mikrotikService.getDhcpLeases();
+    res.json(leases);
+  } catch (error: any) {
+    console.error('Error fetching DHCP leases:', error);
+    res.status(500).json({
+      error: 'Failed to fetch DHCP leases',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/router/scan/neighbors
+ * Get network neighbor discovery data (LLDP/CDP/MNDP)
+ */
+routerRoutes.get('/scan/neighbors', async (req: Request, res: Response) => {
+  try {
+    const neighbors = await mikrotikService.getNeighbors();
+    res.json(neighbors);
+  } catch (error: any) {
+    console.error('Error fetching neighbors:', error);
+    res.status(500).json({
+      error: 'Failed to fetch neighbors',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/router/scan/full
+ * Perform comprehensive network scan combining ARP, DHCP, and neighbor discovery
+ */
+routerRoutes.get('/scan/full', async (req: Request, res: Response) => {
+  try {
+    const scanResults = await mikrotikService.performNetworkScan();
+    res.json(scanResults);
+  } catch (error: any) {
+    console.error('Error performing network scan:', error);
+    res.status(500).json({
+      error: 'Failed to perform network scan',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/router/speed-test
+ * Perform internet speed test (latency and download speed)
+ */
+routerRoutes.get('/speed-test', async (req: Request, res: Response) => {
+  try {
+    const speedResults = await mikrotikService.performSpeedTest();
+    res.json(speedResults);
+  } catch (error: any) {
+    console.error('Error performing speed test:', error);
+    res.status(500).json({
+      error: 'Failed to perform speed test',
+      message: error.message
+    });
+  }
+});

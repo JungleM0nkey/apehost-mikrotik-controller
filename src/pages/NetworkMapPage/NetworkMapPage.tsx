@@ -12,9 +12,11 @@ import ReactFlow, {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { Spin, Alert } from 'antd';
+import { InterfaceTypeIcon } from '../../components/atoms/InterfaceTypeIcon/InterfaceTypeIcon';
 import { NetworkInterface, ArpEntry, RouterStatus } from '../../types/api';
 import { applyLayout, LayoutType } from '../../utils/networkLayouts';
 import { Button } from '../../components/atoms/Button/Button';
+import { Toggle } from '../../components/atoms/Toggle/Toggle';
 import styles from './NetworkMapPage.module.css';
 
 interface NetworkTopology {
@@ -32,6 +34,18 @@ export const NetworkMapPage: React.FC = () => {
     arpTable: []
   });
   const [layoutType, setLayoutType] = useState<LayoutType>('radial');
+  const [showActiveInterfaces, setShowActiveInterfaces] = useState(true);
+  const [showInactiveInterfaces, setShowInactiveInterfaces] = useState(true);
+  const [showDetailedInfo, setShowDetailedInfo] = useState(true);
+  const [scanning, setScanning] = useState(false);
+  const [lastScanTime, setLastScanTime] = useState<string | null>(null);
+  const [speedTesting, setSpeedTesting] = useState(false);
+  const [speedTestResults, setSpeedTestResults] = useState<{
+    latency: number;
+    downloadSpeed: number;
+    testServer: string;
+    timestamp: string;
+  } | null>(null);
 
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
@@ -72,9 +86,87 @@ export const NetworkMapPage: React.FC = () => {
     return () => clearInterval(interval);
   }, [loadTopology]);
 
+  // Trigger network scan
+  const handleNetworkScan = useCallback(async () => {
+    setScanning(true);
+    try {
+      console.log('Starting comprehensive network scan...');
+      const response = await fetch('/api/router/scan/full');
+
+      if (!response.ok) {
+        throw new Error('Network scan failed');
+      }
+
+      const scanResults = await response.json();
+      console.log('Network scan complete:', scanResults);
+
+      // Update topology with enhanced data from scan
+      setTopology(prev => ({
+        ...prev,
+        arpTable: scanResults.arpTable || prev.arpTable
+      }));
+
+      setLastScanTime(scanResults.scanTime);
+
+      // Show scan results in console for debugging
+      console.log(`Scan Results:
+        - ARP Entries: ${scanResults.arpTable.length}
+        - DHCP Leases: ${scanResults.dhcpLeases.length}
+        - Neighbors: ${scanResults.neighbors.length}
+        - Enhanced Hosts: ${scanResults.enhancedHosts.length}
+      `);
+
+      // Log enhanced hosts with all their data
+      console.log('Enhanced Hosts:', scanResults.enhancedHosts);
+
+    } catch (error) {
+      console.error('Network scan failed:', error);
+      setError('Network scan failed. Please try again.');
+    } finally {
+      setScanning(false);
+    }
+  }, []);
+
+  // Trigger speed test
+  const handleSpeedTest = useCallback(async () => {
+    setSpeedTesting(true);
+    try {
+      console.log('Starting speed test...');
+      const response = await fetch('/api/router/speed-test');
+
+      if (!response.ok) {
+        throw new Error('Speed test failed');
+      }
+
+      const results = await response.json();
+      console.log('Speed test complete:', results);
+
+      setSpeedTestResults(results);
+
+    } catch (error) {
+      console.error('Speed test failed:', error);
+      setError('Speed test failed. Please try again.');
+    } finally {
+      setSpeedTesting(false);
+    }
+  }, []);
+
   // Build network graph
   useEffect(() => {
     if (!topology.router) return;
+
+    // Debug: Log all ARP entries
+    console.log('=== Network Map Debug ===');
+    console.log(`Total ARP entries: ${topology.arpTable.length}`);
+    console.log('ARP Table:', topology.arpTable.map(arp => ({
+      interface: arp.interface,
+      ip: arp.address,
+      mac: arp.macAddress,
+      status: arp.status,
+      disabled: arp.disabled,
+      invalid: arp.invalid
+    })));
+    console.log('Interfaces:', topology.interfaces.map(i => i.name));
 
     const newNodes: Node[] = [];
     const newEdges: Edge[] = [];
@@ -104,9 +196,22 @@ export const NetworkMapPage: React.FC = () => {
       }
     });
 
-    // Interface nodes
-    topology.interfaces.forEach((iface) => {
+    // Interface nodes - filter based on settings
+    const filteredInterfaces = topology.interfaces.filter(iface => {
+      if (iface.status === 'up') return showActiveInterfaces;
+      return showInactiveInterfaces;
+    });
+
+    filteredInterfaces.forEach((iface) => {
       const interfaceId = `interface-${iface.id}`;
+
+      // Try to find MAC address from ARP table for this interface
+      const interfaceMac = topology.arpTable.find(
+        arp => arp.interface.trim().toLowerCase() === iface.name.trim().toLowerCase()
+      )?.macAddress;
+
+      // Get router's own MAC if this is a router interface
+      const displayMac = interfaceMac || 'N/A';
 
       newNodes.push({
         id: interfaceId,
@@ -115,8 +220,21 @@ export const NetworkMapPage: React.FC = () => {
         data: {
           label: (
             <div className={styles.interfaceNode}>
-              <div className={styles.nodeTitle}>{iface.name}</div>
-              <div className={styles.nodeInfo}>{iface.type}</div>
+              <div className={styles.nodeTitleRow}>
+                <InterfaceTypeIcon type={iface.type} size={18} className={styles.nodeTypeIcon} />
+                <div className={styles.nodeTitle}>{iface.name}</div>
+              </div>
+              <div className={styles.nodeSubtitle}>{iface.type}</div>
+              {showDetailedInfo && (
+                <>
+                  {iface.ipAddress && (
+                    <div className={styles.nodeInfo}>IP: {iface.ipAddress}</div>
+                  )}
+                  <div className={styles.nodeInfo}>
+                    MAC: {displayMac.substring(0, 17)}
+                  </div>
+                </>
+              )}
               <div className={`${styles.statusBadge} ${iface.status === 'up' ? styles.statusUp : styles.statusDown}`}>
                 {iface.status}
               </div>
@@ -129,7 +247,7 @@ export const NetworkMapPage: React.FC = () => {
           border: `2px solid ${iface.status === 'up' ? 'var(--color-accent-success)' : 'var(--color-border-primary)'}`,
           borderRadius: 'var(--radius-md)',
           padding: '12px',
-          width: 140,
+          width: showDetailedInfo ? 160 : 140,
           fontSize: '12px'
         }
       });
@@ -152,12 +270,38 @@ export const NetworkMapPage: React.FC = () => {
       });
 
       // Add connected hosts for this interface
+      // Include reachable, stale, and delay status (active devices)
       const hostsOnInterface = topology.arpTable.filter(
-        arp => arp.interface === iface.name && arp.status === 'reachable'
+        arp => {
+          // Match interface name (case-insensitive and trim whitespace)
+          const interfaceMatch = arp.interface.trim().toLowerCase() === iface.name.trim().toLowerCase();
+
+          // Include reachable, stale, and delay statuses (exclude failed/probe)
+          const validStatus = ['reachable', 'stale', 'delay'].includes(arp.status);
+
+          // Don't include disabled or invalid entries
+          const isValid = !arp.disabled && !arp.invalid;
+
+          return interfaceMatch && validStatus && isValid;
+        }
       );
+
+      // Debug logging
+      if (hostsOnInterface.length > 0) {
+        console.log(`Interface ${iface.name}: Found ${hostsOnInterface.length} hosts`,
+          hostsOnInterface.map(h => ({ ip: h.address, mac: h.macAddress, status: h.status }))
+        );
+      }
 
       hostsOnInterface.forEach((host) => {
         const hostId = `host-${host.id}`;
+
+        // Determine host status color
+        const getHostBorderColor = () => {
+          if (host.status === 'reachable') return 'var(--color-accent-success)';
+          if (host.status === 'stale') return 'var(--color-accent-primary)';
+          return 'var(--color-border-primary)';
+        };
 
         newNodes.push({
           id: hostId,
@@ -168,13 +312,14 @@ export const NetworkMapPage: React.FC = () => {
               <div className={styles.hostNode}>
                 <div className={styles.nodeTitle}>{host.address}</div>
                 <div className={styles.nodeSubtitle}>{host.macAddress.substring(0, 17)}</div>
+                <div className={styles.hostStatus}>{host.status}</div>
               </div>
             )
           },
           style: {
             background: 'var(--color-bg-secondary)',
             color: 'var(--color-text-primary)',
-            border: '1px solid var(--color-border-primary)',
+            border: `1px solid ${getHostBorderColor()}`,
             borderRadius: 'var(--radius-md)',
             padding: '8px',
             width: 120,
@@ -203,9 +348,15 @@ export const NetworkMapPage: React.FC = () => {
     // Apply layout algorithm
     const layoutedNodes = applyLayout(layoutType, newNodes, newEdges);
 
+    // Debug summary
+    const hostCount = newNodes.filter(n => n.id.startsWith('host-')).length;
+    const interfaceCount = newNodes.filter(n => n.id.startsWith('interface-')).length;
+    console.log(`Network Map: ${interfaceCount} interfaces, ${hostCount} hosts displayed`);
+    console.log('=== End Debug ===\n');
+
     setNodes(layoutedNodes);
     setEdges(newEdges);
-  }, [topology, layoutType, setNodes, setEdges]);
+  }, [topology, layoutType, showActiveInterfaces, showInactiveInterfaces, showDetailedInfo, setNodes, setEdges]);
 
   if (loading) {
     return (
@@ -255,35 +406,102 @@ export const NetworkMapPage: React.FC = () => {
           <div className={styles.stats}>
             <div className={styles.statItem}>
               <span className={styles.statLabel}>Interfaces:</span>
-              <span className={styles.statValue}>{topology.interfaces.length}</span>
+              <div className={styles.interfaceTags}>
+                <button
+                  className={`${styles.interfaceTag} ${styles.tagActive} ${!showActiveInterfaces ? styles.tagHidden : ''}`}
+                  onClick={() => setShowActiveInterfaces(!showActiveInterfaces)}
+                  title="Click to toggle active interfaces"
+                >
+                  Active: {topology.interfaces.filter(i => i.status === 'up').length}
+                </button>
+                <button
+                  className={`${styles.interfaceTag} ${styles.tagInactive} ${!showInactiveInterfaces ? styles.tagHidden : ''}`}
+                  onClick={() => setShowInactiveInterfaces(!showInactiveInterfaces)}
+                  title="Click to toggle inactive interfaces"
+                >
+                  Inactive: {topology.interfaces.filter(i => i.status !== 'up').length}
+                </button>
+              </div>
             </div>
             <div className={styles.statItem}>
-              <span className={styles.statLabel}>Connected Hosts:</span>
+              <span className={styles.statLabel}>Devices:</span>
               <span className={styles.statValue}>
-                {topology.arpTable.filter(arp => arp.status === 'reachable').length}
+                {nodes.filter(n => n.id.startsWith('host-')).length}
               </span>
             </div>
+            <div className={styles.statItem}>
+              <span className={styles.statLabel}>Total ARP:</span>
+              <span className={styles.statValue}>{topology.arpTable.length}</span>
+            </div>
+            {lastScanTime && (
+              <div className={styles.statItem}>
+                <span className={styles.statLabel}>Last Scan:</span>
+                <span className={styles.statValue}>
+                  {new Date(lastScanTime).toLocaleTimeString()}
+                </span>
+              </div>
+            )}
+            {speedTestResults && (
+              <>
+                <div className={styles.statItem}>
+                  <span className={styles.statLabel}>Latency:</span>
+                  <span className={styles.statValue}>{speedTestResults.latency}ms</span>
+                </div>
+                <div className={styles.statItem}>
+                  <span className={styles.statLabel}>Download:</span>
+                  <span className={styles.statValue}>{speedTestResults.downloadSpeed} Mbps</span>
+                </div>
+              </>
+            )}
           </div>
 
-          <div className={styles.layoutControls}>
-            <label className={styles.layoutLabel}>Layout:</label>
-            <select
-              className={styles.layoutSelect}
-              value={layoutType}
-              onChange={(e) => handleLayoutChange(e.target.value as LayoutType)}
-            >
-              <option value="radial">Radial (Concentric)</option>
-              <option value="force">Force-Directed</option>
-              <option value="hierarchical">Hierarchical (Tree)</option>
-              <option value="grid">Grid</option>
-            </select>
-            <Button
-              variant="secondary"
-              size="small"
-              onClick={handleAutoLayout}
-            >
-              Re-layout
-            </Button>
+          <div className={styles.controlsGroup}>
+            <div className={styles.layoutControls}>
+              <label className={styles.layoutLabel}>Layout:</label>
+              <select
+                className={styles.layoutSelect}
+                value={layoutType}
+                onChange={(e) => handleLayoutChange(e.target.value as LayoutType)}
+              >
+                <option value="radial">Radial (Concentric)</option>
+                <option value="force">Force-Directed</option>
+                <option value="hierarchical">Hierarchical (Tree)</option>
+                <option value="grid">Grid</option>
+              </select>
+              <Button
+                variant="secondary"
+                size="small"
+                onClick={handleAutoLayout}
+              >
+                Re-layout
+              </Button>
+              <Button
+                variant="primary"
+                size="small"
+                onClick={handleNetworkScan}
+                disabled={scanning}
+              >
+                {scanning ? 'Scanning...' : 'Scan Network'}
+              </Button>
+              <Button
+                variant="primary"
+                size="small"
+                onClick={handleSpeedTest}
+                disabled={speedTesting}
+              >
+                {speedTesting ? 'Testing...' : 'Speed Test'}
+              </Button>
+            </div>
+
+            <div className={styles.filterControls}>
+              <div className={styles.toggleGroup}>
+                <Toggle
+                  checked={showDetailedInfo}
+                  onChange={setShowDetailedInfo}
+                />
+                <label className={styles.toggleLabel}>Show Details</label>
+              </div>
+            </div>
           </div>
         </div>
       </div>

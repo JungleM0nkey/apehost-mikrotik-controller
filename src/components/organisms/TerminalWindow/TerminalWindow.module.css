@@ -199,6 +199,24 @@
   background: transparent !important;
 }
 
+.tabContent {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: flex-start;
+}
+
+.tabModelInfo {
+  font-size: 10px;
+  color: var(--color-text-tertiary);
+  font-weight: 400;
+  font-family: var(--font-mono);
+}
+
+.tabActive .tabModelInfo {
+  color: rgba(255, 107, 53, 0.7);
+}
+
 .content {
   flex: 1;
   overflow: hidden;

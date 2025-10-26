@@ -61,7 +61,7 @@ class MikroTikService {
   private isConnecting: boolean = false;
   private connectingPromise: Promise<boolean> | null = null;
   private keepaliveTimer: NodeJS.Timeout | null = null;
-  private requestQueue: Array<{resolve: Function; reject: Function; command: string}> = [];
+  private requestQueue: Array<{resolve: Function; reject: Function; command: string; params?: Record<string, any>}> = [];
   private isProcessingQueue: boolean = false;
   
   // Cache system
@@ -340,12 +340,12 @@ class MikroTikService {
   /**
    * Execute a command on the router with request queuing
    */
-  private async executeCommand(command: string): Promise<any[]> {
+  async executeCommand(command: string, params?: Record<string, any>): Promise<any[]> {
     await this.ensureConnected();
-    
+
     // Queue the request
     return new Promise((resolve, reject) => {
-      this.requestQueue.push({ resolve, reject, command });
+      this.requestQueue.push({ resolve, reject, command, params });
       this.processQueue();
     });
   }
@@ -365,7 +365,17 @@ class MikroTikService {
       if (!request) break;
       
       try {
-        const result = await this.connection!.write(request.command);
+        let result;
+        if (request.params) {
+          // Convert params object to RouterOS command format: ['/command', '=key=value', ...]
+          const commandArray = [
+            request.command,
+            ...Object.entries(request.params).map(([key, value]) => `=${key}=${value}`)
+          ];
+          result = await this.connection!.write(commandArray);
+        } else {
+          result = await this.connection!.write(request.command);
+        }
         request.resolve(result);
       } catch (error: any) {
         console.error(`[MikroTik] Error executing command "${request.command}":`, error.message);
@@ -1469,6 +1479,374 @@ class MikroTikService {
         dynamic: false,
         disabled: false,
         comment: 'VPN Client 2'
+      }
+    ];
+  }
+
+  /**
+   * Get DHCP server leases
+   * Provides hostname and additional client information
+   */
+  async getDhcpLeases(): Promise<any[]> {
+    if (!this.isConnectionActive()) {
+      return this.getMockDhcpLeases();
+    }
+
+    try {
+      const result = await this.executeCommand('/ip/dhcp-server/lease/print');
+
+      return result.map((lease: any, index: number) => ({
+        id: lease['.id'] || `*${index}`,
+        address: lease.address || '',
+        macAddress: lease['mac-address'] || '',
+        hostname: lease['host-name'] || '',
+        status: lease.status || 'waiting',
+        expiresAfter: lease['expires-after'] || '',
+        lastSeen: lease['last-seen'] || '',
+        server: lease.server || '',
+        dynamic: lease.dynamic === 'true',
+        blocked: lease.blocked === 'true',
+        disabled: lease.disabled === 'true',
+        comment: lease.comment || ''
+      }));
+    } catch (error) {
+      console.error('Failed to fetch DHCP leases:', error);
+      return this.getMockDhcpLeases();
+    }
+  }
+
+  /**
+   * Get neighbor devices (LLDP/CDP/MNDP)
+   * Discovers network devices like switches, routers, access points
+   */
+  async getNeighbors(): Promise<any[]> {
+    if (!this.isConnectionActive()) {
+      return this.getMockNeighbors();
+    }
+
+    try {
+      const result = await this.executeCommand('/ip/neighbor/print');
+
+      return result.map((neighbor: any, index: number) => ({
+        id: neighbor['.id'] || `*${index}`,
+        interface: neighbor.interface || '',
+        address: neighbor.address || '',
+        address6: neighbor['address6'] || '',
+        macAddress: neighbor['mac-address'] || '',
+        identity: neighbor.identity || '',
+        platform: neighbor.platform || '',
+        version: neighbor.version || '',
+        board: neighbor.board || '',
+        uptime: neighbor.uptime || '',
+        softwareId: neighbor['software-id'] || '',
+        interfaceName: neighbor['interface-name'] || '',
+        system: neighbor.system || '',
+        discoveredBy: neighbor['discovered-by'] || ''
+      }));
+    } catch (error) {
+      console.error('Failed to fetch neighbors:', error);
+      return this.getMockNeighbors();
+    }
+  }
+
+  /**
+   * Perform comprehensive network scan
+   * Combines ARP, DHCP leases, and neighbor discovery for complete network view
+   */
+  async performNetworkScan(): Promise<{
+    arpTable: any[];
+    dhcpLeases: any[];
+    neighbors: any[];
+    enhancedHosts: any[];
+    scanTime: string;
+  }> {
+    const scanStartTime = Date.now();
+
+    try {
+      // Fetch all data in parallel for speed
+      const [arpTable, dhcpLeases, neighbors] = await Promise.all([
+        this.getArpTable(),
+        this.getDhcpLeases(),
+        this.getNeighbors()
+      ]);
+
+      // Create enhanced host list by combining data
+      const enhancedHosts = this.enhanceHostData(arpTable, dhcpLeases, neighbors);
+
+      const scanDuration = Date.now() - scanStartTime;
+
+      return {
+        arpTable,
+        dhcpLeases,
+        neighbors,
+        enhancedHosts,
+        scanTime: new Date().toISOString()
+      };
+    } catch (error) {
+      console.error('Network scan failed:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Enhance host data by combining ARP, DHCP, and neighbor information
+   */
+  private enhanceHostData(arpTable: any[], dhcpLeases: any[], neighbors: any[]): any[] {
+    const enhancedHosts: any[] = [];
+    const processedMacs = new Set<string>();
+
+    // Start with ARP entries as the base
+    arpTable.forEach(arp => {
+      const mac = arp.macAddress.toLowerCase();
+      if (processedMacs.has(mac)) return;
+      processedMacs.add(mac);
+
+      // Find matching DHCP lease
+      const dhcpLease = dhcpLeases.find(
+        lease => lease.macAddress.toLowerCase() === mac
+      );
+
+      // Find matching neighbor
+      const neighbor = neighbors.find(
+        n => n.macAddress.toLowerCase() === mac
+      );
+
+      enhancedHosts.push({
+        id: arp.id,
+        address: arp.address,
+        macAddress: arp.macAddress,
+        interface: arp.interface,
+        arpStatus: arp.status,
+        hostname: dhcpLease?.hostname || '',
+        dhcpStatus: dhcpLease?.status || '',
+        dhcpServer: dhcpLease?.server || '',
+        expiresAfter: dhcpLease?.expiresAfter || '',
+        lastSeen: dhcpLease?.lastSeen || '',
+        isNeighborDevice: !!neighbor,
+        neighborIdentity: neighbor?.identity || '',
+        neighborPlatform: neighbor?.platform || '',
+        neighborVersion: neighbor?.version || '',
+        discoveredBy: neighbor?.discoveredBy || '',
+        dynamic: arp.dynamic,
+        complete: arp.complete,
+        disabled: arp.disabled,
+        comment: arp.comment || dhcpLease?.comment || ''
+      });
+    });
+
+    // Add DHCP leases that don't have ARP entries yet
+    dhcpLeases.forEach(lease => {
+      const mac = lease.macAddress.toLowerCase();
+      if (processedMacs.has(mac)) return;
+      processedMacs.add(mac);
+
+      const neighbor = neighbors.find(
+        n => n.macAddress.toLowerCase() === mac
+      );
+
+      enhancedHosts.push({
+        id: lease.id,
+        address: lease.address,
+        macAddress: lease.macAddress,
+        interface: '',
+        arpStatus: 'unknown',
+        hostname: lease.hostname,
+        dhcpStatus: lease.status,
+        dhcpServer: lease.server,
+        expiresAfter: lease.expiresAfter,
+        lastSeen: lease.lastSeen,
+        isNeighborDevice: !!neighbor,
+        neighborIdentity: neighbor?.identity || '',
+        neighborPlatform: neighbor?.platform || '',
+        neighborVersion: neighbor?.version || '',
+        discoveredBy: neighbor?.discoveredBy || '',
+        dynamic: lease.dynamic,
+        complete: false,
+        disabled: lease.disabled,
+        comment: lease.comment
+      });
+    });
+
+    return enhancedHosts;
+  }
+
+  /**
+   * Perform internet speed test
+   * Tests latency and download speed
+   */
+  async performSpeedTest(): Promise<{
+    latency: number;
+    downloadSpeed: number;
+    testServer: string;
+    timestamp: string;
+  }> {
+    if (!this.isConnectionActive()) {
+      return this.getMockSpeedTest();
+    }
+
+    try {
+      const testServer = '1.1.1.1'; // Cloudflare DNS
+      const testUrl = 'https://speed.cloudflare.com/__down?bytes=25000000'; // 25MB download test
+
+      // Test latency with ping
+      let latency = 0;
+      try {
+        const pingResult = await this.executeCommand('/ping', {
+          address: testServer,
+          count: 4
+        });
+
+        if (pingResult && pingResult.length > 0) {
+          // Calculate average latency from ping results
+          const avgTime = pingResult
+            .filter((r: any) => r.time)
+            .reduce((sum: number, r: any) => {
+              const timeStr = r.time.replace('ms', '');
+              return sum + parseFloat(timeStr);
+            }, 0) / Math.min(4, pingResult.length);
+
+          latency = Math.round(avgTime * 10) / 10;
+        }
+      } catch (error) {
+        console.warn('Ping test failed:', error);
+        latency = 0;
+      }
+
+      // Test download speed with fetch
+      let downloadSpeed = 0;
+      try {
+        const startTime = Date.now();
+
+        // Use tool/fetch to download test file
+        await this.executeCommand('/tool/fetch', {
+          url: testUrl,
+          mode: 'https',
+          'keep-result': 'no'
+        });
+
+        const duration = (Date.now() - startTime) / 1000; // seconds
+        const fileSizeMB = 25; // 25MB
+        downloadSpeed = Math.round((fileSizeMB * 8 / duration) * 100) / 100; // Mbps
+      } catch (error) {
+        console.warn('Download test failed:', error);
+        downloadSpeed = 0;
+      }
+
+      return {
+        latency,
+        downloadSpeed,
+        testServer,
+        timestamp: new Date().toISOString()
+      };
+    } catch (error) {
+      console.error('Speed test failed:', error);
+      return this.getMockSpeedTest();
+    }
+  }
+
+  /**
+   * Mock speed test results for development
+   */
+  private getMockSpeedTest(): {
+    latency: number;
+    downloadSpeed: number;
+    testServer: string;
+    timestamp: string;
+  } {
+    return {
+      latency: 15.5,
+      downloadSpeed: 250.75,
+      testServer: '1.1.1.1',
+      timestamp: new Date().toISOString()
+    };
+  }
+
+  /**
+   * Mock DHCP leases for development
+   */
+  private getMockDhcpLeases(): any[] {
+    return [
+      {
+        id: '*1',
+        address: '192.168.88.10',
+        macAddress: '00:0C:29:12:34:56',
+        hostname: 'desktop-pc',
+        status: 'bound',
+        expiresAfter: '1h30m',
+        lastSeen: '2m30s',
+        server: 'dhcp1',
+        dynamic: true,
+        blocked: false,
+        disabled: false,
+        comment: 'Main workstation'
+      },
+      {
+        id: '*2',
+        address: '192.168.88.11',
+        macAddress: '00:0C:29:65:43:21',
+        hostname: 'laptop-user1',
+        status: 'bound',
+        expiresAfter: '45m',
+        lastSeen: '5m',
+        server: 'dhcp1',
+        dynamic: true,
+        blocked: false,
+        disabled: false,
+        comment: ''
+      },
+      {
+        id: '*3',
+        address: '192.168.88.15',
+        macAddress: 'B8:27:EB:AA:BB:CC',
+        hostname: 'raspberry-pi',
+        status: 'bound',
+        expiresAfter: '2h15m',
+        lastSeen: '1m',
+        server: 'dhcp1',
+        dynamic: true,
+        blocked: false,
+        disabled: false,
+        comment: 'IoT device'
+      }
+    ];
+  }
+
+  /**
+   * Mock neighbors for development
+   */
+  private getMockNeighbors(): any[] {
+    return [
+      {
+        id: '*1',
+        interface: 'ether2',
+        address: '192.168.88.2',
+        address6: '',
+        macAddress: 'DC:2C:6E:11:22:33',
+        identity: 'Switch-Office',
+        platform: 'MikroTik',
+        version: '7.11',
+        board: 'CRS326',
+        uptime: '2w3d5h',
+        softwareId: 'ROUTER',
+        interfaceName: 'ether1',
+        system: 'RouterOS',
+        discoveredBy: 'lldp'
+      },
+      {
+        id: '*2',
+        interface: 'ether3',
+        address: '192.168.88.3',
+        address6: '',
+        macAddress: 'A4:B1:C2:44:55:66',
+        identity: 'AP-Main',
+        platform: 'MikroTik',
+        version: '7.10.2',
+        board: 'cAP',
+        uptime: '1w2d',
+        softwareId: 'ROUTER',
+        interfaceName: 'wlan1',
+        system: 'RouterOS',
+        discoveredBy: 'lldp,cdp'
       }
     ];
   }

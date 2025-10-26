@@ -23,6 +23,13 @@ import { DHCPTool } from './tools/dhcp-tool.js';
 import { RoutesTool } from './tools/routes-tool.js';
 import { FirewallTool } from './tools/firewall-tool.js';
 import { SafeCommandTool } from './tools/safe-command-tool.js';
+import { TrafficTool } from './tools/traffic-tool.js';
+import { WirelessTool } from './tools/wireless-tool.js';
+import { SystemTool } from './tools/system-tool.js';
+import { LogsTool } from './tools/logs-tool.js';
+import { DiagnosticsTool } from './tools/diagnostics-tool.js';
+import { ConnectivityTool } from './tools/connectivity-tool.js';
+import { NetworkTool } from './tools/network-tool.js';
 
 export class MCPExecutor {
   private tools: Map<string, MCPTool> = new Map();
@@ -35,12 +42,32 @@ export class MCPExecutor {
    * Register all default tools
    */
   private registerDefaultTools(): void {
+    // Core network tools
     this.registerTool(new RouterInfoTool());
     this.registerTool(new InterfacesTool());
     this.registerTool(new DHCPTool());
     this.registerTool(new RoutesTool());
     this.registerTool(new FirewallTool());
+
+    // Network troubleshooting tools
+    this.registerTool(new ConnectivityTool());
+    this.registerTool(new NetworkTool());
+
+    // Traffic and bandwidth monitoring
+    this.registerTool(new TrafficTool());
+
+    // Wireless management
+    this.registerTool(new WirelessTool());
+
+    // System resources and monitoring
+    this.registerTool(new SystemTool());
+    this.registerTool(new LogsTool());
+
+    // Advanced command execution
     this.registerTool(new SafeCommandTool());
+
+    // AI Agent diagnostics
+    this.registerTool(new DiagnosticsTool());
 
     console.log(`[MCPExecutor] Registered ${this.tools.size} tools`);
   }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Progress, Badge, Tag } from 'antd';
+import { Progress, Badge } from 'antd';
 import {
   CheckCircleOutlined,
   CloseCircleOutlined,
@@ -12,6 +12,7 @@ import api from '../../services/api';
 import websocket from '../../services/websocket';
 import type { RouterStatus, NetworkInterface } from '../../types/api';
 import { TrafficIndicator } from '../../components/atoms/TrafficIndicator/TrafficIndicator';
+import { InterfaceTypeIcon } from '../../components/atoms/InterfaceTypeIcon';
 import styles from './DashboardPage.module.css';
 
 interface StatCardProps {
@@ -87,6 +88,7 @@ const ProgressStatCard: React.FC<ProgressStatCardProps> = ({ title, percentage, 
 
 interface InterfaceItemProps {
   name: string;
+  type: string;
   status: 'up' | 'down';
   rx: string;
   tx: string;
@@ -95,23 +97,22 @@ interface InterfaceItemProps {
   ipAddress?: string;
 }
 
-const InterfaceItem: React.FC<InterfaceItemProps> = ({ name, status, rx, tx, rxRate, txRate, ipAddress }) => {
+const InterfaceItem: React.FC<InterfaceItemProps> = ({ name, type, status, rx, tx, rxRate, txRate, ipAddress }) => {
   const isActive = status === 'up';
 
   return (
     <div className={styles.interfaceItem}>
       <div className={styles.interfaceStatus}>
-        <Badge
-          status={isActive ? 'success' : 'default'}
-          text={
-            <div className={styles.interfaceInfo}>
-              <span className={styles.interfaceName}>{name}</span>
-              {ipAddress && (
-                <span className={styles.interfaceIp}>{ipAddress}</span>
-              )}
-            </div>
-          }
-        />
+        <div className={styles.interfaceInfo}>
+          <div className={styles.interfaceNameRow}>
+            <Badge status={isActive ? 'success' : 'default'} />
+            <InterfaceTypeIcon type={type} size={20} className={styles.interfaceTypeIcon} />
+            <span className={styles.interfaceName}>{name}</span>
+          </div>
+          {ipAddress && (
+            <span className={styles.interfaceIp}>{ipAddress}</span>
+          )}
+        </div>
       </div>
       <div className={styles.interfaceStats}>
         <span className={isActive ? styles.interfaceRx : styles.interfaceInactive}>
@@ -148,6 +149,8 @@ export const DashboardPage: React.FC = () => {
   const [interfaces, setInterfaces] = useState<NetworkInterface[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showActiveInterfaces, setShowActiveInterfaces] = useState(true);
+  const [showInactiveInterfaces, setShowInactiveInterfaces] = useState(true);
 
   const fetchRouterStatus = async () => {
     try {
@@ -310,28 +313,44 @@ export const DashboardPage: React.FC = () => {
       <div className={styles.section}>
         <div className={styles.sectionHeader}>
           <h2 className={styles.sectionTitle}>Network Interfaces</h2>
-          <div className={styles.sectionTags}>
-            <Tag icon={<CheckCircleOutlined />} color="success">
-              {interfaces.filter(i => i.status === 'up').length} Active
-            </Tag>
-            <Tag icon={<CloseCircleOutlined />} color="default">
-              {interfaces.filter(i => i.status === 'down').length} Inactive
-            </Tag>
+          <div className={styles.interfaceTags}>
+            <button
+              className={`${styles.interfaceTag} ${styles.tagActive} ${!showActiveInterfaces ? styles.tagHidden : ''}`}
+              onClick={() => setShowActiveInterfaces(!showActiveInterfaces)}
+              title="Click to toggle active interfaces"
+            >
+              <CheckCircleOutlined />
+              <span>Active: {interfaces.filter(i => i.status === 'up').length}</span>
+            </button>
+            <button
+              className={`${styles.interfaceTag} ${styles.tagInactive} ${!showInactiveInterfaces ? styles.tagHidden : ''}`}
+              onClick={() => setShowInactiveInterfaces(!showInactiveInterfaces)}
+              title="Click to toggle inactive interfaces"
+            >
+              <CloseCircleOutlined />
+              <span>Inactive: {interfaces.filter(i => i.status === 'down').length}</span>
+            </button>
           </div>
         </div>
         <div className={styles.interfacesList}>
-          {interfaces.map((iface) => (
-            <InterfaceItem
-              key={iface.id}
-              name={iface.name}
-              status={iface.status}
-              rx={formatBytes(iface.rxBytes)}
-              tx={formatBytes(iface.txBytes)}
-              rxRate={iface.rxRate}
-              txRate={iface.txRate}
-              ipAddress={iface.ipAddress}
-            />
-          ))}
+          {interfaces
+            .filter(iface => {
+              if (iface.status === 'up') return showActiveInterfaces;
+              return showInactiveInterfaces;
+            })
+            .map((iface) => (
+              <InterfaceItem
+                key={iface.id}
+                name={iface.name}
+                type={iface.type}
+                status={iface.status}
+                rx={formatBytes(iface.rxBytes)}
+                tx={formatBytes(iface.txBytes)}
+                rxRate={iface.rxRate}
+                txRate={iface.txRate}
+                ipAddress={iface.ipAddress}
+              />
+            ))}
         </div>
       </div>
     </div>

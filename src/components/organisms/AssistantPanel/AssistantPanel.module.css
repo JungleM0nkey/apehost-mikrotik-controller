@@ -16,12 +16,44 @@
   border-bottom: 1px solid rgba(255, 140, 0, 0.2);
 }
 
+.titleSection {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 .title {
   margin: 0;
   font-size: var(--font-size-sm);
   font-weight: 600;
   color: #ff8c00;
   text-shadow: 0 0 10px rgba(255, 140, 0, 0.5);
+}
+
+.modelInfo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  font-family: var(--font-mono);
+}
+
+.modelName {
+  color: #ff8c00;
+  font-weight: 500;
+}
+
+.separator {
+  color: rgba(255, 140, 0, 0.3);
+}
+
+.contextWindow {
+  color: var(--color-text-tertiary);
+}
+
+.tokenCost {
+  color: var(--color-text-tertiary);
 }
 
 .clearButton {
@@ -156,16 +188,24 @@
 }
 
 .sendButton {
-  height: auto !important;
-  padding: 8px 16px !important;
+  min-width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  transition: all var(--transition-fast);
+  border-radius: var(--radius-sm);
 }
 
 .sendButton:hover:not(:disabled) {
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
 }
 
 .sendButton:active:not(:disabled) {
   transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(255, 107, 53, 0.2);
 }
 
 .errorBanner {

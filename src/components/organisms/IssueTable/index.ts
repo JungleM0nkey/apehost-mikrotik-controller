@@ -1,0 +1,1 @@
+export { IssueTable } from './IssueTable';

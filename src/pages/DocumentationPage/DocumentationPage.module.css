@@ -1,0 +1,262 @@
+.container {
+  height: 100vh;
+  overflow-y: auto;
+  background-color: var(--color-bg-primary);
+}
+
+.header {
+  padding: 0 var(--space-xl);
+  height: 49px;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--color-border-primary);
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.content {
+  padding: var(--space-xl);
+  max-width: 1400px;
+}
+
+/* Sections */
+.section {
+  margin-bottom: var(--space-2xl);
+}
+
+.sectionTitle {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-lg);
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+/* Introduction */
+.introCard {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-md);
+  padding: var(--space-xl);
+  margin-bottom: var(--space-xl);
+}
+
+.introCard h3 {
+  color: var(--color-text-primary);
+  font-size: var(--font-size-md);
+  margin-bottom: var(--space-md);
+}
+
+.introCard p {
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--space-lg);
+  margin-bottom: var(--space-xl);
+}
+
+.feature {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-md);
+  padding: var(--space-lg);
+}
+
+.feature h4 {
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
+  margin-bottom: var(--space-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.feature p {
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* API Documentation */
+.apiGroup {
+  margin-bottom: var(--space-2xl);
+}
+
+.apiGroupTitle {
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-lg);
+  padding-bottom: var(--space-sm);
+  border-bottom: 1px solid var(--color-border-primary);
+}
+
+.endpoint {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-md);
+  padding: var(--space-lg);
+  margin-bottom: var(--space-md);
+}
+
+.endpointHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin-bottom: var(--space-sm);
+}
+
+.endpointPath {
+  font-family: var(--font-mono);
+  color: var(--color-accent-primary);
+  font-size: var(--font-size-sm);
+  padding: var(--space-xs) var(--space-sm);
+  background: var(--color-bg-tertiary);
+  border-radius: var(--radius-sm);
+}
+
+.endpointDesc {
+  color: var(--color-text-secondary);
+  margin: var(--space-sm) 0;
+  line-height: 1.5;
+}
+
+.codeBlock {
+  margin-top: var(--space-md);
+  background: var(--color-bg-terminal);
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-sm);
+  overflow-x: auto;
+}
+
+.codeBlock pre {
+  margin: 0;
+  padding: var(--space-md);
+  color: var(--color-text-secondary);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* MCP Tools */
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2xl);
+  gap: var(--space-md);
+  color: var(--color-text-secondary);
+}
+
+.toolsList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.tool {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-md);
+  padding: var(--space-lg);
+}
+
+.toolHeader {
+  margin-bottom: var(--space-md);
+}
+
+.toolName {
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.toolDescription {
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  margin-bottom: var(--space-lg);
+}
+
+.subheading {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-md);
+}
+
+.parameters {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.parameter {
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border-secondary);
+  border-radius: var(--radius-sm);
+  padding: var(--space-md);
+}
+
+.parameterHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.parameterName {
+  font-family: var(--font-mono);
+  color: var(--color-accent-primary);
+  font-size: 14px;
+  padding: 2px var(--space-sm);
+  background: var(--color-bg-terminal);
+  border-radius: var(--radius-sm);
+}
+
+.requiredTag {
+  font-size: 11px;
+}
+
+.parameterDesc {
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  line-height: 1.5;
+  margin: var(--space-sm) 0 0 0;
+}
+
+.enumValues {
+  margin-top: var(--space-sm);
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.enumTag {
+  font-family: var(--font-mono);
+  font-size: 12px;
+}

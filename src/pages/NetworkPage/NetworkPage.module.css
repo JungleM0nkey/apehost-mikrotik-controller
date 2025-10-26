@@ -121,11 +121,56 @@
 .sectionTitle {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: var(--space-sm);
   font-size: 18px;
   font-weight: 600;
   color: var(--color-text-primary);
   margin: 0;
+}
+
+.sectionTitle.collapsible {
+  cursor: pointer;
+  user-select: none;
+  padding: var(--space-md);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+}
+
+.sectionTitle.collapsible:hover {
+  background: var(--color-bg-tertiary);
+  border-color: var(--color-border-secondary);
+}
+
+.sectionTitleContent {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.collapseButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.collapseButton:hover {
+  background: var(--color-bg-primary);
+  border-color: var(--color-accent-primary);
+  color: var(--color-accent-primary);
 }
 
 .sectionCount {
@@ -206,6 +251,12 @@
 .statusIndicator.down {
   background: var(--color-accent-error);
   box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+}
+
+.interfaceTypeIcon {
+  color: var(--color-accent-primary);
+  flex-shrink: 0;
+  opacity: 0.8;
 }
 
 .interfaceName {

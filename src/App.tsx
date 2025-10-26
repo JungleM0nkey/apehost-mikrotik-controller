@@ -8,6 +8,8 @@ import { SettingsPage } from './pages/SettingsPage/SettingsPage';
 import { NetworkPage } from './pages/NetworkPage/NetworkPage';
 import { FirewallPage } from './pages/FirewallPage/FirewallPage';
 import { NetworkMapPage } from './pages/NetworkMapPage/NetworkMapPage';
+import { AgentPage } from './pages/AgentPage/AgentPage';
+import { DocumentationPage } from './pages/DocumentationPage/DocumentationPage';
 import { TerminalManagerProvider, useTerminalManager } from './contexts/TerminalManagerContext';
 import { TerminalTaskbar } from './components/organisms/TerminalTaskbar/TerminalTaskbar';
 import { TerminalWindow } from './components/organisms/TerminalWindow/TerminalWindow';
@@ -54,13 +56,17 @@ const AppContent: React.FC = () => {
         return <FirewallPage />;
       case 'analytics':
         return <NetworkMapPage />;
+      case 'agent':
+        return <AgentPage />;
+      case 'documentation':
+        return <DocumentationPage />;
       case 'dhcp':
         return (
           <div className={styles.placeholder}>
             <h1>{activeNav.charAt(0).toUpperCase() + activeNav.slice(1)}</h1>
             <p>This section is under construction</p>
             <p style={{ marginTop: '16px', color: 'var(--color-text-secondary)' }}>
-              Implemented pages: Dashboard, Terminal, AI Assistant, Settings, Network, Firewall, Network Map
+              Implemented pages: Dashboard, Terminal, AI Assistant, Settings, Network, Firewall, Network Map, Documentation
             </p>
           </div>
         );

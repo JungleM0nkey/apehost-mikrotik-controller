@@ -1,12 +1,29 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Button, Input } from 'antd';
+import { Button as AntButton, Input } from 'antd';
 import { DeleteOutlined, SendOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import { Button } from '../../atoms/Button/Button';
 import { MessageBubble } from '../../molecules/MessageBubble/MessageBubble';
 import type { WebSocketService } from '../../../services/websocket';
 import type { AssistantMessage } from '../../../types/assistant';
 import styles from './AssistantPanel.module.css';
 
 const { TextArea } = Input;
+
+interface AIModelInfo {
+  available: boolean;
+  provider: string;
+  model: string;
+  context_window: number | string;
+  features: {
+    streaming: boolean;
+    function_calling: boolean;
+  };
+  token_costs: {
+    prompt_per_1m: number;
+    completion_per_1m: number;
+    note: string;
+  };
+}
 
 export interface AssistantPanelProps {
   websocket: WebSocketService;
@@ -24,6 +41,7 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isTyping, setIsTyping] = useState(false);
+  const [modelInfo, setModelInfo] = useState<AIModelInfo | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -37,6 +55,26 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
   useEffect(() => {
     scrollToBottom();
   }, [messages, isTyping]);
+
+  // Fetch AI model information
+  useEffect(() => {
+    const fetchModelInfo = async () => {
+      try {
+        const response = await fetch('/api/service/ai-info');
+        if (response.ok) {
+          const data = await response.json();
+          console.log('[AssistantPanel] Model info received:', data);
+          setModelInfo(data);
+        } else {
+          console.error('[AssistantPanel] Failed to fetch model info:', response.status, response.statusText);
+        }
+      } catch (err) {
+        console.error('[AssistantPanel] Error fetching AI model info:', err);
+      }
+    };
+
+    fetchModelInfo();
+  }, []);
 
   // WebSocket event listeners
   useEffect(() => {
@@ -183,8 +221,29 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
     <div className={styles.container}>
       {!hideHeader && (
         <div className={styles.header}>
-          <h3 className={styles.title}>AI Assistant</h3>
-          <Button
+          <div className={styles.titleSection}>
+            <h3 className={styles.title}>AI Assistant</h3>
+            {modelInfo && modelInfo.available ? (
+              <div className={styles.modelInfo}>
+                <span className={styles.modelName}>{modelInfo.model}</span>
+                <span className={styles.separator}>•</span>
+                <span className={styles.contextWindow}>
+                  {typeof modelInfo.context_window === 'number'
+                    ? `${modelInfo.context_window.toLocaleString()} tokens`
+                    : modelInfo.context_window}
+                </span>
+                <span className={styles.separator}>•</span>
+                <span className={styles.tokenCost}>
+                  ${modelInfo.token_costs.prompt_per_1m}/${modelInfo.token_costs.completion_per_1m} per 1M
+                </span>
+              </div>
+            ) : (
+              <div className={styles.modelInfo} style={{ color: '#666', fontSize: '10px' }}>
+                {modelInfo ? 'AI unavailable' : 'Loading model info...'}
+              </div>
+            )}
+          </div>
+          <AntButton
             icon={<DeleteOutlined />}
             onClick={handleClearHistory}
             title="Clear conversation"
@@ -193,7 +252,7 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
             className={styles.clearButton}
           >
             Clear
-          </Button>
+          </AntButton>
         </div>
       )}
 
@@ -236,13 +295,14 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
           autoSize={{ minRows: 1, maxRows: 4 }}
         />
         <Button
-          type="primary"
-          icon={<SendOutlined />}
+          variant="primary"
           onClick={handleSend}
           disabled={!inputValue.trim() || isStreaming}
           title="Send message"
           className={styles.sendButton}
-        />
+        >
+          <SendOutlined />
+        </Button>
       </div>
 
       {error && !messages.some((m) => m.error) && (

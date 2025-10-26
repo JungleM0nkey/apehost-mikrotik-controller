@@ -158,6 +158,64 @@
   gap: var(--space-sm);
 }
 
+.interfaceTags {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: center;
+}
+
+.interfaceTag {
+  padding: 4px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid;
+  background: transparent;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.interfaceTag:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.interfaceTag:active {
+  transform: translateY(0);
+}
+
+.tagActive {
+  color: var(--color-accent-success);
+  border-color: var(--color-accent-success);
+}
+
+.tagActive:hover {
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.tagInactive {
+  color: var(--color-accent-error);
+  border-color: var(--color-accent-error);
+}
+
+.tagInactive:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.tagHidden {
+  opacity: 0.4;
+  text-decoration: line-through;
+}
+
+.tagHidden:hover {
+  opacity: 0.6;
+}
+
 /* Interfaces */
 .interfacesList {
   display: flex;
@@ -191,6 +249,18 @@
   flex-direction: column;
   gap: 2px;
   align-items: flex-start;
+}
+
+.interfaceNameRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.interfaceTypeIcon {
+  color: var(--color-accent-primary);
+  flex-shrink: 0;
+  opacity: 0.8;
 }
 
 .interfaceName {
