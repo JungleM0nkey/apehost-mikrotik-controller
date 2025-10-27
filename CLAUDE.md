@@ -25,25 +25,45 @@ Organisms (Complex Components)
 └── [other organisms as needed]
 
 Ant Design (Selective Use Only)
-├── Tabs ✅ (has token overrides)
-├── Slider ✅ (has token overrides)
-├── Card ✅ (has token overrides)
-├── Alert ✅ (has token overrides)
-├── Spin ✅ (has token overrides)
-├── Progress ✅ (has token overrides)
-├── Badge ✅ (has token overrides)
-├── Tag ✅ (has token overrides)
-├── Statistic ✅ (has token overrides)
-└── Modal ✅ (has token overrides)
+├── Tabs (has token overrides)
+├── Slider (has token overrides)
+├── Card (has token overrides)
+├── Alert (has token overrides)
+├── Spin (has token overrides)
+├── Progress (has token overrides)
+├── Badge (has token overrides)
+├── Tag (has token overrides)
+├── Statistic (has token overrides)
+└── Modal (has token overrides)
 ```
 
 ## Core Rules
 
-### 🔴 Rule 1: Use Custom Components for Form Elements
+### Rule 0: No Emojis
+
+**NEVER** use emojis in any code, documentation, comments, commit messages, or UI text unless explicitly instructed by the user.
+
+This includes but is not limited to:
+- Code comments
+- README files
+- Documentation
+- UI labels and text
+- Error messages
+- Log messages
+- Commit messages
+- Component names or descriptions
+
+Use plain text equivalents instead:
+- Instead of "✅ Success", use "Success" or "[OK]"
+- Instead of "❌ Error", use "Error" or "[FAILED]"
+- Instead of "🚀 Deploy", use "Deploy"
+- Instead of "⚠️ Warning", use "Warning" or "[WARN]"
+
+### Rule 1: Use Custom Components for Form Elements
 
 **ALWAYS** use our custom components instead of Ant Design equivalents:
 
-✅ **Correct:**
+**Correct:**
 ```tsx
 import { Input } from '../../components/atoms/Input/Input';
 import { Button } from '../../components/atoms/Button/Button';
@@ -56,7 +76,7 @@ import { Textarea } from '../../components/atoms/Textarea/Textarea';
 <Textarea value={text} onChange={setText} />
 ```
 
-❌ **Wrong:**
+**Wrong:**
 ```tsx
 import { Input, Button, Switch, Form } from 'antd';
 
@@ -67,11 +87,11 @@ import { Input, Button, Switch, Form } from 'antd';
 <Switch checked={enabled} onChange={setEnabled} />
 ```
 
-### 🔴 Rule 2: Use FormField and ToggleField for Form Layouts
+### Rule 2: Use FormField and ToggleField for Form Layouts
 
 **ALWAYS** wrap form inputs with FormField or ToggleField molecules:
 
-✅ **Correct:**
+**Correct:**
 ```tsx
 import { FormField } from '../../components/molecules/FormField/FormField';
 import { ToggleField } from '../../components/molecules/ToggleField/ToggleField';
@@ -97,7 +117,7 @@ import { ToggleField } from '../../components/molecules/ToggleField/ToggleField'
 />
 ```
 
-❌ **Wrong:**
+**Wrong:**
 ```tsx
 <div>
   <label>Server Port</label>
@@ -111,11 +131,11 @@ import { ToggleField } from '../../components/molecules/ToggleField/ToggleField'
 </div>
 ```
 
-### 🔴 Rule 3: Use SettingsSection for Grouping
+### Rule 3: Use SettingsSection for Grouping
 
 **ALWAYS** group related settings using SettingsSection:
 
-✅ **Correct:**
+**Correct:**
 ```tsx
 import { SettingsSection } from '../../components/organisms/SettingsSection/SettingsSection';
 
@@ -130,7 +150,7 @@ import { SettingsSection } from '../../components/organisms/SettingsSection/Sett
 </SettingsSection>
 ```
 
-❌ **Wrong:**
+**Wrong:**
 ```tsx
 <div>
   <h3>Server Configuration</h3>
@@ -139,11 +159,11 @@ import { SettingsSection } from '../../components/organisms/SettingsSection/Sett
 </div>
 ```
 
-### 🔴 Rule 4: Only Use Approved Ant Design Components
+### Rule 4: Only Use Approved Ant Design Components
 
 **ONLY** use Ant Design components that have CSS token overrides in `src/styles/tokens.css`:
 
-✅ **Approved for Use:**
+**Approved for Use:**
 - `Tabs` - Tab navigation
 - `Slider` - Range inputs
 - `Card` - Content containers
@@ -155,7 +175,7 @@ import { SettingsSection } from '../../components/organisms/SettingsSection/Sett
 - `Statistic` - Numeric displays
 - `Modal` - Dialog boxes and confirmations
 
-❌ **Never Use (Use Custom Components Instead):**
+**Never Use (Use Custom Components Instead):**
 - `Form` → Use controlled components with useState
 - `Input` → Use custom `Input` component
 - `Button` → Use custom `Button` component
@@ -166,11 +186,11 @@ import { SettingsSection } from '../../components/organisms/SettingsSection/Sett
 - `Checkbox` → Use custom checkbox implementation
 - `Radio` → Use custom radio implementation
 
-### 🔴 Rule 5: All Styling Via CSS Modules with Design Tokens
+### Rule 5: All Styling Via CSS Modules with Design Tokens
 
 **NEVER** use inline styles. **ALWAYS** use CSS modules with design tokens.
 
-✅ **Correct:**
+**Correct:**
 ```tsx
 // Component.module.css
 .container {
@@ -195,7 +215,7 @@ import styles from './Component.module.css';
 </div>
 ```
 
-❌ **Wrong:**
+**Wrong:**
 ```tsx
 <div style={{
   padding: '24px',
@@ -426,7 +446,7 @@ const items = [
 ### Controlled Components
 **ALWAYS** use controlled components with useState:
 
-✅ **Correct:**
+**Correct:**
 ```tsx
 const [port, setPort] = useState('3000');
 const [enabled, setEnabled] = useState(false);
@@ -435,7 +455,7 @@ const [enabled, setEnabled] = useState(false);
 <Toggle checked={enabled} onChange={setEnabled} />
 ```
 
-❌ **Wrong:**
+**Wrong:**
 ```tsx
 import { Form } from 'antd';
 const [form] = Form.useForm();
@@ -492,7 +512,7 @@ src/components/
 6. Types
 7. Styles (always last)
 
-✅ **Correct:**
+**Correct:**
 ```tsx
 import React, { useState, useEffect } from 'react';
 import { Tabs, Alert } from 'antd';
@@ -509,6 +529,7 @@ import styles from './SettingsPage.module.css';
 
 Before creating any new UI component or page, verify:
 
+- [ ] Are you avoiding ALL emojis in code, comments, and UI text?
 - [ ] Are you using custom Input/Button/Toggle/Textarea components?
 - [ ] Are you wrapping inputs with FormField or ToggleField?
 - [ ] Are you using SettingsSection for grouping?
@@ -543,7 +564,7 @@ The application has a **fixed terminal taskbar** at the bottom of the screen (48
 - Content areas with fixed footers need `padding-bottom: 130px` minimum (footer + taskbar + spacing)
 - The terminal taskbar is always visible and has the highest z-index
 
-✅ **Correct:**
+**Correct:**
 ```css
 .footer {
   position: fixed;
@@ -556,7 +577,7 @@ The application has a **fixed terminal taskbar** at the bottom of the screen (48
 }
 ```
 
-❌ **Wrong:**
+**Wrong:**
 ```css
 .footer {
   position: fixed;
