@@ -5,6 +5,10 @@ import {
   CheckCircleOutlined,
   ClockCircleOutlined,
   EyeInvisibleOutlined,
+  SafetyOutlined,
+  ThunderboltOutlined,
+  ToolOutlined,
+  SettingOutlined,
 } from '@ant-design/icons';
 import { SeverityBadge } from '../../atoms/SeverityBadge/SeverityBadge';
 import { IssueDetailModal } from '../../molecules/IssueDetailModal/IssueDetailModal';
@@ -17,10 +21,10 @@ interface IssueTableProps {
 }
 
 const categoryIcons = {
-  security: '🛡️',
-  performance: '⚡',
-  stability: '🔧',
-  configuration: '⚙️',
+  security: <SafetyOutlined />,
+  performance: <ThunderboltOutlined />,
+  stability: <ToolOutlined />,
+  configuration: <SettingOutlined />,
 };
 
 const statusConfig = {
@@ -121,7 +125,7 @@ export const IssueTable: React.FC<IssueTableProps> = ({ issues, onStatusChange }
                   key={issue.id}
                   className={`${styles.row} ${styles[issue.severity]} ${
                     index % 2 === 0 ? styles.evenRow : styles.oddRow
-                  }`}
+                  } ${issue.status === 'resolved' || issue.status === 'ignored' ? styles.resolvedRow : ''}`}
                   onClick={() => handleRowClick(issue)}
                 >
                   <td className={styles.cell}>

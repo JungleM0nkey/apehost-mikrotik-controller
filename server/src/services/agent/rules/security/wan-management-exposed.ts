@@ -38,12 +38,24 @@ export class WANManagementExposedRule extends BaseDetectionRule {
 
     // Check if firewall blocks access to router on WAN interface
     if (firewallRules && Array.isArray(firewallRules)) {
-      const hasWANInputProtection = firewallRules.some((rule: any) =>
+      // Check for explicit interface rules
+      const hasExplicitWANProtection = firewallRules.some((rule: any) =>
         !rule.disabled &&
         rule.chain === 'input' &&
         rule.in_interface === wanInterfaceName &&
         (rule.action === 'drop' || rule.action === 'reject')
       );
+
+      // Check for interface list rules (modern MikroTik configurations)
+      // Common list names: WAN, External, Internet, Public
+      const hasInterfaceListProtection = firewallRules.some((rule: any) =>
+        !rule.disabled &&
+        rule.chain === 'input' &&
+        rule.in_interface_list &&
+        (rule.action === 'drop' || rule.action === 'reject')
+      );
+
+      const hasWANInputProtection = hasExplicitWANProtection || hasInterfaceListProtection;
 
       if (!hasWANInputProtection) {
         const exposedServices = this.MANAGEMENT_SERVICES.join(', ');
@@ -51,7 +63,7 @@ export class WANManagementExposedRule extends BaseDetectionRule {
           'WAN Interface Management Access Exposed',
           `Your WAN interface (${wanInterfaceName}) has no firewall rules blocking incoming connections to the router. Management services like WinBox, SSH, and HTTP are likely accessible from the internet.`,
           `Add firewall input chain rules to block all incoming connections on ${wanInterfaceName} except established/related. Example:\n/ip firewall filter add chain=input in-interface=${wanInterfaceName} connection-state=established,related action=accept\n/ip firewall filter add chain=input in-interface=${wanInterfaceName} action=drop`,
-          0.98
+          0.85
         );
       }
     }

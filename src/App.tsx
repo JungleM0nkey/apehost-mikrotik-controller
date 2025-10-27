@@ -10,6 +10,7 @@ import { FirewallPage } from './pages/FirewallPage/FirewallPage';
 import { NetworkMapPage } from './pages/NetworkMapPage/NetworkMapPage';
 import { AgentPage } from './pages/AgentPage/AgentPage';
 import { DocumentationPage } from './pages/DocumentationPage/DocumentationPage';
+import { LearningDashboardPage } from './pages/LearningDashboardPage/LearningDashboardPage';
 import { TerminalManagerProvider, useTerminalManager } from './contexts/TerminalManagerContext';
 import { TerminalTaskbar } from './components/organisms/TerminalTaskbar/TerminalTaskbar';
 import { TerminalWindow } from './components/organisms/TerminalWindow/TerminalWindow';
@@ -60,6 +61,8 @@ const AppContent: React.FC = () => {
         return <AgentPage />;
       case 'documentation':
         return <DocumentationPage />;
+      case 'learning':
+        return <LearningDashboardPage />;
       case 'dhcp':
         return (
           <div className={styles.placeholder}>

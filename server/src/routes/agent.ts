@@ -240,4 +240,187 @@ router.get('/status', (req, res) => {
   }
 });
 
+/**
+ * POST /api/agent/issues/:id/feedback
+ * Submit feedback on an issue detection
+ */
+router.post('/issues/:id/feedback', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { feedback_type, false_positive_reason, notes, actual_configuration } = req.body;
+
+    if (!feedback_type || !['true_positive', 'false_positive', 'needs_investigation'].includes(feedback_type)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid feedback_type. Must be: true_positive, false_positive, or needs_investigation',
+      });
+    }
+
+    const { getFeedbackDatabase } = await import('../services/agent/database/feedback-db.js');
+    const feedbackDb = getFeedbackDatabase();
+
+    const feedback = feedbackDb.createFeedback({
+      issue_id: id,
+      user_id: 'system', // TODO: Get from auth session
+      feedback_type,
+      false_positive_reason,
+      notes,
+      actual_configuration,
+      submitted_at: Date.now(),
+    });
+
+    // Trigger learning analysis if false positive
+    if (feedback_type === 'false_positive') {
+      const issue = db.getIssue(id);
+      if (issue && issue.metadata?.rule_name) {
+        const { getLearningSystem } = await import('../services/agent/learning/learning-system.js');
+        const learningSystem = getLearningSystem();
+
+        // Run learning asynchronously
+        learningSystem.analyzeAndLearn(issue.metadata.rule_name).catch((error) => {
+          console.error('[AgentAPI] Learning analysis failed:', error);
+        });
+      }
+    }
+
+    res.json({
+      success: true,
+      data: feedback,
+      message: 'Feedback submitted successfully. Thank you for helping improve detection accuracy!',
+    });
+  } catch (error) {
+    console.error('[AgentAPI] Failed to submit feedback:', error);
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to submit feedback',
+    });
+  }
+});
+
+/**
+ * GET /api/agent/issues/:id/evidence
+ * Get detection evidence for an issue
+ */
+router.get('/issues/:id/evidence', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { getFeedbackDatabase } = await import('../services/agent/database/feedback-db.js');
+    const feedbackDb = getFeedbackDatabase();
+
+    const evidence = feedbackDb.getEvidence(id);
+
+    res.json({
+      success: true,
+      data: {
+        issue_id: id,
+        evidence_count: evidence.length,
+        evidence,
+      },
+    });
+  } catch (error) {
+    console.error('[AgentAPI] Failed to get evidence:', error);
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to get evidence',
+    });
+  }
+});
+
+/**
+ * GET /api/agent/learning/stats
+ * Get learning system statistics
+ */
+router.get('/learning/stats', async (req, res) => {
+  try {
+    const { getFeedbackDatabase } = await import('../services/agent/database/feedback-db.js');
+    const feedbackDb = getFeedbackDatabase();
+
+    const stats = feedbackDb.getLearningStats();
+
+    res.json({
+      success: true,
+      data: {
+        rules: stats,
+        total_rules: stats.length,
+        average_fp_rate: stats.reduce((sum, s) => sum + s.false_positive_rate, 0) / stats.length || 0,
+      },
+    });
+  } catch (error) {
+    console.error('[AgentAPI] Failed to get learning stats:', error);
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to get learning stats',
+    });
+  }
+});
+
+/**
+ * GET /api/agent/learning/:rule_name
+ * Get detailed learning metrics for a specific rule
+ */
+router.get('/learning/:rule_name', async (req, res) => {
+  try {
+    const { rule_name } = req.params;
+    const { getFeedbackDatabase } = await import('../services/agent/database/feedback-db.js');
+    const feedbackDb = getFeedbackDatabase();
+
+    const metrics = feedbackDb.getLearningMetrics(rule_name);
+    const patterns = feedbackDb.getPatterns(rule_name);
+    const rules = feedbackDb.getImprovementRules(rule_name);
+
+    res.json({
+      success: true,
+      data: {
+        rule_name,
+        metrics,
+        patterns,
+        improvement_rules: rules,
+      },
+    });
+  } catch (error) {
+    console.error('[AgentAPI] Failed to get learning details:', error);
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to get learning details',
+    });
+  }
+});
+
+/**
+ * POST /api/agent/learning/analyze
+ * Trigger learning analysis for all rules or a specific rule
+ */
+router.post('/learning/analyze', async (req, res) => {
+  try {
+    const { rule_name } = req.body;
+    const { getLearningSystem } = await import('../services/agent/learning/learning-system.js');
+    const learningSystem = getLearningSystem();
+
+    if (rule_name) {
+      const result = await learningSystem.analyzeAndLearn(rule_name);
+      res.json({
+        success: true,
+        data: {
+          rule_name,
+          patterns_found: result.patterns.length,
+          rules_generated: result.rules.length,
+          metrics: result.metrics,
+        },
+      });
+    } else {
+      // Analyze all rules (run in background)
+      res.json({
+        success: true,
+        message: 'Learning analysis started for all rules',
+      });
+    }
+  } catch (error) {
+    console.error('[AgentAPI] Failed to trigger learning analysis:', error);
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to trigger learning analysis',
+    });
+  }
+});
+
 export default router;

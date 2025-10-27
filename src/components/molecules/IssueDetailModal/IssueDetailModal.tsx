@@ -1,14 +1,20 @@
-import React from 'react';
-import { Modal, Tag } from 'antd';
+import React, { useState } from 'react';
+import { Modal, Tag, message } from 'antd';
 import {
   WarningOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
   EyeInvisibleOutlined,
+  SafetyOutlined,
+  ThunderboltOutlined,
+  ToolOutlined,
+  SettingOutlined,
 } from '@ant-design/icons';
 import { SeverityBadge } from '../../atoms/SeverityBadge/SeverityBadge';
 import { Button } from '../../atoms/Button/Button';
+import { FalsePositiveMarker } from '../FalsePositiveMarker';
 import type { Issue } from '../../../types/agent';
+import type { FeedbackSubmission } from '../FalsePositiveMarker/FalsePositiveMarker';
 import styles from './IssueDetailModal.module.css';
 
 interface IssueDetailModalProps {
@@ -19,10 +25,10 @@ interface IssueDetailModalProps {
 }
 
 const categoryIcons = {
-  security: '🛡️',
-  performance: '⚡',
-  stability: '🔧',
-  configuration: '⚙️',
+  security: <SafetyOutlined />,
+  performance: <ThunderboltOutlined />,
+  stability: <ToolOutlined />,
+  configuration: <SettingOutlined />,
 };
 
 const statusConfig = {
@@ -54,6 +60,8 @@ export const IssueDetailModal: React.FC<IssueDetailModalProps> = ({
   onClose,
   onStatusChange,
 }) => {
+  const [feedbackCount, setFeedbackCount] = useState(0);
+
   if (!issue) return null;
 
   const statusInfo = statusConfig[issue.status];
@@ -63,6 +71,29 @@ export const IssueDetailModal: React.FC<IssueDetailModalProps> = ({
     if (onStatusChange) {
       onStatusChange(issue.id, newStatus);
       onClose();
+    }
+  };
+
+  const handleFeedbackSubmit = async (feedback: FeedbackSubmission) => {
+    try {
+      const response = await fetch(`/api/agent/issues/${issue.id}/feedback`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(feedback),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to submit feedback');
+      }
+
+      const data = await response.json();
+      setFeedbackCount(prev => prev + 1);
+      message.success('Feedback submitted successfully. The AI will learn from this.');
+    } catch (error) {
+      console.error('Error submitting feedback:', error);
+      message.error('Failed to submit feedback. Please try again.');
     }
   };
 
@@ -184,6 +215,14 @@ export const IssueDetailModal: React.FC<IssueDetailModalProps> = ({
             </div>
           </div>
         )}
+
+        <div className={styles.section}>
+          <FalsePositiveMarker
+            issueId={issue.id}
+            onSubmit={handleFeedbackSubmit}
+            feedbackCount={feedbackCount}
+          />
+        </div>
 
         <div className={styles.section}>
           <h3 className={styles.sectionTitle}>Timeline</h3>

@@ -3,6 +3,7 @@
   grid-template-columns: var(--size-sidebar) 1fr;
   height: 100vh;
   overflow: hidden;
+  position: relative;
 }
 
 .main {

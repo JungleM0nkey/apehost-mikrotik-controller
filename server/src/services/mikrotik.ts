@@ -635,25 +635,32 @@ class MikroTikService {
     updates: { name?: string; comment?: string; disabled?: boolean }
   ): Promise<NetworkInterface> {
     try {
-      const params: string[] = [];
+      console.log('updateInterface called with:', { id, updates });
+
+      const params: Record<string, string> = {
+        '.id': id
+      };
 
       if (updates.name !== undefined) {
-        params.push(`=name=${updates.name}`);
+        params['name'] = updates.name;
       }
       if (updates.comment !== undefined) {
-        params.push(`=comment=${updates.comment}`);
+        params['comment'] = updates.comment;
       }
       if (updates.disabled !== undefined) {
-        params.push(`=disabled=${updates.disabled ? 'yes' : 'no'}`);
+        params['disabled'] = updates.disabled ? 'yes' : 'no';
       }
 
-      if (params.length === 0) {
+      // Check if there are any updates besides .id
+      if (Object.keys(params).length === 1) {
         throw new Error('No updates provided');
       }
 
-      // Execute the set command
-      const command = `/interface/set\n=.id=${id}\n${params.join('\n')}`;
-      await this.executeCommand(command);
+      console.log('Executing MikroTik command:', '/interface/set', params);
+
+      // Execute the set command with params object
+      await this.executeCommand('/interface/set', params);
+      console.log('Command executed successfully');
 
       // Clear cache to force refresh
       this.clearCache('interfaces');
@@ -666,6 +673,7 @@ class MikroTikService {
         throw new Error('Interface not found after update');
       }
 
+      console.log('Interface updated successfully:', updatedInterface);
       return updatedInterface;
     } catch (error) {
       console.error('Error updating interface:', error);

@@ -62,13 +62,26 @@ const InterfaceCard: React.FC<InterfaceCardProps> = ({
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      await onUpdate(iface.id, {
+      const updates = {
         name: editName !== iface.name ? editName : undefined,
         comment: editComment !== iface.comment ? editComment : undefined
+      };
+
+      console.log('Saving interface updates:', {
+        interfaceId: iface.id,
+        originalName: iface.name,
+        newName: editName,
+        originalComment: iface.comment,
+        newComment: editComment,
+        updates
       });
+
+      await onUpdate(iface.id, updates);
+      antMessage.success('Interface updated successfully');
       onEditEnd();
     } catch (error) {
       console.error('Failed to save interface changes:', error);
+      antMessage.error(`Failed to save changes: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsSaving(false);
     }

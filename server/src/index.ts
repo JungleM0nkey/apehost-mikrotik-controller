@@ -8,7 +8,15 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Load .env from project root (2 levels up from dist/)
-config({ path: path.resolve(__dirname, '../../.env') });
+const envPath = path.resolve(__dirname, '../../.env');
+console.log(`[ENV] Loading environment from: ${envPath}`);
+const result = config({ path: envPath });
+if (result.error) {
+  console.error('[ENV] Error loading .env:', result.error);
+} else {
+  console.log('[ENV] Successfully loaded .env');
+  console.log(`[ENV] LMSTUDIO_CONTEXT_WINDOW=${process.env.LMSTUDIO_CONTEXT_WINDOW}`);
+}
 
 import express, { Request, Response } from 'express';
 import cors from 'cors';
@@ -22,7 +30,7 @@ import mikrotikService from './services/mikrotik.js';
 import { Server as SocketIOServer } from 'socket.io';
 import terminalSessionManager from './services/terminal-session.js';
 import conversationManager from './services/ai/conversation-manager.js';
-import { getGlobalProvider } from './services/ai/provider-factory.js';
+import { getGlobalProvider, refreshGlobalProvider } from './services/ai/provider-factory.js';
 import { AIServiceError } from './services/ai/errors/index.js';
 import { globalMCPExecutor } from './services/ai/mcp/mcp-executor.js';
 import { createServer } from 'http';
@@ -592,7 +600,7 @@ const startServer = async () => {
 
   // Initialize AI provider from config
   console.log('[Server] Initializing AI provider...');
-  aiProvider = await getGlobalProvider();
+  aiProvider = await refreshGlobalProvider();
   if (aiProvider) {
     console.log(`[Server] AI Provider: ${aiProvider.getName()}`);
     const valid = await aiProvider.validateConfig();

@@ -3,6 +3,7 @@
   flex-direction: column;
   height: 100%;
   padding: var(--space-lg);
+  padding-bottom: 80px; /* Extra padding for terminal taskbar (48px) + spacing */
   gap: var(--space-lg);
   overflow-y: auto;
 }

@@ -18,6 +18,7 @@ export class LMStudioProvider implements LLMProvider {
   private model: string;
   private defaultMaxTokens: number;
   private endpoint: string;
+  private contextWindow: number;
 
   constructor(endpoint: string, model: string) {
     if (!endpoint) {
@@ -32,6 +33,12 @@ export class LMStudioProvider implements LLMProvider {
     this.model = model;
     this.defaultMaxTokens = 2048;
 
+    // Use environment variable if provided, otherwise fallback to default
+    const envContextWindow = process.env.LMSTUDIO_CONTEXT_WINDOW;
+    this.contextWindow = envContextWindow ? parseInt(envContextWindow, 10) : 32768;
+
+    console.log(`[LMStudioProvider] Context window configured: ${this.contextWindow}`);
+
     // Create OpenAI client with custom endpoint
     this.client = new OpenAI({
       baseURL: endpoint,
@@ -42,17 +49,29 @@ export class LMStudioProvider implements LLMProvider {
   async sendMessage(messages: Message[], options?: SendMessageOptions): Promise<MessageResponse> {
     try {
       // OpenAI format includes system messages in the messages array
-      const formattedMessages = messages.map(m => ({
+      let formattedMessages = messages.map(m => ({
         role: m.role,
         content: m.content,
       }));
+
+      // Prepend systemPrompt as a system message if provided
+      if (options?.systemPrompt) {
+        formattedMessages = [
+          { role: 'system' as const, content: options.systemPrompt },
+          ...formattedMessages,
+        ];
+      }
 
       const requestParams: any = {
         model: this.model,
         messages: formattedMessages,
         max_tokens: options?.maxTokens || this.defaultMaxTokens,
-        temperature: options?.temperature,
       };
+
+      // Only add temperature if it's defined
+      if (options?.temperature !== undefined) {
+        requestParams.temperature = options.temperature;
+      }
 
       // Add tools if provided
       if (options?.tools && options.tools.length > 0) {
@@ -66,6 +85,16 @@ export class LMStudioProvider implements LLMProvider {
         }));
         requestParams.tool_choice = 'auto';
       }
+
+      // Log request details for debugging
+      console.log('[LMStudioProvider] Request:', {
+        model: requestParams.model,
+        messageCount: requestParams.messages.length,
+        maxTokens: requestParams.max_tokens,
+        temperature: requestParams.temperature,
+        toolCount: requestParams.tools?.length || 0,
+        hasSystemMessage: requestParams.messages[0]?.role === 'system',
+      });
 
       const response = await this.client.chat.completions.create(requestParams);
 
@@ -102,18 +131,30 @@ export class LMStudioProvider implements LLMProvider {
   ): AsyncGenerator<string, void, unknown> {
     try {
       // OpenAI format includes system messages in the messages array
-      const formattedMessages = messages.map(m => ({
+      let formattedMessages = messages.map(m => ({
         role: m.role,
         content: m.content,
       }));
+
+      // Prepend systemPrompt as a system message if provided
+      if (options?.systemPrompt) {
+        formattedMessages = [
+          { role: 'system' as const, content: options.systemPrompt },
+          ...formattedMessages,
+        ];
+      }
 
       const requestParams: any = {
         model: this.model,
         messages: formattedMessages,
         max_tokens: options?.maxTokens || this.defaultMaxTokens,
-        temperature: options?.temperature,
         stream: true,
       };
+
+      // Only add temperature if it's defined
+      if (options?.temperature !== undefined) {
+        requestParams.temperature = options.temperature;
+      }
 
       // Add tools if provided
       if (options?.tools && options.tools.length > 0) {
@@ -127,6 +168,16 @@ export class LMStudioProvider implements LLMProvider {
         }));
         requestParams.tool_choice = 'auto';
       }
+
+      // Log request details for debugging
+      console.log('[LMStudioProvider] Stream request:', {
+        model: requestParams.model,
+        messageCount: requestParams.messages.length,
+        maxTokens: requestParams.max_tokens,
+        temperature: requestParams.temperature,
+        toolCount: requestParams.tools?.length || 0,
+        hasSystemMessage: requestParams.messages[0]?.role === 'system',
+      });
 
       const stream = await this.client.chat.completions.create(requestParams) as any;
 
@@ -190,17 +241,35 @@ export class LMStudioProvider implements LLMProvider {
       }
 
       const data: any = await response.json();
-      const availableModels = data.data?.map((m: any) => m.id) || [];
+      const models = data.data || [];
 
-      if (availableModels.length === 0) {
+      if (models.length === 0) {
         console.error('[LMStudioProvider] No models loaded in LM Studio');
         return false;
       }
 
-      // Check if specified model is available
-      if (!availableModels.includes(this.model)) {
+      // Find the loaded model and extract its context window
+      const loadedModel = models.find((m: any) => m.id === this.model);
+
+      if (loadedModel) {
+        // Extract context_window from model metadata
+        // LM Studio may provide this in different fields
+        this.contextWindow = loadedModel.context_length ||
+                            loadedModel.context_window ||
+                            loadedModel.max_context_length ||
+                            32768; // Fallback
+        console.log(`[LMStudioProvider] Model '${this.model}' loaded with context window: ${this.contextWindow}`);
+      } else {
+        const availableModels = models.map((m: any) => m.id);
         console.warn(`[LMStudioProvider] Model '${this.model}' not found in loaded models:`, availableModels);
         console.warn('[LMStudioProvider] Using first available model');
+
+        // Use first available model's context window
+        const firstModel = models[0];
+        this.contextWindow = firstModel.context_length ||
+                            firstModel.context_window ||
+                            firstModel.max_context_length ||
+                            32768;
       }
 
       return true;
@@ -214,7 +283,7 @@ export class LMStudioProvider implements LLMProvider {
     return {
       streaming: true,
       functionCalling: true, // Qwen and other modern models support function calling via OpenAI format
-      maxTokens: 32768, // Varies by model, this is conservative
+      maxTokens: this.contextWindow, // Actual context window from loaded model
       modelInfo: this.model,
     };
   }
@@ -224,6 +293,15 @@ export class LMStudioProvider implements LLMProvider {
   }
 
   private handleError(error: any): Error {
+    // Log full error details for debugging
+    console.error('[LMStudioProvider] Full error details:', {
+      message: error.message,
+      status: error.status,
+      code: error.code,
+      response: error.response?.data,
+      error: error.error,
+    });
+
     if (error.code === 'ECONNREFUSED') {
       return new NetworkError(
         `Failed to connect to LM Studio at ${this.endpoint}. Make sure LM Studio is running.`,
@@ -240,7 +318,8 @@ export class LMStudioProvider implements LLMProvider {
     }
 
     if (error.status === 400) {
-      return new APIError('Invalid request to LM Studio', error.status);
+      const detailMsg = error.message || error.error?.message || error.response?.data?.error?.message;
+      return new APIError(`Invalid request to LM Studio: ${detailMsg}`, error.status);
     }
 
     if (error.status === 500) {

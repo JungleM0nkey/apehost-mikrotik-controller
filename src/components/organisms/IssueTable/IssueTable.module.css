@@ -40,11 +40,18 @@
 
 .row:hover {
   background: var(--color-bg-tertiary);
-  transform: translateX(2px);
 }
 
 .row:last-child {
   border-bottom: none;
+}
+
+.resolvedRow {
+  opacity: 0.5;
+}
+
+.resolvedRow:hover {
+  opacity: 0.7;
 }
 
 .evenRow {
@@ -83,7 +90,10 @@
 
 .categoryIcon {
   font-size: 20px;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-secondary);
 }
 
 .title {

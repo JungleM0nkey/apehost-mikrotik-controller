@@ -264,7 +264,7 @@ export const TerminalWindow: React.FC<TerminalWindowProps> = ({ terminal }) => {
               <span>AI Assistant</span>
               {modelInfo && modelInfo.available && activeTab === 'assistant' && (
                 <span className={styles.tabModelInfo}>
-                  {modelInfo.model} • {typeof modelInfo.context_window === 'number' ? `${modelInfo.context_window.toLocaleString()}` : modelInfo.context_window} tokens
+                  {modelInfo.model} • {typeof modelInfo.context_window === 'number' ? `${modelInfo.context_window.toLocaleString()}` : modelInfo.context_window} context
                 </span>
               )}
             </div>
@@ -352,7 +352,7 @@ export const TerminalWindow: React.FC<TerminalWindowProps> = ({ terminal }) => {
               <span>AI Assistant</span>
               {modelInfo && modelInfo.available && activeTab === 'assistant' && (
                 <span className={styles.tabModelInfo}>
-                  {modelInfo.model} • {typeof modelInfo.context_window === 'number' ? `${modelInfo.context_window.toLocaleString()}` : modelInfo.context_window} tokens
+                  {modelInfo.model} • {typeof modelInfo.context_window === 'number' ? `${modelInfo.context_window.toLocaleString()}` : modelInfo.context_window} context
                 </span>
               )}
             </div>

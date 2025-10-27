@@ -7,8 +7,9 @@ import {
   ApiOutlined,
   SettingOutlined,
   ClusterOutlined,
-  ExclamationCircleOutlined,
-  BookOutlined
+  RobotOutlined,
+  BookOutlined,
+  ExperimentOutlined
 } from '@ant-design/icons';
 import { RouterInfo } from '../../molecules/RouterInfo/RouterInfo';
 import { RouterInfo as RouterInfoType } from '../../../types/router';
@@ -71,8 +72,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
     {
       key: 'agent',
-      icon: <ExclamationCircleOutlined />,
+      icon: <RobotOutlined />,
       label: 'AI Agent',
+    },
+    {
+      key: 'learning',
+      icon: <ExperimentOutlined />,
+      label: 'AI Learning',
     },
     {
       key: 'documentation',

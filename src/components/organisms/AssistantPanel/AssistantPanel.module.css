@@ -189,10 +189,11 @@
 
 .sendButton {
   min-width: 40px;
-  height: 40px;
+  align-self: flex-end;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: var(--space-sm);
   font-size: 16px;
   transition: all var(--transition-fast);
   border-radius: var(--radius-sm);

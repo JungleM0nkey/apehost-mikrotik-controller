@@ -88,12 +88,19 @@ routerRoutes.patch('/interfaces/:id', async (req: Request, res: Response) => {
     const { id } = req.params;
     const { name, comment, disabled } = req.body;
 
+    console.log('Received interface update request:', {
+      id,
+      body: req.body,
+      updates: { name, comment, disabled }
+    });
+
     const updatedInterface = await mikrotikService.updateInterface(id, {
       name,
       comment,
       disabled
     });
 
+    console.log('Interface updated successfully:', updatedInterface);
     res.json(updatedInterface);
   } catch (error: any) {
     console.error('Error updating interface:', error);
