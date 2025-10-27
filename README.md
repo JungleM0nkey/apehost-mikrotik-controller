@@ -1,23 +1,46 @@
 # MikroTik Router Management Dashboard
 
+> [!WARNING]
+> **🚧 Work In Progress - Not Production Ready 🚧**
+>
+> This project is under active development and is **NOT ready for production use**. Features are incomplete, bugs are expected, and breaking changes may occur without notice. Use at your own risk.
+>
+> - ⚠️ Security features are not fully implemented
+> - ⚠️ API stability is not guaranteed
+> - ⚠️ Data loss may occur during updates
+> - ⚠️ Not all features are fully functional
+
 Web-based management interface for MikroTik routers with AI-powered network diagnostics and troubleshooting capabilities.
 
 ## Interface Overview
 
-### Dashboard
-Real-time router metrics, interface status, and traffic monitoring.
+The dashboard provides multiple specialized views for comprehensive network management:
+
+### 🏠 Dashboard
+Real-time router metrics, system resource monitoring, interface status overview, and traffic statistics at a glance.
 
 ![Dashboard](docs/screenshots/dashboard.png)
 
-### AI Agent Diagnostics
-Automated network issue detection and classification with confidence scoring.
+### 🤖 AI Agent Diagnostics
+Claude-powered network troubleshooting with automated issue detection, confidence scoring, and actionable recommendations. Features 14 specialized MCP tools for deep network analysis.
 
 ![AI Agent](docs/screenshots/ai-agent.png)
 
-### Network Management
-Detailed interface configuration and monitoring with toggle controls and status indicators.
+### 🌐 Network Interfaces
+Comprehensive interface management with detailed configuration options, traffic monitoring, and status indicators. Toggle interfaces on/off and view real-time statistics.
 
 ![Network Interfaces](docs/screenshots/network.png)
+
+### Additional Pages
+
+- **💬 Chat**: Interactive AI assistant for natural language network queries
+- **📊 Analytics**: Traffic analysis, usage patterns, and historical data visualization
+- **🔥 Firewall**: Firewall rule management and connection tracking
+- **🗺️ Network Map**: Visual topology mapping and device discovery
+- **📚 Documentation**: Built-in help system and API reference
+- **📖 Learning Dashboard**: Network education resources and tutorials
+- **⚙️ Settings**: System configuration, API credentials, and preferences
+- **💻 Terminal**: Direct router CLI access with command history
 
 ## Core Features
 
