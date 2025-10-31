@@ -54,3 +54,25 @@ coverage/
 
 # Vite
 .vite/
+
+# Database files (contain sensitive data)
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+*.sqlite-shm
+*.sqlite-wal
+
+# Data directories
+server/data/
+data/
+backups/
+
+# Sensitive files
+*.key
+*.pem
+*.p12
+*.pfx
+*secret*
+*credential*
