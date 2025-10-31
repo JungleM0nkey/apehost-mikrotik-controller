@@ -17,6 +17,15 @@
 > - Data loss may occur during updates
 > - Not all features are fully functional
 
+> [!NOTE]
+> **Git History Cleaned - October 31, 2025**
+>
+> Database files were removed from git history. If you cloned this repository before October 31, 2025, please fetch the updated history:
+> ```bash
+> git fetch origin --force && git reset --hard origin/main
+> ```
+> See [SECURITY_INCIDENT_REPORT.md](SECURITY_INCIDENT_REPORT.md) for details.
+
 Web-based management interface for MikroTik routers with AI-powered network diagnostics and troubleshooting capabilities.
 
 ## Interface Overview
