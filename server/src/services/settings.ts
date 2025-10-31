@@ -21,7 +21,7 @@ export interface ServerSettings {
 
   // LLM Configuration
   llm: {
-    provider: 'claude' | 'lmstudio';
+    provider: 'claude' | 'lmstudio' | 'cloudflare';
     claude: {
       apiKey: string;
       model: string;
@@ -30,6 +30,12 @@ export interface ServerSettings {
       endpoint: string;
       model: string;
       contextWindow: number;
+    };
+    cloudflare: {
+      accountId: string;
+      apiToken: string;
+      model: string;
+      gateway?: string;
     };
   };
 
@@ -77,6 +83,12 @@ class SettingsService {
           model: config.llm.lmstudio?.model || '',
           contextWindow: config.llm.lmstudio?.contextWindow || 32768,
         },
+        cloudflare: {
+          accountId: config.llm.cloudflare?.accountId || '',
+          apiToken: config.llm.cloudflare?.apiToken || '',
+          model: config.llm.cloudflare?.model || '@cf/meta/llama-4-scout-17b-16e-instruct',
+          gateway: config.llm.cloudflare?.gateway,
+        },
       },
       assistant: {
         temperature: config.assistant.temperature,
@@ -100,6 +112,7 @@ class SettingsService {
         server: settings.server ? {
           ...config.server,
           ...settings.server,
+          nodeEnv: (settings.server.nodeEnv as 'development' | 'production' | 'test') ?? config.server.nodeEnv,
         } : config.server,
         mikrotik: settings.mikrotik ? {
           ...config.mikrotik,
@@ -128,6 +141,12 @@ class SettingsService {
               contextWindow: settings.llm.lmstudio.contextWindow || config.llm.lmstudio?.contextWindow || 32768,
             } : {}),
           },
+          cloudflare: settings.llm.cloudflare ? {
+            accountId: settings.llm.cloudflare.accountId || config.llm.cloudflare?.accountId || '',
+            apiToken: settings.llm.cloudflare.apiToken || config.llm.cloudflare?.apiToken || '',
+            model: settings.llm.cloudflare.model || config.llm.cloudflare?.model || '@cf/meta/llama-4-scout-17b-16e-instruct',
+            gateway: settings.llm.cloudflare.gateway || config.llm.cloudflare?.gateway,
+          } : config.llm.cloudflare,
         } : config.llm,
         assistant: settings.assistant ? {
           ...config.assistant,
@@ -165,11 +184,11 @@ class SettingsService {
   /**
    * Stop watching for configuration changes
    */
-  unwatchSettings(callback?: () => void): void {
+  async unwatchSettings(callback?: () => void): Promise<void> {
     if (callback) {
       unifiedConfigService.off('change', callback);
     }
-    unifiedConfigService.stopWatching();
+    await unifiedConfigService.stopWatch();
     console.log('[SettingsService] Stopped watching for settings changes');
   }
 }

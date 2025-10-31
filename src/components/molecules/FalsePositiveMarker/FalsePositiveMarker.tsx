@@ -25,7 +25,7 @@ export interface FeedbackData {
 }
 
 export function FalsePositiveMarker({
-  issueId,
+  issueId: _issueId,
   onSubmit,
   feedbackCount = 0,
 }: FalsePositiveMarkerProps) {
@@ -137,7 +137,7 @@ export function FalsePositiveMarker({
           >
             <Textarea
               value={notes}
-              onChange={setNotes}
+              onChange={(e) => setNotes(e.target.value)}
               placeholder="e.g., /ip service print shows winbox disabled=yes&#10;or: WAN interface is in 'WAN' interface list with input drop rules"
               rows={4}
             />

@@ -25,7 +25,7 @@ export const MikroTikConfigSchema = z.object({
 
 // LLM Configuration Schema
 export const LLMConfigSchema = z.object({
-  provider: z.enum(['claude', 'lmstudio']),
+  provider: z.enum(['claude', 'lmstudio', 'cloudflare']),
   claude: z.object({
     apiKey: z.string(),
     model: z.string(),
@@ -37,6 +37,12 @@ export const LLMConfigSchema = z.object({
     model: z.string(),
     contextWindow: z.number().int().min(1024).default(32768),
   }),
+  cloudflare: z.object({
+    accountId: z.string(),
+    apiToken: z.string(),
+    model: z.string(),
+    gateway: z.string().optional(),
+  }).optional(),
 });
 
 // Assistant Configuration Schema

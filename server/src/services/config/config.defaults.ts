@@ -35,6 +35,12 @@ export const DEFAULT_CONFIG: AppConfig = {
       model: '',
       contextWindow: 70752,
     },
+    cloudflare: {
+      accountId: '',
+      apiToken: '',
+      model: '@cf/meta/llama-4-scout-17b-16e-instruct',
+      gateway: undefined,
+    },
   },
 
   assistant: {

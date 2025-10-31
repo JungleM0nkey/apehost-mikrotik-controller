@@ -446,11 +446,11 @@
     0 0 20px rgba(255, 140, 0, 0.7),
     0 0 30px rgba(255, 140, 0, 0.4),
     0 0 40px rgba(255, 140, 0, 0.2);
-  line-height: 1.2;
+  line-height: 1.4;
   letter-spacing: 0;
   font-size: 1em;
-  margin-bottom: 8px;
-  margin-top: 4px;
+  margin-bottom: 12px;
+  margin-top: 8px;
   white-space: pre;
   animation: terminalGlow 2.5s ease-in-out infinite alternate;
 }

@@ -374,7 +374,7 @@ export class ConfigMigrator {
       lines.push(`- LLM Provider: ${result.config.llm.provider}`);
 
       if (result.config.llm.provider === 'claude') {
-        lines.push(`- Claude Model: ${result.config.llm.anthropic.model}`);
+        lines.push(`- Claude Model: ${result.config.llm.claude.model}`);
       } else {
         lines.push(`- LM Studio Endpoint: ${result.config.llm.lmstudio.endpoint}`);
         lines.push(`- LM Studio Model: ${result.config.llm.lmstudio.model}`);

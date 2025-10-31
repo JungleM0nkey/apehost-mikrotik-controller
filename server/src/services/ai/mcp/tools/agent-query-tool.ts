@@ -180,7 +180,7 @@ This enables context-aware troubleshooting by leveraging automated monitoring da
     const ruleName = issue.metadata?.rule_name as string | undefined;
     let relatedPatterns = null;
     if (ruleName) {
-      relatedPatterns = feedbackDb.getPatternsByRule(ruleName);
+      relatedPatterns = feedbackDb.getPatterns(ruleName);
     }
 
     const executionTime = Date.now() - startTime;
@@ -235,7 +235,7 @@ This enables context-aware troubleshooting by leveraging automated monitoring da
 
     // Get learned false positive patterns
     const learnedPatterns = params.rule_name
-      ? feedbackDb.getPatternsByRule(params.rule_name as string)
+      ? feedbackDb.getPatterns(params.rule_name as string)
       : [];
 
     const executionTime = Date.now() - startTime;

@@ -211,6 +211,28 @@ export class UnifiedConfigService extends EventEmitter {
       overrides.llm.lmstudio.contextWindow = parseInt(process.env.LMSTUDIO_CONTEXT_WINDOW, 10);
     }
 
+    // Cloudflare overrides
+    if (process.env.CLOUDFLARE_ACCOUNT_ID) {
+      overrides.llm = overrides.llm || {};
+      overrides.llm.cloudflare = overrides.llm.cloudflare || {};
+      overrides.llm.cloudflare.accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
+    }
+    if (process.env.CLOUDFLARE_API_TOKEN) {
+      overrides.llm = overrides.llm || {};
+      overrides.llm.cloudflare = overrides.llm.cloudflare || {};
+      overrides.llm.cloudflare.apiToken = process.env.CLOUDFLARE_API_TOKEN;
+    }
+    if (process.env.CLOUDFLARE_AI_MODEL) {
+      overrides.llm = overrides.llm || {};
+      overrides.llm.cloudflare = overrides.llm.cloudflare || {};
+      overrides.llm.cloudflare.model = process.env.CLOUDFLARE_AI_MODEL;
+    }
+    if (process.env.CLOUDFLARE_AI_GATEWAY) {
+      overrides.llm = overrides.llm || {};
+      overrides.llm.cloudflare = overrides.llm.cloudflare || {};
+      overrides.llm.cloudflare.gateway = process.env.CLOUDFLARE_AI_GATEWAY;
+    }
+
     // Assistant overrides
     if (process.env.AI_TEMPERATURE) {
       overrides.assistant = overrides.assistant || {};

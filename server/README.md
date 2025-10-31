@@ -89,36 +89,53 @@ See [MCP_TOOLS_QUICK_REFERENCE.md](./MCP_TOOLS_QUICK_REFERENCE.md) for complete 
 
 ## API Endpoints
 
-### Health Check
-```
-GET /api/health
-```
-Returns server health status
+### Core Endpoints
+- **GET** `/api/health` - Server and router health status
+- **GET** `/api/router/status` - Router information, CPU, memory, uptime
+- **GET** `/api/router/interfaces` - Network interfaces with status and traffic
+- **GET** `/api/router/resources` - CPU, memory, and system resources
+- **POST** `/api/terminal/execute` - Execute RouterOS command (HTTP)
 
-### Router Status
-```
-GET /api/router/status
-```
-Returns router information, CPU, memory, uptime
+### AI Agent Endpoints
+- **GET** `/api/agent/issues` - Get detected network issues with AI analysis
+- **GET** `/api/agent/metrics` - Agent performance metrics and statistics
+- **POST** `/api/agent/scan` - Trigger AI diagnostic scan
+- **PATCH** `/api/agent/issues/:id` - Update issue status
 
-### Network Interfaces
-```
-GET /api/router/interfaces
-```
-Returns list of network interfaces with status and traffic
+### WireGuard VPN Endpoints
+- **GET** `/api/wireguard/interface` - Get WireGuard interface config
+- **POST** `/api/wireguard/interface` - Create/update WireGuard interface
+- **DELETE** `/api/wireguard/interface` - Remove WireGuard interface
+- **GET** `/api/wireguard/peers` - List all WireGuard peers
+- **POST** `/api/wireguard/peers` - Add new peer with auto-generated keys
+- **GET** `/api/wireguard/peers/:id/config` - Get peer configuration file
+- **GET** `/api/wireguard/peers/:id/qr` - Get QR code for mobile setup
+- **PATCH** `/api/wireguard/peers/:id` - Update peer configuration
+- **DELETE** `/api/wireguard/peers/:id` - Remove peer
 
-### Resources
-```
-GET /api/router/resources
-```
-Returns CPU, memory, and system resources
+### Configuration Backup Endpoints
+- **GET** `/api/backups` - List all configuration backups
+- **POST** `/api/backups/create` - Create new backup with optional name
+- **GET** `/api/backups/:id/download` - Download backup file
+- **POST** `/api/backups/:id/restore` - Restore configuration from backup
+- **POST** `/api/backups/:id/export` - Export configuration as text
+- **DELETE** `/api/backups/:id` - Delete backup file
 
-### Terminal Command
-```
-POST /api/terminal/execute
-Body: { "command": "/system resource print" }
-```
-Executes RouterOS command and returns output
+### Settings Management Endpoints
+- **GET** `/api/settings` - Get all application settings
+- **PATCH** `/api/settings` - Update settings
+- **POST** `/api/settings/test-connection` - Test router connection
+
+### Service Control Endpoints
+- **GET** `/api/service/status` - Get backend service status
+- **POST** `/api/service/restart` - Restart backend service
+- **POST** `/api/service/stop` - Stop backend service
+
+### Setup Wizard Endpoints
+- **GET** `/api/setup/status` - Get wizard completion status
+- **POST** `/api/setup/complete` - Complete setup step
+
+See [docs/API.md](../docs/API.md) for complete API documentation with request/response examples.
 
 ---
 
@@ -128,22 +145,46 @@ Executes RouterOS command and returns output
 server/
 ├── src/
 │   ├── routes/
+│   │   ├── agent.ts         # AI agent diagnostics endpoints
+│   │   ├── backups.ts       # Configuration backup/restore
 │   │   ├── health.ts        # Health check endpoint
 │   │   ├── router.ts        # Router API endpoints
-│   │   └── terminal.ts      # Terminal command execution
+│   │   ├── service.ts       # Service management
+│   │   ├── settings.ts      # Settings persistence
+│   │   ├── setup.ts         # Setup wizard
+│   │   ├── terminal.ts      # Terminal command execution
+│   │   └── wireguard.ts     # WireGuard VPN management
 │   ├── services/
-│   │   └── (future: mikrotik service)
-│   ├── middleware/
-│   │   └── (future: auth, validation)
-│   ├── types/
-│   │   └── (future: TypeScript types)
+│   │   ├── ai/
+│   │   │   ├── mcp/         # 14 MCP tool implementations
+│   │   │   │   ├── agent-query-tool.ts
+│   │   │   │   ├── connectivity-tool.ts
+│   │   │   │   ├── dhcp-tool.ts
+│   │   │   │   ├── firewall-tool.ts
+│   │   │   │   └── ... (10 more tools)
+│   │   │   └── mcp-executor.ts  # MCP tool orchestration
+│   │   ├── backup-management.service.ts
+│   │   ├── config/          # Configuration management
+│   │   │   ├── config.migrator.ts
+│   │   │   └── config.validator.ts
+│   │   ├── settings.ts      # Settings service
+│   │   ├── setup.service.ts # Setup wizard service
+│   │   └── wireguard/       # WireGuard service layer
+│   ├── data/                # SQLite databases
+│   │   ├── agent.db         # AI agent issue tracking
+│   │   ├── wireguard.db     # WireGuard configurations
+│   │   └── backups/         # Backup files storage
+│   ├── utils/               # Helper functions
 │   └── index.ts             # Express app entry point
-├── config/
-│   └── (future: configuration files)
+├── scripts/                 # Utility scripts
+│   ├── migrate-config.ts
+│   ├── validate-config.ts
+│   └── backup-config.ts
+├── MCP_TOOLS_QUICK_REFERENCE.md
+├── NETWORK_TROUBLESHOOTING_TOOLS.md
 ├── package.json
 ├── tsconfig.json
-├── .env.example
-└── README.md
+└── .env
 ```
 
 ---
@@ -156,12 +197,16 @@ server/
 |----------|---------|-------------|
 | PORT | 3000 | Server port |
 | NODE_ENV | development | Environment |
-| MIKROTIK_HOST | 192.168.88.1 | Router IP |
+| CORS_ORIGIN | http://localhost:5173 | Frontend origin |
+| MIKROTIK_HOST | 192.168.88.1 | Router IP address |
 | MIKROTIK_PORT | 8728 | RouterOS API port |
 | MIKROTIK_USERNAME | admin | Router username |
-| MIKROTIK_PASSWORD | | Router password |
-| CORS_ORIGIN | http://localhost:5173 | Frontend origin |
-| WS_PORT | 3001 | WebSocket port |
+| MIKROTIK_PASSWORD | | Router password (quote if contains #) |
+| MIKROTIK_TIMEOUT | 10000 | API connection timeout (ms) |
+| MIKROTIK_KEEPALIVE_SEC | 30 | Keep-alive interval (seconds) |
+| ANTHROPIC_API_KEY | | Claude API key for AI features |
+| DATA_DIR | ./data | Data storage directory |
+| BACKUPS_DIR | ./data/backups | Backup files directory |
 
 ---
 
@@ -169,67 +214,96 @@ server/
 
 | Command | Description |
 |---------|-------------|
-| `npm run dev` | Start development server with hot reload |
-| `npm run build` | Build TypeScript to JavaScript |
-| `npm start` | Run production server |
-| `npm run typecheck` | Check TypeScript types |
+| `npm run dev` | Start development server with hot reload (tsx watch) |
+| `npm run build` | Build TypeScript to JavaScript (dist/) |
+| `npm start` | Run production server from dist/ |
+| `npm run typecheck` | Check TypeScript types without building |
+| `npm run migrate-config` | Migrate configuration to new schema |
+| `npm run validate-config` | Validate current configuration |
+| `npm run backup-config` | Create configuration backup |
+| `npm run restore-config` | Restore configuration from backup |
+| `npm run list-backups` | List available configuration backups |
 
 ---
 
 ## Current Implementation
 
-### Phase 2 Foundation (Complete)
-- ✅ Express server setup
-- ✅ TypeScript configuration
-- ✅ CORS middleware
-- ✅ Basic routing structure
-- ✅ Mock API endpoints
-- ✅ Request logging
-- ✅ Error handling
+### Phase 3 - Network Troubleshooting Enhancement (Complete)
+- ✅ Express server with Socket.IO WebSocket
+- ✅ TypeScript with strict mode
+- ✅ CORS middleware with origin validation
+- ✅ Complete routing structure (10 route files)
+- ✅ MikroTik RouterOS API integration
+- ✅ Real-time terminal with session management
+- ✅ Claude AI integration with 14 MCP tools
+- ✅ SQLite databases (agent, wireguard, backups)
+- ✅ Configuration backup/restore system
+- ✅ WireGuard VPN management with QR codes
+- ✅ Settings persistence with validation
+- ✅ Service control endpoints
+- ✅ Setup wizard flow
+- ✅ Request logging and audit trails
+- ✅ Comprehensive error handling
 
-### Mock Data
-All endpoints currently return mock data matching the frontend expectations. This allows frontend development to continue while real MikroTik integration is implemented.
+### AI Assistant Features
+- ✅ 14 specialized MCP tools for network diagnostics
+- ✅ Intelligent firewall path analysis
+- ✅ Active connectivity testing (ping, traceroute, bandwidth)
+- ✅ Network layer diagnostics (ARP, DNS, DHCP)
+- ✅ Confidence scoring for recommendations
+- ✅ 5-phase systematic troubleshooting workflow
+- ✅ Rate limiting and security controls
+- ✅ Audit logging for all tool executions
 
 ---
 
-## TODO (Phase 2 Continued)
+## Future Enhancements
 
 ### High Priority
-- [ ] Real MikroTik RouterOS API integration
-- [ ] WebSocket server for terminal
-- [ ] Authentication middleware
-- [ ] Session management
-- [ ] Input validation
+- [ ] JWT authentication and authorization
+- [ ] User management and roles
+- [ ] Multi-router support
+- [ ] Advanced analytics and reporting
+- [ ] Network topology mapping
 
 ### Medium Priority
-- [ ] Rate limiting
-- [ ] Request caching
-- [ ] Error logging service
-- [ ] Database integration (optional)
+- [ ] Automated scheduled backups
+- [ ] Email notifications for alerts
+- [ ] API rate limiting per user
+- [ ] Redis caching layer
+- [ ] Prometheus metrics export
 
 ### Low Priority
-- [ ] API documentation (Swagger)
-- [ ] Unit tests
-- [ ] Integration tests
-- [ ] Docker support
+- [ ] OpenAPI/Swagger documentation
+- [ ] Comprehensive unit test coverage
+- [ ] Integration test suite
+- [ ] Docker containerization
+- [ ] Kubernetes deployment configs
 
 ---
 
 ## Security Notes
 
-### Current Status (Development Only)
-- ⚠ No authentication implemented yet
-- ⚠ Mock data only, no real router access
-- ⚠ CORS open to frontend origin
-- ⚠ Passwords in .env (not committed)
+### Current Status (Development/Testing)
+- ⚠ **No user authentication** - Single user mode only
+- ⚠ **API access unrestricted** - All endpoints publicly accessible
+- ⚠ **Passwords in .env** - Not suitable for production without secrets manager
+- ✅ **MCP tool rate limiting** - 20 calls per minute per session
+- ✅ **Command whitelist** - Only safe RouterOS commands allowed
+- ✅ **Audit logging** - All MCP tool executions logged
+- ✅ **Input validation** - Zod schemas for API requests
+- ✅ **CORS configured** - Origin restriction in place
 
 ### Production Requirements
-- Implement JWT authentication
-- Add rate limiting
-- Validate all inputs
-- Use environment secrets management
-- Enable HTTPS
-- Restrict CORS properly
+- ⚠ **Critical**: Implement JWT authentication and user sessions
+- ⚠ **Critical**: Add per-user API rate limiting
+- ⚠ **Critical**: Use environment secrets management (Vault, AWS Secrets Manager)
+- ⚠ **Critical**: Enable HTTPS with valid certificates
+- ⚠ **Important**: Implement role-based access control (RBAC)
+- ⚠ **Important**: Add API request signing and validation
+- ⚠ **Important**: Implement IP whitelisting
+- ⚠ **Recommended**: Add intrusion detection monitoring
+- ⚠ **Recommended**: Implement comprehensive audit logging with retention
 
 ---
 
@@ -264,16 +338,21 @@ curl -X POST http://localhost:3000/api/terminal/execute \
 ## Dependencies
 
 ### Production
-- **express**: Web framework
-- **cors**: Cross-origin resource sharing
-- **dotenv**: Environment configuration
-- **ws**: WebSocket library (future)
-- **node-routeros**: MikroTik API client (future)
+- **express**: Web framework for REST API
+- **socket.io**: WebSocket library for real-time communication
+- **cors**: Cross-origin resource sharing middleware
+- **node-routeros**: MikroTik RouterOS API client
+- **@anthropic-ai/sdk**: Claude AI integration for diagnostics
+- **better-sqlite3**: SQLite database for local persistence
+- **qrcode**: QR code generation for WireGuard mobile setup
+- **zod**: Runtime type validation
+- **chalk** & **boxen**: Enhanced terminal output
 
 ### Development
-- **typescript**: Type safety
-- **tsx**: TypeScript execution
-- **@types/***: Type definitions
+- **typescript**: Type safety and modern JavaScript features
+- **tsx**: Fast TypeScript execution and hot reload
+- **@types/***: TypeScript type definitions
+- **chokidar**: File watching for configuration changes
 
 ---
 
@@ -299,12 +378,23 @@ Frontend (http://localhost:5173) is allowed by default. Update `CORS_ORIGIN` in 
 
 ## Next Steps
 
-1. **Test Mock API**: Verify all endpoints return expected data
-2. **Frontend Integration**: Connect Dashboard to real API
-3. **MikroTik Integration**: Implement real router communication
-4. **WebSocket Terminal**: Add real-time terminal communication
-5. **Authentication**: Implement user authentication
-6. **Production Deploy**: Docker + environment setup
+### Immediate (Phase 4)
+1. **Authentication System**: Implement JWT-based user authentication
+2. **User Management**: Add user creation, roles, and permissions
+3. **Enhanced Security**: Add API rate limiting and request signing
+4. **Advanced Analytics**: Expand metrics collection and reporting
+
+### Short Term
+1. **Multi-Router Support**: Manage multiple routers from single dashboard
+2. **Automated Backups**: Scheduled configuration backups
+3. **Alert System**: Email/webhook notifications for critical events
+4. **Network Topology**: Visual network mapping and device discovery
+
+### Long Term
+1. **Production Deployment**: Docker containerization and orchestration
+2. **High Availability**: Redis caching and load balancing
+3. **Monitoring Integration**: Prometheus metrics and Grafana dashboards
+4. **API Documentation**: OpenAPI/Swagger specification
 
 ---
 
@@ -324,5 +414,7 @@ If port 3000 is in use, change `PORT` in `.env`.
 
 ---
 
-**Status**: Backend foundation complete, ready for MikroTik integration  
-**Next Phase**: Phase 3 - Frontend-Backend Integration
+**Status**: Phase 3 Complete - Network Troubleshooting Enhancement
+**Current Version**: 1.0.0 (Development/Testing)
+**Next Phase**: Phase 4 - Authentication & Multi-Router Support
+**Production Ready**: No (See Security Notes and Warning in Main README)

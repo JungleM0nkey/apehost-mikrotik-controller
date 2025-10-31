@@ -37,6 +37,12 @@ import { TroubleshootingSessionTool } from './tools/troubleshooting-session-tool
 import { SystemStateTool } from './tools/system-state-tool.js';
 import { TrendAnalysisTool } from './tools/trend-analysis-tool.js';
 import { PatternLearningTool } from './tools/pattern-learning-tool.js';
+import { BackupExportTool } from './tools/backup-export-tool.js';
+import { BackupListTool } from './tools/backup-list-tool.js';
+import { BackupDownloadTool } from './tools/backup-download-tool.js';
+import { BackupCreateBinaryTool } from './tools/backup-create-binary-tool.js';
+import { BackupRestoreTool } from './tools/backup-restore-tool.js';
+import { WireguardTool } from './tools/wireguard-tool.js';
 
 export class MCPExecutor {
   private tools: Map<string, MCPTool> = new Map();
@@ -92,6 +98,16 @@ export class MCPExecutor {
 
     // Pattern learning and historical resolution data (Phase 3.2: Pattern-aware responses)
     this.registerTool(new PatternLearningTool());
+
+    // Backup management tools
+    this.registerTool(new BackupExportTool());
+    this.registerTool(new BackupListTool());
+    this.registerTool(new BackupDownloadTool());
+    this.registerTool(new BackupCreateBinaryTool());
+    this.registerTool(new BackupRestoreTool());
+
+    // WireGuard VPN management
+    this.registerTool(new WireguardTool());
 
     console.log(`[MCPExecutor] Registered ${this.tools.size} tools`);
   }

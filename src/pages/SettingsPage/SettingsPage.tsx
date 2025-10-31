@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Tabs, Slider, Alert, Spin } from 'antd';
+import { Tabs, Slider, Alert, Spin, message } from 'antd';
 import { ConnectionStatusCard } from '../../components/molecules/ConnectionStatusCard/ConnectionStatusCard';
 import { SettingsSection } from '../../components/organisms/SettingsSection/SettingsSection';
 import { FormField } from '../../components/molecules/FormField/FormField';
@@ -44,6 +44,7 @@ export const SettingsPage: React.FC = () => {
   // Track original masked values
   const [originalMaskedPassword, setOriginalMaskedPassword] = useState<string>('');
   const [originalMaskedApiKey, setOriginalMaskedApiKey] = useState<string>('');
+  const [originalMaskedCloudflareToken, setOriginalMaskedCloudflareToken] = useState<string>('');
 
   // Connection test state
   const [mikrotikTest, setMikrotikTest] = useState<TestResult | null>(null);
@@ -102,6 +103,7 @@ export const SettingsPage: React.FC = () => {
         setServerSettings(data);
         setOriginalMaskedPassword(data.mikrotik.password || '');
         setOriginalMaskedApiKey(data.llm.claude.apiKey || '');
+        setOriginalMaskedCloudflareToken(data.llm.cloudflare.apiToken || '');
       }
 
       const savedUISettings = localStorage.getItem('mikrotik-ui-settings');
@@ -136,7 +138,6 @@ export const SettingsPage: React.FC = () => {
           port: serverSettings.mikrotik.port.toString(),
           username: serverSettings.mikrotik.username,
           password: serverSettings.mikrotik.password,
-          timeout: serverSettings.mikrotik.timeout.toString(),
         }),
       });
 
@@ -235,6 +236,12 @@ export const SettingsPage: React.FC = () => {
             ...(serverSettings.llm.claude.apiKey !== originalMaskedApiKey
               ? { apiKey: serverSettings.llm.claude.apiKey }
               : {})
+          },
+          cloudflare: {
+            ...serverSettings.llm.cloudflare,
+            ...(serverSettings.llm.cloudflare.apiToken !== originalMaskedCloudflareToken
+              ? { apiToken: serverSettings.llm.cloudflare.apiToken }
+              : {})
           }
         }
       };
@@ -248,24 +255,21 @@ export const SettingsPage: React.FC = () => {
       if (response.ok) {
         const result = await response.json();
         setHasServerChanges(false);
-        setNotification({
-          type: 'success',
-          message: result.message || 'Server settings saved successfully!'
-        });
-        await loadSettings();
+
+        // Update original masked values to match saved values
+        setOriginalMaskedPassword(serverSettings.mikrotik.password || '');
+        setOriginalMaskedApiKey(serverSettings.llm.claude.apiKey || '');
+        setOriginalMaskedCloudflareToken(serverSettings.llm.cloudflare.apiToken || '');
+
+        // Show success toast
+        message.success(result.message || 'Server settings saved successfully!');
       } else {
         const error = await response.json();
-        setNotification({
-          type: 'error',
-          message: error.error || error.message || 'Failed to save settings'
-        });
+        message.error(error.error || error.message || 'Failed to save settings');
       }
     } catch (error) {
       console.error('Failed to save settings:', error);
-      setNotification({
-        type: 'error',
-        message: 'An unexpected error occurred while saving settings'
-      });
+      message.error('An unexpected error occurred while saving settings');
     } finally {
       setSaving(false);
     }
@@ -275,16 +279,10 @@ export const SettingsPage: React.FC = () => {
     try {
       localStorage.setItem('mikrotik-ui-settings', JSON.stringify(uiSettings));
       setHasUIChanges(false);
-      setNotification({
-        type: 'success',
-        message: 'UI settings saved successfully!'
-      });
+      message.success('UI settings saved successfully!');
     } catch (error) {
       console.error('Failed to save UI settings:', error);
-      setNotification({
-        type: 'error',
-        message: 'Unable to save UI settings to local storage'
-      });
+      message.error('Unable to save UI settings to local storage');
     }
   };
 
@@ -552,6 +550,21 @@ export const SettingsPage: React.FC = () => {
                                 Run models locally on your machine
                               </div>
                             </div>
+
+                            <div
+                              className={`${styles.providerOption} ${serverSettings.llm.provider === 'cloudflare' ? styles.active : ''}`}
+                              onClick={() => updateServerSettings('llm', 'provider', 'cloudflare')}
+                            >
+                              <div className={styles.providerHeader}>
+                                <div className={styles.providerRadio}>
+                                  {serverSettings.llm.provider === 'cloudflare' && <div className={styles.providerRadioActive}></div>}
+                                </div>
+                                <div className={styles.providerTitle}>Cloudflare Workers AI</div>
+                              </div>
+                              <div className={styles.providerDescription}>
+                                Workers AI comes with a curated set of popular open-source models
+                              </div>
+                            </div>
                           </div>
                         </FormField>
 
@@ -591,7 +604,7 @@ export const SettingsPage: React.FC = () => {
                               </select>
                             </FormField>
                           </>
-                        ) : (
+                        ) : serverSettings.llm.provider === 'lmstudio' ? (
                           <>
                             <h3 className={styles.subsectionTitle}>LM Studio Configuration</h3>
                             <FormField label="Server Endpoint" helpText="LM Studio server URL (usually http://localhost:1234)">
@@ -634,6 +647,68 @@ export const SettingsPage: React.FC = () => {
                                   setLLMTest(null);
                                 }}
                                 placeholder="32768"
+                              />
+                            </FormField>
+                          </>
+                        ) : (
+                          <>
+                            <h3 className={styles.subsectionTitle}>Cloudflare Workers AI Configuration</h3>
+                            <FormField label="Account ID" helpText="Get your Account ID from Cloudflare dashboard">
+                              <Input
+                                value={serverSettings.llm.cloudflare.accountId}
+                                onChange={(e) => {
+                                  const newSettings = { ...serverSettings };
+                                  newSettings.llm.cloudflare.accountId = e.target.value;
+                                  setServerSettings(newSettings);
+                                  setHasServerChanges(true);
+                                  setLLMTest(null);
+                                }}
+                                placeholder="your_cloudflare_account_id"
+                              />
+                            </FormField>
+
+                            <FormField label="API Token" helpText="Create an API token with Workers AI permissions">
+                              <Input
+                                type="password"
+                                value={serverSettings.llm.cloudflare.apiToken}
+                                onChange={(e) => {
+                                  const newSettings = { ...serverSettings };
+                                  newSettings.llm.cloudflare.apiToken = e.target.value;
+                                  setServerSettings(newSettings);
+                                  setHasServerChanges(true);
+                                  setLLMTest(null);
+                                }}
+                                placeholder="your_api_token"
+                              />
+                            </FormField>
+
+                            <FormField label="Model">
+                              <select
+                                className={styles.select}
+                                value={serverSettings.llm.cloudflare.model}
+                                onChange={(e) => {
+                                  const newSettings = { ...serverSettings };
+                                  newSettings.llm.cloudflare.model = e.target.value;
+                                  setServerSettings(newSettings);
+                                  setHasServerChanges(true);
+                                  setLLMTest(null);
+                                }}
+                              >
+                                <option value="@cf/meta/llama-4-scout-17b-16e-instruct">Llama 4 Scout 17B (Recommended)</option>
+                              </select>
+                            </FormField>
+
+                            <FormField label="AI Gateway (Optional)" helpText="Optional: AI Gateway name for caching and analytics">
+                              <Input
+                                value={serverSettings.llm.cloudflare.gateway || ''}
+                                onChange={(e) => {
+                                  const newSettings = { ...serverSettings };
+                                  newSettings.llm.cloudflare.gateway = e.target.value || undefined;
+                                  setServerSettings(newSettings);
+                                  setHasServerChanges(true);
+                                  setLLMTest(null);
+                                }}
+                                placeholder="my-gateway-name"
                               />
                             </FormField>
                           </>

@@ -3,7 +3,8 @@
  * Handles initial setup wizard logic, connection testing, and configuration initialization
  */
 
-import { unifiedConfigService, UnifiedConfig } from './config/unified-config.service.js';
+import { unifiedConfigService } from './config/unified-config.service.js';
+import type { AppConfig } from './config/config.schema.js';
 import { RouterOSAPI } from 'node-routeros';
 
 export interface SetupStatus {
@@ -357,7 +358,7 @@ class SetupService {
       }
 
       // Build config update object
-      const configUpdate: Partial<UnifiedConfig> = {
+      const configUpdate: Partial<AppConfig> = {
         mikrotik: {
           host: setupConfig.mikrotik.host,
           port: setupConfig.mikrotik.port,
@@ -373,7 +374,11 @@ class SetupService {
         configUpdate.llm = {
           provider: setupConfig.llm.provider,
           claude: setupConfig.llm.claude || { apiKey: '', model: 'claude-3-5-sonnet-20241022' },
-          lmstudio: setupConfig.llm.lmstudio || { endpoint: '', model: '', contextWindow: 32768 },
+          lmstudio: {
+            endpoint: setupConfig.llm.lmstudio?.endpoint || '',
+            model: setupConfig.llm.lmstudio?.model || '',
+            contextWindow: setupConfig.llm.lmstudio?.contextWindow ?? 32768,
+          },
         };
       }
 

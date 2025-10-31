@@ -6,10 +6,12 @@
 import type { LLMProvider } from './providers/base.js';
 import { ClaudeProvider } from './providers/claude.js';
 import { LMStudioProvider } from './providers/lmstudio.js';
+import { CloudflareProvider } from './providers/cloudflare.js';
 import { ConfigError } from './errors/index.js';
 import { configManager } from '../config-manager.js';
+import { unifiedConfigService } from '../config/unified-config.service.js';
 
-export type ProviderType = 'claude' | 'lmstudio';
+export type ProviderType = 'claude' | 'lmstudio' | 'cloudflare';
 
 export interface ProviderConfig {
   type: ProviderType;
@@ -18,6 +20,10 @@ export interface ProviderConfig {
   lmstudioEndpoint?: string;
   lmstudioModel?: string;
   lmstudioContextWindow?: number;
+  cloudflareAccountId?: string;
+  cloudflareApiToken?: string;
+  cloudflareModel?: string;
+  cloudflareGateway?: string;
 }
 
 export class ProviderFactory {
@@ -40,8 +46,19 @@ export class ProviderFactory {
         }
         return new LMStudioProvider(config.lmstudioEndpoint, config.lmstudioModel, config.lmstudioContextWindow);
 
+      case 'cloudflare':
+        if (!config.cloudflareAccountId || !config.cloudflareApiToken) {
+          throw new ConfigError('Cloudflare Account ID and API Token are required. Set CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN in .env');
+        }
+        return new CloudflareProvider({
+          accountId: config.cloudflareAccountId,
+          apiToken: config.cloudflareApiToken,
+          model: config.cloudflareModel,
+          gateway: config.cloudflareGateway,
+        });
+
       default:
-        throw new ConfigError(`Unknown provider type: ${config.type}. Use 'claude' or 'lmstudio'`);
+        throw new ConfigError(`Unknown provider type: ${config.type}. Use 'claude', 'lmstudio', or 'cloudflare'`);
     }
   }
 
@@ -59,6 +76,10 @@ export class ProviderFactory {
         lmstudioEndpoint: llmConfig.lmstudio.endpoint,
         lmstudioModel: llmConfig.lmstudio.model,
         lmstudioContextWindow: llmConfig.lmstudio.contextWindow,
+        cloudflareAccountId: llmConfig.cloudflare?.accountId,
+        cloudflareApiToken: llmConfig.cloudflare?.apiToken,
+        cloudflareModel: llmConfig.cloudflare?.model,
+        cloudflareGateway: llmConfig.cloudflare?.gateway,
       };
 
       console.log(`[ProviderFactory] Config values - endpoint: ${config.lmstudioEndpoint}, model: ${config.lmstudioModel}, contextWindow: ${config.lmstudioContextWindow}`);
@@ -85,6 +106,10 @@ export class ProviderFactory {
       lmstudioEndpoint: process.env.LMSTUDIO_ENDPOINT || 'http://localhost:1234/v1',
       lmstudioModel: process.env.LMSTUDIO_MODEL,
       lmstudioContextWindow: process.env.LMSTUDIO_CONTEXT_WINDOW ? parseInt(process.env.LMSTUDIO_CONTEXT_WINDOW, 10) : undefined,
+      cloudflareAccountId: process.env.CLOUDFLARE_ACCOUNT_ID,
+      cloudflareApiToken: process.env.CLOUDFLARE_API_TOKEN,
+      cloudflareModel: process.env.CLOUDFLARE_AI_MODEL || '@cf/meta/llama-4-scout-17b-16e-instruct',
+      cloudflareGateway: process.env.CLOUDFLARE_AI_GATEWAY,
     };
 
     try {
@@ -134,7 +159,15 @@ export function setGlobalProvider(provider: LLMProvider): void {
  */
 export async function refreshGlobalProvider(): Promise<LLMProvider | null> {
   console.log('[ProviderFactory] Refreshing global provider with updated settings');
-  globalProvider = null; // Clear cached instance
-  await configManager.refreshConfig(); // Refresh config first
-  return await getGlobalProvider(); // Recreate with current config
+
+  // Clear all caches in the chain (order matters!)
+  globalProvider = null; // Clear cached provider instance
+  providerInitPromise = null; // Clear any pending init promise
+  configManager.clearCache(); // Clear ConfigManager cache
+  unifiedConfigService.clearCache(); // Clear UnifiedConfigService cache
+
+  // Reload config from disk and recreate provider
+  await unifiedConfigService.reload(); // Reload from disk first
+  await configManager.refreshConfig(); // Then refresh ConfigManager
+  return await getGlobalProvider(); // Finally recreate provider with fresh config
 }

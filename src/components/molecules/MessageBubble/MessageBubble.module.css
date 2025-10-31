@@ -254,6 +254,12 @@
   gap: 8px;
 }
 
+.metaLeft {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
 .timestamp {
   font-size: 11px;
   opacity: 0.6;

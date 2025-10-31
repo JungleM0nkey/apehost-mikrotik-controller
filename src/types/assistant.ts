@@ -2,6 +2,20 @@
  * AI Assistant Types
  */
 
+/**
+ * Token usage and cost information for a message
+ */
+export interface TokenUsage {
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
+  cost?: {
+    prompt: number;
+    completion: number;
+    total: number;
+  };
+}
+
 export interface AssistantMessage {
   id: string;
   role: 'user' | 'assistant' | 'system';
@@ -9,6 +23,7 @@ export interface AssistantMessage {
   timestamp: Date;
   isStreaming?: boolean;
   error?: string;
+  usage?: TokenUsage;
 }
 
 export interface Conversation {
@@ -36,6 +51,11 @@ export interface AssistantCompletePayload {
   conversationId: string;
   messageId: string;
   fullMessage: string;
+  usage?: {
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+  };
 }
 
 export interface AssistantErrorPayload {
@@ -48,4 +68,11 @@ export interface AssistantErrorPayload {
 export interface AssistantTypingPayload {
   conversationId: string;
   isTyping: boolean;
+}
+
+export interface AssistantTokenUpdatePayload {
+  conversationId: string;
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
 }

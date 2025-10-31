@@ -26,6 +26,10 @@ router.get('/', async (req: Request, res: Response) => {
         claude: {
           ...settings.llm.claude,
           apiKey: settings.llm.claude.apiKey ? '********' : ''
+        },
+        cloudflare: {
+          ...settings.llm.cloudflare,
+          apiToken: settings.llm.cloudflare.apiToken ? '********' : ''
         }
       }
     };
@@ -93,6 +97,10 @@ router.put('/', async (req: Request, res: Response) => {
         claude: {
           ...updatedSettings.llm.claude,
           apiKey: updatedSettings.llm.claude.apiKey ? '********' : ''
+        },
+        cloudflare: {
+          ...updatedSettings.llm.cloudflare,
+          apiToken: updatedSettings.llm.cloudflare.apiToken ? '********' : ''
         }
       }
     };
@@ -136,7 +144,9 @@ router.put('/', async (req: Request, res: Response) => {
 router.post('/validate', async (req: Request, res: Response) => {
   try {
     const settings = req.body;
-    const validation = settingsService.validateSettings(settings);
+    // Use UnifiedConfigService validate method directly
+    const { unifiedConfigService } = await import('../services/config/unified-config.service.js');
+    const validation = await unifiedConfigService.validate();
 
     res.json(validation);
   } catch (error) {

@@ -208,9 +208,9 @@ export const TerminalWindow: React.FC<TerminalWindowProps> = ({ terminal }) => {
     // Send command to terminal
     const socket = terminal.websocketConnection.getSocket();
     if (socket) {
-      socket.emit('terminal:input', {
-        terminalId: terminal.id,
-        data: command + '\n'
+      socket.emit('terminal:execute', {
+        command: command,
+        sessionId: terminal.sessionId
       });
 
       // Switch to terminal tab to show execution

@@ -5,7 +5,7 @@ import { MessageBubble } from '../../molecules/MessageBubble/MessageBubble';
 import { EnhancedInput } from '../../molecules/EnhancedInput/EnhancedInput';
 import { SessionInfoPanel, type ToolDefinition, type AIModelInfo } from '../../molecules/SessionInfoPanel/SessionInfoPanel';
 import type { WebSocketService } from '../../../services/websocket';
-import type { AssistantMessage } from '../../../types/assistant';
+import type { AssistantMessage, TokenUsage } from '../../../types/assistant';
 import { defaultUISettings } from '../../../types/settings';
 import {
   saveConversation,
@@ -33,7 +33,9 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isTyping, setIsTyping] = useState(false);
+  const [liveTokenCount, setLiveTokenCount] = useState(0);
   const [modelInfo, setModelInfo] = useState<AIModelInfo | null>(null);
+  const [pricingInfo, setPricingInfo] = useState<{ prompt_per_1m: number; completion_per_1m: number } | null>(null);
   const [inputHistory, setInputHistory] = useState<string[]>([]);
   const [historyPosition, setHistoryPosition] = useState(-1);
   const [metadata, setMetadata] = useState<ConversationMetadata>({
@@ -92,6 +94,18 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
           const data = await response.json();
           console.log('[AssistantPanel] Model info received:', data);
           setModelInfo(data);
+
+          // Extract pricing information for cost calculation
+          if (data.token_costs) {
+            setPricingInfo({
+              prompt_per_1m: data.token_costs.prompt_per_1m,
+              completion_per_1m: data.token_costs.completion_per_1m
+            });
+            console.log('[AssistantPanel] Pricing info:', {
+              prompt: data.token_costs.prompt_per_1m,
+              completion: data.token_costs.completion_per_1m
+            });
+          }
         } else {
           console.error('[AssistantPanel] Failed to fetch model info:', response.status, response.statusText);
         }
@@ -195,17 +209,55 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
     };
 
     // Handle completion
-    const handleComplete = (data: { conversationId: string; messageId: string; fullMessage: string }) => {
+    const handleComplete = (data: {
+      conversationId: string;
+      messageId: string;
+      fullMessage: string;
+      usage?: {
+        promptTokens: number;
+        completionTokens: number;
+        totalTokens: number;
+      };
+    }) => {
       if (data.conversationId !== conversationId) return;
 
       setIsStreaming(false);
       setIsTyping(false);
 
-      // Mark message as complete
+      // Calculate cost if usage data and pricing available
+      let usageWithCost: TokenUsage | undefined;
+      if (data.usage && pricingInfo) {
+        const promptCost = (data.usage.promptTokens / 1_000_000) * pricingInfo.prompt_per_1m;
+        const completionCost = (data.usage.completionTokens / 1_000_000) * pricingInfo.completion_per_1m;
+        const totalCost = promptCost + completionCost;
+
+        usageWithCost = {
+          ...data.usage,
+          cost: {
+            prompt: promptCost,
+            completion: completionCost,
+            total: totalCost
+          }
+        };
+
+        console.log('[AssistantPanel] Token usage:', {
+          tokens: data.usage,
+          cost: usageWithCost.cost
+        });
+      } else if (data.usage) {
+        // Usage data available but no pricing
+        usageWithCost = data.usage;
+      }
+
+      // Mark message as complete with usage
       setMessages((prev) =>
         prev.map((msg) =>
           msg.id === data.messageId
-            ? { ...msg, isStreaming: false }
+            ? {
+                ...msg,
+                isStreaming: false,
+                usage: usageWithCost
+              }
             : msg
         )
       );
@@ -236,6 +288,21 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
     const handleTyping = (data: { conversationId: string; isTyping: boolean }) => {
       if (data.conversationId !== conversationId) return;
       setIsTyping(data.isTyping);
+      // Reset live token count when typing starts
+      if (data.isTyping) {
+        setLiveTokenCount(0);
+      }
+    };
+
+    // Handle live token updates
+    const handleTokenUpdate = (data: {
+      conversationId: string;
+      promptTokens: number;
+      completionTokens: number;
+      totalTokens: number;
+    }) => {
+      if (data.conversationId !== conversationId) return;
+      setLiveTokenCount(data.totalTokens);
     };
 
     // Handle metadata updates
@@ -249,6 +316,7 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
     socket.on('assistant:complete', handleComplete);
     socket.on('assistant:error', handleError);
     socket.on('assistant:typing', handleTyping);
+    socket.on('assistant:token-update', handleTokenUpdate);
     socket.on('assistant:metadata', handleMetadata);
 
     return () => {
@@ -256,6 +324,7 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
       socket.off('assistant:complete', handleComplete);
       socket.off('assistant:error', handleError);
       socket.off('assistant:typing', handleTyping);
+      socket.off('assistant:token-update', handleTokenUpdate);
       socket.off('assistant:metadata', handleMetadata);
     };
   }, [websocket, conversationId]);
@@ -325,6 +394,8 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
     }
   };
 
+  // Input change handler for textarea - kept for potential future implementation
+  // Currently not used as input handling is done via controlled component pattern
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newValue = e.target.value;
     setInputValue(newValue);
@@ -334,6 +405,7 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
       setHistoryPosition(-1);
     }
   };
+  void handleInputChange; // Suppress unused warning - kept for future use
 
   const handleClearHistory = () => {
     Modal.confirm({
@@ -408,11 +480,11 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
       // Fallback: send command directly to terminal via websocket
       const socket = websocket.getSocket();
       if (socket) {
-        socket.emit('terminal:input', {
-          terminalId,
-          data: command + '\n'
+        socket.emit('terminal:execute', {
+          command: command,
+          sessionId: terminalId
         });
-        
+
         // Show success notification
         message.success({
           content: 'Command sent to terminal',
@@ -476,9 +548,22 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
 
         {isTyping && !isStreaming && (
           <div className={styles.typingIndicator}>
-            <span className={styles.dot}></span>
-            <span className={styles.dot}></span>
-            <span className={styles.dot}></span>
+            <div className={styles.thinkingContent}>
+              <div className={styles.thinkingDots}>
+                <span className={styles.dot}></span>
+                <span className={styles.dot}></span>
+                <span className={styles.dot}></span>
+              </div>
+              <span className={styles.thinkingText}>
+                Processing your request...
+                {liveTokenCount > 0 && (
+                  <span className={styles.tokenCount}> ({liveTokenCount.toLocaleString()} tokens)</span>
+                )}
+              </span>
+            </div>
+            <div className={styles.progressBar}>
+              <div className={styles.progressFill}></div>
+            </div>
           </div>
         )}
 

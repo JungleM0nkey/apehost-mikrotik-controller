@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Alert, Button, Modal, message } from 'antd';
+import { Alert, Button, message } from 'antd';
 import { PlusOutlined, ReloadOutlined, LockOutlined } from '@ant-design/icons';
 import { SettingsSection } from '../../components/organisms/SettingsSection/SettingsSection';
 import { FormField } from '../../components/molecules/FormField/FormField';
@@ -25,7 +25,9 @@ export const WireguardPage: React.FC = () => {
   const [publicKey, setPublicKey] = useState('');
 
   // UI state
+  // Note: Modal implementation pending - state kept for future use
   const [isPeerModalOpen, setIsPeerModalOpen] = useState(false);
+  void isPeerModalOpen; // Suppress unused variable warning - will be used when modal is implemented
   const [hasChanges, setHasChanges] = useState(false);
 
   useEffect(() => {
@@ -198,7 +200,7 @@ export const WireguardPage: React.FC = () => {
           >
             <Input
               value={name}
-              onChange={setName}
+              onChange={(e) => setName(e.target.value)}
               placeholder="wireguard1"
               disabled={isSaving}
             />
@@ -210,7 +212,7 @@ export const WireguardPage: React.FC = () => {
           >
             <Input
               value={address}
-              onChange={setAddress}
+              onChange={(e) => setAddress(e.target.value)}
               placeholder="10.0.0.1/24"
               disabled={isSaving}
             />
@@ -224,7 +226,7 @@ export const WireguardPage: React.FC = () => {
               <Input
                 type="number"
                 value={listenPort.toString()}
-                onChange={(val) => setListenPort(parseInt(val) || 51820)}
+                onChange={(e) => setListenPort(parseInt(e.target.value) || 51820)}
                 placeholder="51820"
                 disabled={isSaving}
               />
@@ -237,7 +239,7 @@ export const WireguardPage: React.FC = () => {
               <Input
                 type="number"
                 value={mtu.toString()}
-                onChange={(val) => setMtu(parseInt(val) || 1420)}
+                onChange={(e) => setMtu(parseInt(e.target.value) || 1420)}
                 placeholder="1420"
                 disabled={isSaving}
               />

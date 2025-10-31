@@ -14,7 +14,7 @@ import {
 import { RouterInfo } from '../../molecules/RouterInfo/RouterInfo';
 import { RouterInfo as RouterInfoType } from '../../../types/router';
 import styles from './Sidebar.module.css';
-import bardLogo from '../../../assets/bard-logo3.png';
+import apehostLogo from '../../../assets/apehost-mikrotik-controller-no-bg.png';
 
 export interface SidebarProps {
   router: RouterInfoType;
@@ -103,15 +103,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
     <aside className={styles.sidebar} role="navigation" aria-label="Main navigation">
       <div className={styles.logo}>
         <img
-          src={bardLogo}
-          alt="MikroTik Dashboard"
-          style={{
-            width: '100%',
-            height: 'auto',
-            maxWidth: '320px',
-            display: 'block',
-            margin: '0 auto'
-          }}
+          src={apehostLogo}
+          alt="ApeHost MikroTik Controller Dashboard"
+          className={styles.logoImage}
         />
       </div>
 

@@ -96,7 +96,7 @@ function terminalReducer(state: TerminalManagerState, action: TerminalAction): T
         newTerminals.delete(action.id);
       }
 
-      // If no terminals left, create a new one
+      // If no terminals left, create a new one but minimized
       if (newTerminals.size === 0) {
         const id = generateId();
         const newTerminal: Terminal = {
@@ -104,8 +104,8 @@ function terminalReducer(state: TerminalManagerState, action: TerminalAction): T
           name: 'Terminal 1',
           websocketConnection: createWebSocketService(),
           sessionId: null,
-          isMinimized: false,
-          isActive: true,
+          isMinimized: true,
+          isActive: false,
           position: { x: 100, y: 100 },
           size: { width: 900, height: 600 },
           createdAt: new Date(),
@@ -117,7 +117,7 @@ function terminalReducer(state: TerminalManagerState, action: TerminalAction): T
         return {
           ...state,
           terminals: newTerminals,
-          activeTerminalId: id,
+          activeTerminalId: null,
           nextTerminalNumber: 2,
         };
       }

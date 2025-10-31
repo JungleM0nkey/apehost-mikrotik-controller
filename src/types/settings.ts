@@ -2,7 +2,7 @@
  * Settings Types
  */
 
-export type AIProvider = 'claude' | 'lmstudio';
+export type AIProvider = 'claude' | 'lmstudio' | 'cloudflare';
 export type ColorScheme = 'dark-orange' | 'classic-green' | 'cyan-blue' | 'custom';
 
 // Server Settings (from backend API)
@@ -28,6 +28,12 @@ export interface ServerSettings {
       endpoint: string;
       model: string;
       contextWindow: number;
+    };
+    cloudflare: {
+      accountId: string;
+      apiToken: string;
+      model: string;
+      gateway?: string;
     };
   };
   assistant: {

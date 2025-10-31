@@ -19,6 +19,16 @@ interface StoredMessage {
   content: string;
   timestamp: string; // ISO string
   error?: string;
+  usage?: {
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+    cost?: {
+      prompt: number;
+      completion: number;
+      total: number;
+    };
+  };
 }
 
 /**
@@ -50,6 +60,8 @@ export interface ConversationMetadata {
   total_commands?: number;
   session_start?: number;
   last_tool_call?: number;
+  total_tokens?: number;
+  total_cost?: number;
 }
 
 /**
@@ -62,6 +74,7 @@ function serializeMessage(message: AssistantMessage): StoredMessage {
     content: message.content,
     timestamp: message.timestamp.toISOString(),
     error: message.error,
+    usage: message.usage,
   };
 }
 
@@ -75,6 +88,7 @@ function deserializeMessage(stored: StoredMessage): AssistantMessage {
     content: stored.content,
     timestamp: new Date(stored.timestamp),
     error: stored.error,
+    usage: stored.usage,
   };
 }
 

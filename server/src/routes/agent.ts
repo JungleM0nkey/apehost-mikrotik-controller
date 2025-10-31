@@ -277,7 +277,7 @@ router.post('/issues/:id/feedback', async (req, res) => {
         const learningSystem = getLearningSystem();
 
         // Run learning asynchronously
-        learningSystem.analyzeAndLearn(issue.metadata.rule_name).catch((error) => {
+        learningSystem.analyzeAndLearn(issue.metadata.rule_name as string).catch((error) => {
           console.error('[AgentAPI] Learning analysis failed:', error);
         });
       }

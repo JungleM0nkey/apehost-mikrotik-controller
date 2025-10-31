@@ -23,7 +23,7 @@ export interface AppConfig {
     keepaliveInterval: number;
   };
   llm: {
-    provider: 'claude' | 'lmstudio';
+    provider: 'claude' | 'lmstudio' | 'cloudflare';
     claude: {
       apiKey: string;
       model: string;
@@ -32,6 +32,12 @@ export interface AppConfig {
       endpoint: string;
       model: string;
       contextWindow: number;
+    };
+    cloudflare?: {
+      accountId: string;
+      apiToken: string;
+      model: string;
+      gateway?: string;
     };
   };
   assistant: {
@@ -89,6 +95,12 @@ class ConfigManager {
             model: settings.llm.lmstudio.model,
             contextWindow: settings.llm.lmstudio.contextWindow,
           },
+          cloudflare: settings.llm.cloudflare ? {
+            accountId: settings.llm.cloudflare.accountId,
+            apiToken: settings.llm.cloudflare.apiToken,
+            model: settings.llm.cloudflare.model,
+            gateway: settings.llm.cloudflare.gateway,
+          } : undefined,
         },
         assistant: {
           temperature: settings.assistant.temperature,

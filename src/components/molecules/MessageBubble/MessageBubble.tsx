@@ -4,6 +4,7 @@ import { CopyOutlined, ExclamationCircleOutlined, PlayCircleOutlined, RedoOutlin
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { AssistantMessage } from '../../../types/assistant';
+import { TokenCostBadge } from '../../atoms/TokenCostBadge/TokenCostBadge';
 import styles from './MessageBubble.module.css';
 
 export interface MessageBubbleProps {
@@ -166,9 +167,14 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
           </div>
         )}
         <div className={styles.meta}>
-          <span className={styles.timestamp}>
-            {new Date(message.timestamp).toLocaleTimeString()}
-          </span>
+          <div className={styles.metaLeft}>
+            <span className={styles.timestamp}>
+              {new Date(message.timestamp).toLocaleTimeString()}
+            </span>
+            {!isUser && message.usage && !isStreaming && (
+              <TokenCostBadge usage={message.usage} />
+            )}
+          </div>
           {!isStreaming && (
             <div className={styles.actions}>
               {!isUser && onRetry && (

@@ -36,28 +36,36 @@ Comprehensive interface management with detailed configuration options, traffic 
 - **Chat**: Interactive AI assistant for natural language network queries
 - **Analytics**: Traffic analysis, usage patterns, and historical data visualization
 - **Firewall**: Firewall rule management and connection tracking
+- **WireGuard**: VPN configuration, peer management, and QR code generation
 - **Network Map**: Visual topology mapping and device discovery
 - **Documentation**: Built-in help system and API reference
 - **Learning Dashboard**: Network education resources and tutorials
-- **Settings**: System configuration, API credentials, and preferences
-- **Terminal**: Direct router CLI access with command history
+- **Settings**: System configuration, API credentials, backup/restore, and service management
+- **Terminal**: Direct router CLI access with command history and persistent sessions
 
 ## Core Features
 
 - **AI-Powered Diagnostics**: Claude-based network troubleshooting with 14 specialized MCP tools
 - **Real-Time Monitoring**: Live router metrics (CPU, memory, uptime, traffic)
 - **Interface Management**: Configure and monitor all network interfaces
+- **WireGuard VPN**: Complete VPN setup with automatic key generation, peer management, and mobile QR codes
+- **Configuration Backups**: Automated backup creation, download, restore with SQLite persistence
+- **Service Management**: Start, stop, restart backend services with real-time status monitoring
 - **Firewall Analysis**: Automatic path analysis and blocking rule identification
 - **Network Diagnostics**: Ping, traceroute, ARP lookups, DNS resolution, DHCP lease tracking
 - **Systematic Troubleshooting**: 5-phase diagnostic workflow for connectivity issues
-- **Dark Theme UI**: WCAG 2.1 AA compliant, responsive design
+- **Persistent Terminal**: WebSocket-based terminal with session history and auto-reconnection
+- **Dark Theme UI**: WCAG 2.1 AA compliant, responsive design with custom component system
 
 ## Quick Start
 
 ### Prerequisites
 - Node.js 18+
 - MikroTik router with API access
-- Claude API key (Anthropic)
+- AI Provider (choose one):
+  - **Claude** (Anthropic) - Premium quality, highest cost
+  - **Cloudflare Workers AI** - 93% cheaper, function calling support
+  - **LM Studio** - Free local inference
 
 ### Frontend Setup
 ```bash
@@ -94,9 +102,14 @@ npm run dev:full  # Runs frontend and backend concurrently
 **Backend**
 - Node.js + Express + TypeScript
 - MikroTik RouterOS API client
-- Claude AI SDK (Anthropic)
-- WebSocket for real-time updates
-- MCP (Model Context Protocol) tools
+- Multi-provider AI support with 14 MCP tools:
+  - Claude AI SDK (Anthropic)
+  - Cloudflare Workers AI (llama-4-scout-17b-16e)
+  - LM Studio (local inference)
+- Socket.IO for real-time WebSocket updates
+- Better-SQLite3 for local data persistence
+- QR code generation for WireGuard mobile configs
+- Configuration backup/restore system
 
 ## Project Structure
 
@@ -115,11 +128,29 @@ src/
 
 server/
 ├── src/
-│   ├── mcp/               # MCP tool implementations
 │   ├── routes/            # API endpoints
-│   ├── services/          # Business logic
+│   │   ├── agent.ts       # AI agent diagnostics
+│   │   ├── backups.ts     # Configuration backup/restore
+│   │   ├── health.ts      # Health check
+│   │   ├── router.ts      # Router status & interfaces
+│   │   ├── service.ts     # Service management
+│   │   ├── settings.ts    # Settings persistence
+│   │   ├── setup.ts       # Initial setup wizard
+│   │   ├── terminal.ts    # Terminal command execution
+│   │   └── wireguard.ts   # WireGuard VPN management
+│   ├── services/
+│   │   ├── ai/            # Claude AI integration
+│   │   │   └── mcp/       # 14 MCP tool implementations
+│   │   ├── backup-management.service.ts
+│   │   ├── config/        # Configuration management
+│   │   ├── settings.ts    # Settings service
+│   │   └── wireguard/     # WireGuard service
+│   ├── data/              # SQLite databases
+│   │   ├── agent.db       # AI agent data
+│   │   └── wireguard.db   # WireGuard configs
 │   └── utils/             # Helper functions
-└── MCP_TOOLS_QUICK_REFERENCE.md
+├── MCP_TOOLS_QUICK_REFERENCE.md
+└── NETWORK_TROUBLESHOOTING_TOOLS.md
 ```
 
 ## AI Assistant Capabilities
@@ -175,18 +206,41 @@ VITE_WS_URL=ws://localhost:3000
 
 **Backend** (`server/.env`)
 ```
+# Server
+PORT=3000
+NODE_ENV=development
+CORS_ORIGIN=http://localhost:5173
+
 # MikroTik Router
 MIKROTIK_HOST=192.168.x.x
 MIKROTIK_PORT=8728
 MIKROTIK_USERNAME=admin
-MIKROTIK_PASSWORD=
+MIKROTIK_PASSWORD=your_password_here
+MIKROTIK_TIMEOUT=10000
+MIKROTIK_KEEPALIVE_SEC=30
 
-# Claude AI
+# AI Provider (choose one: claude, cloudflare, or lmstudio)
+LLM_PROVIDER=claude
+
+# Claude AI - Premium quality, high cost
 ANTHROPIC_API_KEY=sk-ant-...
+CLAUDE_MODEL=claude-3-5-sonnet-20241022
 
-# Server
-PORT=3000
-NODE_ENV=development
+# Cloudflare Workers AI - 93% cheaper, with function calling
+CLOUDFLARE_ACCOUNT_ID=your_account_id
+CLOUDFLARE_API_TOKEN=your_api_token
+CLOUDFLARE_AI_MODEL=@cf/meta/llama-4-scout-17b-16e-instruct
+# Optional: AI Gateway for caching/analytics
+# CLOUDFLARE_AI_GATEWAY=my-gateway-name
+
+# LM Studio - Free local inference
+LMSTUDIO_ENDPOINT=http://localhost:1234/v1
+LMSTUDIO_MODEL=your-model-name
+LMSTUDIO_CONTEXT_WINDOW=32768
+
+# Data Storage
+DATA_DIR=./data
+BACKUPS_DIR=./data/backups
 ```
 
 ## Development

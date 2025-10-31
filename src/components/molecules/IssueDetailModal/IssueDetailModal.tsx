@@ -12,9 +12,8 @@ import {
 } from '@ant-design/icons';
 import { SeverityBadge } from '../../atoms/SeverityBadge/SeverityBadge';
 import { Button } from '../../atoms/Button/Button';
-import { FalsePositiveMarker } from '../FalsePositiveMarker';
+import { FalsePositiveMarker, type FeedbackData } from '../FalsePositiveMarker';
 import type { Issue } from '../../../types/agent';
-import type { FeedbackSubmission } from '../FalsePositiveMarker/FalsePositiveMarker';
 import styles from './IssueDetailModal.module.css';
 
 interface IssueDetailModalProps {
@@ -74,7 +73,7 @@ export const IssueDetailModal: React.FC<IssueDetailModalProps> = ({
     }
   };
 
-  const handleFeedbackSubmit = async (feedback: FeedbackSubmission) => {
+  const handleFeedbackSubmit = async (feedback: FeedbackData) => {
     try {
       const response = await fetch(`/api/agent/issues/${issue.id}/feedback`, {
         method: 'POST',
@@ -88,7 +87,7 @@ export const IssueDetailModal: React.FC<IssueDetailModalProps> = ({
         throw new Error('Failed to submit feedback');
       }
 
-      const data = await response.json();
+      await response.json();
       setFeedbackCount(prev => prev + 1);
       message.success('Feedback submitted successfully. The AI will learn from this.');
     } catch (error) {

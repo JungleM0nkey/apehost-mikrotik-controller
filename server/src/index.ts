@@ -17,6 +17,8 @@ import { serviceRoutes } from './routes/service.js';
 import { settingsRoutes } from './routes/settings.js';
 import { setupRoutes } from './routes/setup.js';
 import agentRoutes from './routes/agent.js';
+import { backupRoutes } from './routes/backups.js';
+import { wireguardRoutes } from './routes/wireguard.js';
 import mikrotikService from './services/mikrotik.js';
 import { Server as SocketIOServer } from 'socket.io';
 import terminalSessionManager from './services/terminal-session.js';
@@ -28,6 +30,7 @@ import { createServer } from 'http';
 import { getHealthMonitor } from './services/agent/monitor/health-monitor.js';
 import { unifiedConfigService } from './services/config/unified-config.service.js';
 import { startMetricsCollection, stopMetricsCollection } from './services/agent/metrics-collector.js';
+import { backupManagementService } from './services/backup-management.service.js';
 
 const app = express();
 const httpServer = createServer(app);
@@ -59,6 +62,8 @@ app.use('/api/terminal', terminalRoutes);
 app.use('/api/service', serviceRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/agent', agentRoutes);
+app.use('/api/backups', backupRoutes);
+app.use('/api/wireguard', wireguardRoutes);
 
 // Root endpoint
 app.get('/', (req: Request, res: Response) => {
@@ -364,6 +369,13 @@ io.on('connection', (socket) => {
       const assistantMessageId = `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       let fullResponse = '';
 
+      // Track total token usage across all iterations
+      const totalUsage = {
+        promptTokens: 0,
+        completionTokens: 0,
+        totalTokens: 0,
+      };
+
       try {
         // Tool execution loop - max 5 iterations to prevent infinite loops
         const maxIterations = 5;
@@ -408,6 +420,23 @@ When asked about the network, devices, or configuration - use the appropriate to
 
           console.log(`[Assistant] LLM response - finishReason: ${response.finishReason}, hasToolCalls: ${!!response.toolCalls}`);
           console.log(`[Assistant] LLM content preview: ${response.content.substring(0, 200)}...`);
+
+          // Accumulate token usage from this iteration
+          if (response.usage) {
+            totalUsage.promptTokens += response.usage.promptTokens;
+            totalUsage.completionTokens += response.usage.completionTokens;
+            totalUsage.totalTokens += response.usage.totalTokens;
+            console.log(`[Assistant] Iteration ${iteration} usage: ${response.usage.promptTokens} prompt + ${response.usage.completionTokens} completion = ${response.usage.totalTokens} total tokens`);
+            console.log(`[Assistant] Cumulative usage: ${totalUsage.totalTokens} total tokens`);
+
+            // Emit live token update to frontend
+            socket.emit('assistant:token-update', {
+              conversationId,
+              promptTokens: totalUsage.promptTokens,
+              completionTokens: totalUsage.completionTokens,
+              totalTokens: totalUsage.totalTokens,
+            });
+          }
 
           // If no tool calls, we have the final response
           if (!response.toolCalls || response.toolCalls.length === 0) {
@@ -562,14 +591,15 @@ When asked about the network, devices, or configuration - use the appropriate to
         // Add assistant message to conversation
         conversationManager.addMessage(conversationId, 'assistant', fullResponse);
 
-        // Emit completion
+        // Emit completion with token usage
         socket.emit('assistant:complete', {
           conversationId,
           messageId: assistantMessageId,
           fullMessage: fullResponse,
+          usage: totalUsage.totalTokens > 0 ? totalUsage : undefined,
         });
 
-        console.log(`[Assistant] Response completed for conversation ${conversationId} (${fullResponse.length} chars)`);
+        console.log(`[Assistant] Response completed for conversation ${conversationId} (${fullResponse.length} chars, ${totalUsage.totalTokens} tokens)`);
       } catch (streamError: any) {
         console.error('[Assistant] Streaming error:', streamError);
 
@@ -721,6 +751,11 @@ const startServer = async () => {
   console.log('[Server] Initializing Metrics Collector...');
   startMetricsCollection(5); // Collect metrics every 5 minutes
   console.log('[Server] Metrics Collector started - collecting system metrics every 5 minutes');
+
+  // Initialize Backup Management Service
+  console.log('[Server] Initializing Backup Management Service...');
+  await backupManagementService.initialize();
+  console.log('[Server] Backup Management Service started');
 
   server = httpServer.listen(Number(PORT), '0.0.0.0', () => {
     console.log(`\n[Server] MikroTik Dashboard API Server`);

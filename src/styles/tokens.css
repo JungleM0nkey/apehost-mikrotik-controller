@@ -38,7 +38,7 @@
   --size-avatar: 40px;
   --size-button-lg: 48px;
   --size-header: 56px;
-  --size-sidebar: 267px;
+  --size-sidebar: 350px;
 
   /* Typography */
   --font-family-primary: Arial, sans-serif;
@@ -337,6 +337,50 @@
   color: var(--color-text-primary) !important;
 }
 
+/* Confirm Modal Buttons */
+.ant-modal-confirm-btns .ant-btn {
+  height: var(--size-button-sm) !important;
+  padding: 0 var(--space-lg) !important;
+  border-radius: var(--radius-sm) !important;
+  font-size: var(--font-size-xs) !important;
+  font-weight: 500 !important;
+  transition: all var(--transition-fast) !important;
+}
+
+.ant-modal-confirm-btns .ant-btn-default {
+  background-color: var(--color-bg-tertiary) !important;
+  border: 1px solid var(--color-border-primary) !important;
+  color: var(--color-text-primary) !important;
+}
+
+.ant-modal-confirm-btns .ant-btn-default:hover {
+  background-color: var(--color-bg-secondary) !important;
+  border-color: var(--color-border-secondary) !important;
+}
+
+.ant-modal-confirm-btns .ant-btn-primary {
+  background-color: var(--color-accent-primary) !important;
+  border: 1px solid var(--color-accent-primary) !important;
+  color: white !important;
+}
+
+.ant-modal-confirm-btns .ant-btn-primary:hover {
+  background-color: #ff8255 !important;
+  border-color: #ff8255 !important;
+}
+
+.ant-modal-confirm-btns .ant-btn-dangerous {
+  background-color: var(--color-accent-error) !important;
+  border: 1px solid var(--color-accent-error) !important;
+  color: white !important;
+}
+
+.ant-modal-confirm-btns .ant-btn-dangerous:hover {
+  background-color: #f87171 !important;
+  border-color: #f87171 !important;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.4) !important;
+}
+
 /* Success Modal */
 .ant-modal-confirm-success .ant-modal-confirm-body > .anticon {
   color: var(--color-accent-success) !important;
@@ -565,6 +609,44 @@
 .ant-badge-status-text {
   color: var(--color-text-primary) !important;
   font-size: 14px !important;
+}
+
+/* Ant Design Message (Toast) Overrides */
+.ant-message {
+  z-index: 9999 !important;
+}
+
+.ant-message-notice {
+  padding: 0 !important;
+}
+
+.ant-message-notice-content {
+  background-color: var(--color-bg-secondary) !important;
+  border: 1px solid var(--color-border-primary) !important;
+  border-radius: var(--radius-md) !important;
+  padding: 12px 20px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+}
+
+.ant-message-success .anticon {
+  color: var(--color-accent-success) !important;
+}
+
+.ant-message-error .anticon {
+  color: var(--color-accent-error) !important;
+}
+
+.ant-message-warning .anticon {
+  color: #f59e0b !important;
+}
+
+.ant-message-info .anticon {
+  color: #3b82f6 !important;
+}
+
+.ant-message-notice-content span {
+  color: var(--color-text-primary) !important;
+  font-size: var(--font-size-xs) !important;
 }
 
 /* Global Animation for Traffic Indicators */
