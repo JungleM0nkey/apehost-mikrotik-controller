@@ -301,11 +301,11 @@ export const TerminalWindow: React.FC<TerminalWindowProps> = ({ terminal }) => {
             >
               <div className={styles.tabContent}>
                 <span>AI Assistant</span>
-                {modelInfo && modelInfo.available && activeTab === 'assistant' && (
+                {/* {modelInfo && modelInfo.available && activeTab === 'assistant' && (
                   <span className={styles.tabModelInfo}>
                     {modelInfo.model} • {typeof modelInfo.context_window === 'number' ? `${modelInfo.context_window.toLocaleString()}` : modelInfo.context_window} context
                   </span>
-                )}
+                )} */}
               </div>
             </button>
           </div>

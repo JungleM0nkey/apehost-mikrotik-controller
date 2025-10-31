@@ -69,6 +69,7 @@ export interface UISettings {
   };
   aiAssistant: {
     sidePanelSections: {
+      modelInfo: boolean;
       sessionInfo: boolean;
       mostUsedTools: boolean;
       availableTools: boolean;
@@ -113,6 +114,7 @@ export const defaultUISettings: UISettings = {
   },
   aiAssistant: {
     sidePanelSections: {
+      modelInfo: true,
       sessionInfo: true,
       mostUsedTools: false,
       availableTools: true

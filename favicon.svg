@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <radialGradient id="orangeGlow" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
+      <stop offset="30%" style="stop-color:#ff6b35;stop-opacity:1" />
+      <stop offset="70%" style="stop-color:#ff8c5f;stop-opacity:0.8" />
+      <stop offset="100%" style="stop-color:#ffa07a;stop-opacity:0.4" />
+    </radialGradient>
+    <filter id="outerGlow">
+      <feGaussianBlur stdDeviation="8" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="middleGlow">
+      <feGaussianBlur stdDeviation="6" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="innerGlow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Outer glow layer -->
+  <rect x="5" y="5" width="90" height="90" rx="12" fill="url(#orangeGlow)" opacity="0.4" filter="url(#outerGlow)"/>
+
+  <!-- Middle glow layer -->
+  <rect x="15" y="15" width="70" height="70" rx="10" fill="url(#orangeGlow)" opacity="0.7" filter="url(#middleGlow)"/>
+
+  <!-- Inner glow layer -->
+  <rect x="25" y="25" width="50" height="50" rx="8" fill="#ff6b35" filter="url(#innerGlow)"/>
+
+  <!-- Core square with bright center -->
+  <rect x="35" y="35" width="30" height="30" rx="6" fill="#ff6b35"/>
+
+  <!-- Bright center highlight -->
+  <rect x="40" y="40" width="20" height="20" rx="4" fill="#ffffff" opacity="0.9"/>
+</svg>

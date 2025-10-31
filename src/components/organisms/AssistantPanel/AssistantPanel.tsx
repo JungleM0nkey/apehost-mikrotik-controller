@@ -3,7 +3,7 @@ import { message, Button, Modal } from 'antd';
 import { DeleteOutlined, ExclamationCircleOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { MessageBubble } from '../../molecules/MessageBubble/MessageBubble';
 import { EnhancedInput } from '../../molecules/EnhancedInput/EnhancedInput';
-import { SessionInfoPanel, type ToolDefinition } from '../../molecules/SessionInfoPanel/SessionInfoPanel';
+import { SessionInfoPanel, type ToolDefinition, type AIModelInfo } from '../../molecules/SessionInfoPanel/SessionInfoPanel';
 import type { WebSocketService } from '../../../services/websocket';
 import type { AssistantMessage } from '../../../types/assistant';
 import { defaultUISettings } from '../../../types/settings';
@@ -14,22 +14,6 @@ import {
   type ConversationMetadata,
 } from '../../../utils/conversationStorage';
 import styles from './AssistantPanel.module.css';
-
-interface AIModelInfo {
-  available: boolean;
-  provider: string;
-  model: string;
-  context_window: number | string;
-  features: {
-    streaming: boolean;
-    function_calling: boolean;
-  };
-  token_costs: {
-    prompt_per_1m: number;
-    completion_per_1m: number;
-    note: string;
-  };
-}
 
 export interface AssistantPanelProps {
   websocket: WebSocketService;
@@ -449,28 +433,7 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
       <div className={styles.container}>
         {!hideHeader && (
           <div className={styles.header}>
-            <div className={styles.titleSection}>
-              <h3 className={styles.title}>AI Assistant</h3>
-              {modelInfo && modelInfo.available ? (
-                <div className={styles.modelInfo}>
-                  <span className={styles.modelName}>{modelInfo.model}</span>
-                  <span className={styles.separator}>•</span>
-                  <span className={styles.contextWindow}>
-                    {typeof modelInfo.context_window === 'number'
-                      ? `${modelInfo.context_window.toLocaleString()} tokens`
-                      : modelInfo.context_window}
-                  </span>
-                  <span className={styles.separator}>•</span>
-                  <span className={styles.tokenCost}>
-                    ${modelInfo.token_costs.prompt_per_1m}/${modelInfo.token_costs.completion_per_1m} per 1M
-                  </span>
-                </div>
-              ) : (
-                <div className={styles.modelInfo} style={{ color: '#666', fontSize: '10px' }}>
-                  {modelInfo ? 'AI unavailable' : 'Loading model info...'}
-                </div>
-              )}
-            </div>
+            <h3 className={styles.title}>AI Assistant</h3>
             <div className={styles.headerActions}>
               <Button
                 icon={<InfoCircleOutlined />}
@@ -549,6 +512,7 @@ export const AssistantPanel: React.FC<AssistantPanelProps> = ({
           <SessionInfoPanel
             metadata={metadata}
             tools={availableTools}
+            modelInfo={modelInfo}
             isLoading={isLoadingTools}
             visibleSections={sidePanelSections}
           />

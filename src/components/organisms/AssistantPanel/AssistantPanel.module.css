@@ -31,44 +31,12 @@
   border-bottom: 1px solid rgba(255, 140, 0, 0.2);
 }
 
-.titleSection {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
 .title {
   margin: 0;
   font-size: var(--font-size-sm);
   font-weight: 600;
   color: #ff8c00;
   text-shadow: 0 0 10px rgba(255, 140, 0, 0.5);
-}
-
-.modelInfo {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  color: var(--color-text-secondary);
-  font-family: var(--font-mono);
-}
-
-.modelName {
-  color: #ff8c00;
-  font-weight: 500;
-}
-
-.separator {
-  color: rgba(255, 140, 0, 0.3);
-}
-
-.contextWindow {
-  color: var(--color-text-tertiary);
-}
-
-.tokenCost {
-  color: var(--color-text-tertiary);
 }
 
 .headerActions {

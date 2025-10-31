@@ -114,6 +114,21 @@
   text-transform: none;
 }
 
+/* Model Info Grid */
+.modelInfoGrid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.unavailable {
+  text-align: center;
+  padding: var(--space-lg);
+  color: var(--color-text-tertiary);
+  font-size: 12px;
+  font-style: italic;
+}
+
 /* Session Info Grid */
 .infoGrid {
   display: grid;

@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "dev:full": "concurrently \"npm run dev\" \"npm run dev:backend\"",
+    "dev:start": "concurrently \"npm run dev\" \"npm run dev:backend\"",
+    "dev:full": "node scripts/dev-with-cleanup.mjs",
     "dev:backend": "cd server && npm run dev",
     "build": "tsc && vite build",
     "build:all": "npm run build && cd server && npm run build",

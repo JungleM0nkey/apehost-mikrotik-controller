@@ -10,11 +10,29 @@ export interface ToolDefinition {
   risk_level: 'safe' | 'read_only' | 'write' | 'dangerous';
 }
 
+export interface AIModelInfo {
+  available: boolean;
+  provider: string;
+  model: string;
+  context_window: number | string;
+  features: {
+    streaming: boolean;
+    function_calling: boolean;
+  };
+  token_costs: {
+    prompt_per_1m: number;
+    completion_per_1m: number;
+    note: string;
+  };
+}
+
 export interface SessionInfoPanelProps {
   metadata: ConversationMetadata;
   tools: ToolDefinition[];
+  modelInfo?: AIModelInfo | null;
   isLoading?: boolean;
   visibleSections?: {
+    modelInfo?: boolean;
     sessionInfo?: boolean;
     mostUsedTools?: boolean;
     availableTools?: boolean;
@@ -24,8 +42,10 @@ export interface SessionInfoPanelProps {
 export const SessionInfoPanel: React.FC<SessionInfoPanelProps> = ({
   metadata,
   tools,
+  modelInfo,
   isLoading = false,
   visibleSections = {
+    modelInfo: true,
     sessionInfo: true,
     mostUsedTools: false,
     availableTools: true
@@ -134,6 +154,41 @@ export const SessionInfoPanel: React.FC<SessionInfoPanelProps> = ({
 
       {!isCollapsed && (
         <>
+          {/* Model Info Section */}
+          {visibleSections.modelInfo && modelInfo && (
+            <div className={styles.section}>
+              <h4 className={styles.sectionTitle}>AI Model</h4>
+              {modelInfo.available ? (
+                <div className={styles.modelInfoGrid}>
+                  <div className={styles.infoItem}>
+                    <span className={styles.label}>Model</span>
+                    <span className={styles.value}>{modelInfo.model}</span>
+                  </div>
+                  <div className={styles.infoItem}>
+                    <span className={styles.label}>Provider</span>
+                    <span className={styles.value}>{modelInfo.provider}</span>
+                  </div>
+                  <div className={styles.infoItem}>
+                    <span className={styles.label}>Context Window</span>
+                    <span className={styles.value}>
+                      {typeof modelInfo.context_window === 'number'
+                        ? `${modelInfo.context_window.toLocaleString()}`
+                        : modelInfo.context_window}
+                    </span>
+                  </div>
+                  <div className={styles.infoItem}>
+                    <span className={styles.label}>Token Cost</span>
+                    <span className={styles.value}>
+                      ${modelInfo.token_costs.prompt_per_1m}/${modelInfo.token_costs.completion_per_1m}
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <div className={styles.unavailable}>AI Model Unavailable</div>
+              )}
+            </div>
+          )}
+
           {/* Session Info Section */}
           {visibleSections.sessionInfo && (
           <div className={styles.section}>

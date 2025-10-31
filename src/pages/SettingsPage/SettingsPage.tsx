@@ -941,6 +941,15 @@ export const SettingsPage: React.FC = () => {
                         <div className={styles.subsectionTitle}>Side Panel Sections</div>
                         <div className={styles.toggleGroup}>
                           <ToggleField
+                            label="AI Model Info"
+                            description="Display AI model details, provider, and token costs"
+                            checked={uiSettings.aiAssistant.sidePanelSections.modelInfo}
+                            onChange={(checked) => updateUISettings('aiAssistant', 'sidePanelSections', {
+                              ...uiSettings.aiAssistant.sidePanelSections,
+                              modelInfo: checked
+                            })}
+                          />
+                          <ToggleField
                             label="Session Info"
                             description="Show session duration, tool calls, and command count"
                             checked={uiSettings.aiAssistant.sidePanelSections.sessionInfo}
