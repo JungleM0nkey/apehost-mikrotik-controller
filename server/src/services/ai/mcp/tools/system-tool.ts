@@ -17,7 +17,7 @@ import mikrotikService from '../../../mikrotik.js';
 export class SystemTool extends BaseMCPTool {
   readonly name = 'get_system_resources';
   readonly description =
-    'Get system resource information including CPU usage, memory, disk space, temperature, uptime, and health status. Use this when users ask about system performance, resource usage, or hardware status.';
+    'Get system resource information including CPU usage, memory, disk space, temperature, uptime, health sensors, hardware status, RouterOS version, and router identity. Use this when users ask about CPU/memory metrics, resource monitoring, disk usage, system temperature, hardware health, RouterOS version, or router hostname. DO NOT use for network connectivity testing, internet speed tests, or bandwidth measurements.';
 
   readonly inputSchema: ToolInputSchema = {
     type: 'object',
@@ -138,14 +138,23 @@ export class SystemTool extends BaseMCPTool {
 
   /**
    * Get system identity and basic info
+   * Phase 3: Enhanced to include RouterOS version, board-name, and architecture
    */
   private async getIdentity(): Promise<any> {
-    const identityOutput = await mikrotikService.executeTerminalCommand('/system identity print');
-    const clockOutput = await mikrotikService.executeTerminalCommand('/system clock print');
+    const [identityOutput, clockOutput, resourceOutput] = await Promise.all([
+      mikrotikService.executeTerminalCommand('/system identity print'),
+      mikrotikService.executeTerminalCommand('/system clock print'),
+      mikrotikService.executeTerminalCommand('/system resource print'),
+    ]);
+
+    const resources = this.parseResources(resourceOutput);
 
     return {
       identity: this.parseSimpleOutput(identityOutput),
       clock: this.parseSimpleOutput(clockOutput),
+      version: resources.version,
+      board_name: resources.board_name,
+      architecture: resources.architecture,
     };
   }
 

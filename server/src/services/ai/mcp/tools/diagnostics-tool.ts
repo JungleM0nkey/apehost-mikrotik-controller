@@ -20,7 +20,7 @@ import { getRuleCounts } from '../../../agent/rules/index.js';
 export class DiagnosticsTool extends BaseMCPTool {
   readonly name = 'run_diagnostics';
   readonly description =
-    'Run diagnostic scans on the MikroTik router to identify configuration issues, security vulnerabilities, performance problems, and stability concerns. Use this when the user asks about router health, issues, problems, or when proactive monitoring is needed.';
+    'Run diagnostic scans on the MikroTik router to identify configuration issues, security vulnerabilities, misconfigurations, and stability concerns. Use this when the user asks about router health, configuration problems, security issues, or system problems. DO NOT use for network speed tests or bandwidth measurements.';
 
   readonly inputSchema: ToolInputSchema = {
     type: 'object',

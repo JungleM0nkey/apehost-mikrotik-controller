@@ -15,7 +15,7 @@ import mikrotikService from '../../../mikrotik.js';
 export class InterfacesTool extends BaseMCPTool {
   readonly name = 'get_interfaces';
   readonly description =
-    'Get information about network interfaces including their status, type, and traffic statistics. Use this when the user asks about network interfaces, bandwidth usage, or interface status.';
+    'Get information about network interfaces including their status, type, and current traffic rates (RX/TX). Use this when the user asks about interface status, current bandwidth usage monitoring, or interface types. DO NOT use for active speed testing or internet speed measurements - use test_connectivity tool with action=internet-speed-test for that.';
 
   readonly inputSchema: ToolInputSchema = {
     type: 'object',

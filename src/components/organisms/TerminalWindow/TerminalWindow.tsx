@@ -49,6 +49,7 @@ export const TerminalWindow: React.FC<TerminalWindowProps> = ({ terminal }) => {
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const [isClosing, setIsClosing] = useState(false);
   const [isMinimizing, setIsMinimizing] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const [activeTab, setActiveTab] = useState<TerminalTab>('terminal');
   const [modelInfo, setModelInfo] = useState<AIModelInfo | null>(null);
   const [clearTrigger, setClearTrigger] = useState(0);
@@ -144,8 +145,19 @@ export const TerminalWindow: React.FC<TerminalWindowProps> = ({ terminal }) => {
     }
   };
 
+  const handleDragStart = () => {
+    setIsDragging(true);
+  };
+
+  const handleDrag = () => {
+    if (!isDragging) {
+      setIsDragging(true);
+    }
+  };
+
   const handleDragStop = (_e: any, d: { x: number; y: number }) => {
     updateTerminalPosition(terminal.id, { x: d.x, y: d.y });
+    setIsDragging(false);
   };
 
   const handleResizeStop = (
@@ -331,6 +343,8 @@ export const TerminalWindow: React.FC<TerminalWindowProps> = ({ terminal }) => {
     <Rnd
       size={terminal.size}
       position={terminal.position}
+      onDragStart={handleDragStart}
+      onDrag={handleDrag}
       onDragStop={handleDragStop}
       onResizeStop={handleResizeStop}
       minWidth={500}
@@ -343,7 +357,7 @@ export const TerminalWindow: React.FC<TerminalWindowProps> = ({ terminal }) => {
       disableDragging={false}
     >
       <div
-        className={`${styles.window} ${terminal.isActive ? styles.active : ''} ${isClosing ? styles.closing : ''} ${isMinimizing ? styles.minimizing : ''}`}
+        className={`${styles.window} ${terminal.isActive ? styles.active : ''} ${isClosing ? styles.closing : ''} ${isMinimizing ? styles.minimizing : ''} ${isDragging ? styles.dragging : ''}`}
         onClick={handleFocus}
       >
         <div className={`${styles.titleBar} ${styles.dragHandle}`}>

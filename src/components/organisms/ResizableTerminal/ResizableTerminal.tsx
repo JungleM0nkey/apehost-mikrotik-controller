@@ -12,6 +12,7 @@ export interface ResizableTerminalProps {
 export const ResizableTerminal: React.FC<ResizableTerminalProps> = ({ onCommand }) => {
   const [isMaximized, setIsMaximized] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const [size, setSize] = useState({ width: 900, height: 600 });
   const [position, setPosition] = useState({ x: 100, y: 100 });
 
@@ -68,7 +69,20 @@ export const ResizableTerminal: React.FC<ResizableTerminalProps> = ({ onCommand 
     <Rnd
       size={size}
       position={position}
-      onDragStop={(_e, d) => setPosition({ x: d.x, y: d.y })}
+      onDragStart={() => {
+        console.log('Drag started');
+        setIsDragging(true);
+      }}
+      onDrag={() => {
+        if (!isDragging) {
+          setIsDragging(true);
+        }
+      }}
+      onDragStop={(_e, d) => {
+        console.log('Drag stopped');
+        setPosition({ x: d.x, y: d.y });
+        setIsDragging(false);
+      }}
       onResizeStop={(_e, _direction, ref, _delta, _position) => {
         setSize({
           width: parseInt(ref.style.width),
@@ -82,7 +96,7 @@ export const ResizableTerminal: React.FC<ResizableTerminalProps> = ({ onCommand 
       dragHandleClassName={styles.dragHandle}
       className={styles.rndContainer}
     >
-      <div className={styles.window}>
+      <div className={`${styles.window} ${isDragging ? styles.dragging : ''}`}>
         <div className={`${styles.titleBar} ${styles.dragHandle}`}>
           <span className={styles.title}>Terminal</span>
           <div className={styles.windowControls}>

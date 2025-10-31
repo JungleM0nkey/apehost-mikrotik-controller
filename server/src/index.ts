@@ -408,15 +408,63 @@ IMPORTANT INSTRUCTIONS:
 6. Focus on answering the user's question directly with real data you retrieve
 
 Available tools allow you to:
-- Get router information and system details
+- Get system information and resources (CPU, memory, disk, uptime, version, identity)
+- Test network connectivity and internet speed
 - View network interfaces and their status
 - Check DHCP leases (connected devices)
 - View routing tables
 - Check firewall rules
 - Execute safe RouterOS commands
 
-When asked about the network, devices, or configuration - use the appropriate tool and present the results clearly.`,
+When asked about the network, devices, or configuration - use the appropriate tool and present the results clearly.
+
+NETWORK SPEED TESTING - CRITICAL ROUTING RULES:
+
+When user asks "run speed test", "test my internet", "how fast is my internet", "bandwidth test", "check internet speed":
+→ ALWAYS use: test_connectivity with action="internet-speed-test"
+→ NEVER use: get_router_info, get_system_resources, get_interfaces, get_traffic
+
+Key distinctions:
+- SPEED TESTING (active measurement) → test_connectivity with internet-speed-test
+- SYSTEM METRICS (CPU/memory/uptime/version/identity) → get_system_resources (PREFERRED) or get_router_info (deprecated)
+- TRAFFIC MONITORING (current rates) → get_interfaces
+- HISTORICAL USAGE (past bandwidth) → get_traffic
+
+TOOL PREFERENCES:
+→ PREFER: get_system_resources for system info (comprehensive, supports type selection: resources/health/history/identity)
+→ AVOID: get_router_info (deprecated, maintained for backward compatibility only)
+
+Example queries and correct routing:
+✓ "speed test" → test_connectivity internet-speed-test
+✓ "is my internet fast" → test_connectivity internet-speed-test
+✓ "check CPU usage" → get_system_resources type=resources
+✓ "RouterOS version" → get_system_resources type=identity
+✓ "how much bandwidth am I using" → get_interfaces (current) or get_traffic (historical)`,
           });
+
+          // Log tool selection decision for debugging and analytics
+          console.log(`[Assistant] 🎯 TOOL SELECTION DECISION:`, {
+            iteration,
+            userQuery: messages[messages.length - 1]?.content.substring(0, 200),
+            availableTools: tools.length,
+            toolsProvided: tools.map(t => t.name),
+            selectedTools: response.toolCalls?.map(tc => tc.function.name) || 'none',
+            finishReason: response.finishReason,
+            timestamp: new Date().toISOString()
+          });
+
+          // If tools were called, log detailed selection rationale
+          if (response.toolCalls && response.toolCalls.length > 0) {
+            response.toolCalls.forEach((tc, idx) => {
+              console.log(`[Assistant] 🔧 Tool Call #${idx + 1}:`, {
+                toolName: tc.function.name,
+                arguments: tc.function.arguments,
+                callId: tc.id
+              });
+            });
+          } else {
+            console.log(`[Assistant] ℹ️ No tools called - Direct response generation`);
+          }
 
           console.log(`[Assistant] LLM response - finishReason: ${response.finishReason}, hasToolCalls: ${!!response.toolCalls}`);
           console.log(`[Assistant] LLM content preview: ${response.content.substring(0, 200)}...`);
@@ -510,7 +558,8 @@ When asked about the network, devices, or configuration - use the appropriate to
                 args,
                 result,
                 result.success,
-                executionTime
+                executionTime,
+                message
               );
 
               toolResults.push({
@@ -531,7 +580,8 @@ When asked about the network, devices, or configuration - use the appropriate to
                 {},
                 { error: error.message },
                 false,
-                0
+                0,
+                message
               );
 
               toolResults.push({

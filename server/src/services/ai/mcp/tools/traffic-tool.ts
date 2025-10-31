@@ -15,7 +15,7 @@ import mikrotikService from '../../../mikrotik.js';
 export class TrafficTool extends BaseMCPTool {
   readonly name = 'get_traffic_stats';
   readonly description =
-    'Get traffic and bandwidth statistics. Can retrieve per-IP traffic data, interface statistics, active connections, and bandwidth usage. Use this when users ask about traffic, bandwidth, data consumption, or network usage for specific IPs or interfaces.';
+    'Get historical traffic and bandwidth statistics. Can retrieve per-IP traffic accounting data, historical bandwidth consumption, active connections, and data usage analysis. Use this when users ask about past traffic, historical bandwidth consumption, data usage by IP, or analyzing network usage patterns. DO NOT use for active speed testing or measuring current internet speed - use test_connectivity with action=internet-speed-test for that.';
 
   readonly inputSchema: ToolInputSchema = {
     type: 'object',

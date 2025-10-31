@@ -100,19 +100,39 @@ export const SessionInfoPanel: React.FC<SessionInfoPanelProps> = ({
     return acc;
   }, {} as Record<string, ToolDefinition[]>);
 
-  // Get risk level badge color
-  const getRiskColor = (riskLevel: string): string => {
+  // Get risk level badge styles
+  const getRiskStyles = (riskLevel: string): { backgroundColor: string; color: string; borderColor: string } => {
     switch (riskLevel) {
       case 'safe':
-        return '#10b981';
+        return {
+          backgroundColor: 'rgba(16, 185, 129, 0.15)',
+          color: '#10b981',
+          borderColor: '#10b981'
+        };
       case 'read_only':
-        return '#14b8a6'; // Teal color that complements orange theme
+        return {
+          backgroundColor: 'rgba(37, 99, 235, 0.15)',
+          color: '#3b82f6',
+          borderColor: '#3b82f6'
+        };
       case 'write':
-        return '#f59e0b';
+        return {
+          backgroundColor: 'rgba(245, 158, 11, 0.15)',
+          color: '#f59e0b',
+          borderColor: '#f59e0b'
+        };
       case 'dangerous':
-        return '#ef4444';
+        return {
+          backgroundColor: 'rgba(239, 68, 68, 0.15)',
+          color: '#ef4444',
+          borderColor: '#ef4444'
+        };
       default:
-        return '#6b6b6b';
+        return {
+          backgroundColor: 'rgba(107, 107, 107, 0.15)',
+          color: '#6b6b6b',
+          borderColor: '#6b6b6b'
+        };
     }
   };
 
@@ -176,12 +196,6 @@ export const SessionInfoPanel: React.FC<SessionInfoPanelProps> = ({
                         : modelInfo.context_window}
                     </span>
                   </div>
-                  <div className={styles.infoItem}>
-                    <span className={styles.label}>Token Cost</span>
-                    <span className={styles.value}>
-                      ${modelInfo.token_costs.prompt_per_1m}/${modelInfo.token_costs.completion_per_1m}
-                    </span>
-                  </div>
                 </div>
               ) : (
                 <div className={styles.unavailable}>AI Model Unavailable</div>
@@ -201,10 +215,6 @@ export const SessionInfoPanel: React.FC<SessionInfoPanelProps> = ({
           <div className={styles.infoItem}>
             <span className={styles.label}>Tool Calls</span>
             <span className={styles.value}>{metadata.total_tool_calls || 0}</span>
-          </div>
-          <div className={styles.infoItem}>
-            <span className={styles.label}>Commands</span>
-            <span className={styles.value}>{metadata.total_commands || 0}</span>
           </div>
           {metadata.resolution_status && (
             <div className={styles.infoItem}>
@@ -315,7 +325,7 @@ export const SessionInfoPanel: React.FC<SessionInfoPanelProps> = ({
                               </div>
                               <div
                                 className={styles.riskBadge}
-                                style={{ backgroundColor: getRiskColor(tool.risk_level) }}
+                                style={getRiskStyles(tool.risk_level)}
                               >
                                 {tool.risk_level}
                               </div>

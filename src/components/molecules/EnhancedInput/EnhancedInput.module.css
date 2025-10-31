@@ -25,21 +25,23 @@
   align-items: center;
   gap: var(--space-xs);
   padding: var(--space-xs) var(--space-md);
-  background: rgba(255, 140, 0, 0.1);
-  border: 1px solid rgba(255, 140, 0, 0.3);
+  background: rgba(255, 107, 53, 0.15);
+  border: 1px solid var(--color-accent-primary);
   border-radius: var(--radius-sm);
-  color: #ff8c00;
+  color: var(--color-accent-primary);
   font-size: 13px;
   font-family: var(--font-family-mono);
+  font-weight: 600;
   cursor: pointer;
   transition: all var(--transition-fast);
+  text-shadow: 0 0 8px rgba(255, 107, 53, 0.3);
 }
 
 .quickAction:hover:not(:disabled) {
-  background: rgba(255, 140, 0, 0.2);
-  border-color: #ff8c00;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(255, 140, 0, 0.3);
+  background: rgba(255, 107, 53, 0.25);
+  border-color: var(--color-accent-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 0 12px rgba(255, 107, 53, 0.5);
 }
 
 .quickAction:active:not(:disabled) {
@@ -52,7 +54,7 @@
 }
 
 .quickActionLabel {
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .toolbarActions {
@@ -76,15 +78,16 @@
 }
 
 .toolbarButton:hover {
-  background: rgba(255, 140, 0, 0.1);
-  border-color: #ff8c00;
-  color: #ff8c00;
+  background: rgba(255, 107, 53, 0.15);
+  border-color: var(--color-accent-primary);
+  color: var(--color-accent-primary);
+  box-shadow: 0 0 8px rgba(255, 107, 53, 0.3);
 }
 
 /* Shortcuts Panel */
 .shortcutsPanel {
   background: var(--color-bg-tertiary);
-  border: 1px solid rgba(255, 140, 0, 0.2);
+  border: 1px solid rgba(255, 107, 53, 0.2);
   border-radius: var(--radius-sm);
   overflow: hidden;
   animation: slideDown 0.2s ease-out;
@@ -106,10 +109,10 @@
   justify-content: space-between;
   align-items: center;
   padding: var(--space-md);
-  background: rgba(255, 140, 0, 0.05);
-  border-bottom: 1px solid rgba(255, 140, 0, 0.2);
+  background: rgba(255, 107, 53, 0.05);
+  border-bottom: 1px solid rgba(255, 107, 53, 0.2);
   font-weight: 600;
-  color: #ff8c00;
+  color: var(--color-accent-primary);
 }
 
 .closeShortcuts {
@@ -129,7 +132,7 @@
 }
 
 .closeShortcuts:hover {
-  color: #ff8c00;
+  color: var(--color-accent-primary);
 }
 
 .shortcutsList {
@@ -157,7 +160,7 @@
   padding: 2px 8px;
   font-family: var(--font-family-mono);
   font-size: 12px;
-  color: #ff8c00;
+  color: var(--color-accent-primary);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
@@ -177,8 +180,8 @@
 }
 
 .inputWrapper.focused {
-  border-color: #ff8c00;
-  box-shadow: 0 0 0 3px rgba(255, 140, 0, 0.1);
+  border-color: var(--color-accent-primary);
+  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
 }
 
 .inputWrapper.disabled {
@@ -216,8 +219,8 @@
   justify-content: space-between;
   align-items: center;
   padding: var(--space-sm) var(--space-md);
-  background: rgba(255, 140, 0, 0.05);
-  border-top: 1px solid rgba(255, 140, 0, 0.1);
+  background: rgba(255, 107, 53, 0.05);
+  border-top: 1px solid rgba(255, 107, 53, 0.1);
 }
 
 .inputInfo {

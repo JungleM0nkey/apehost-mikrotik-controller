@@ -15,6 +15,7 @@ export interface ConversationMessage extends Message {
 /**
  * Enhanced metadata tracking for troubleshooting sessions
  * Phase 1: Foundation - Execution tracking
+ * Phase 2: Added user_query for tool selection debugging
  */
 export interface ToolExecution {
   tool_name: string;
@@ -23,6 +24,7 @@ export interface ToolExecution {
   timestamp: number;
   success: boolean;
   execution_time?: number;
+  user_query?: string;
 }
 
 export interface CommandExecution {
@@ -507,6 +509,7 @@ You can only execute read-only commands. Write operations are not allowed for se
   /**
    * Track tool execution in conversation metadata
    * Phase 1: Foundation - Execution tracking
+   * Phase 2: Enhanced with user query context for debugging tool selection
    */
   trackToolExecution(
     conversationId: string,
@@ -514,7 +517,8 @@ You can only execute read-only commands. Write operations are not allowed for se
     parameters: Record<string, any>,
     result: any,
     success: boolean,
-    executionTime?: number
+    executionTime?: number,
+    userQuery?: string
   ): void {
     const conversation = this.conversations.get(conversationId);
     if (!conversation) return;
@@ -526,11 +530,23 @@ You can only execute read-only commands. Write operations are not allowed for se
       timestamp: Date.now(),
       success,
       execution_time: executionTime,
+      user_query: userQuery,
     };
 
     conversation.metadata.tools_called.push(toolExecution);
     conversation.metadata.total_tool_calls = (conversation.metadata.total_tool_calls || 0) + 1;
     conversation.metadata.last_tool_call = Date.now();
+
+    // Add contextual logging to track tool selection patterns
+    if (userQuery) {
+      console.log(`[ConversationManager] 📊 Tool Execution Context:`, {
+        conversationId,
+        userQuery: userQuery.substring(0, 100),
+        toolChosen: toolName,
+        success,
+        executionTime: executionTime ? `${executionTime}ms` : 'N/A'
+      });
+    }
 
     // Keep only last 20 tool executions to prevent memory bloat
     if (conversation.metadata.tools_called.length > 20) {

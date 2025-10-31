@@ -1,4 +1,11 @@
-# apehost.net Mikrotik Bard - Router Management Dashboard
+>
+
+<div align="center">
+  <img src="docs/logo.png" alt="MikroTik Controller Logo" width="1100"/>
+</div>
+
+
+
 
 > [!WARNING]
 > **Work In Progress - Not Production Ready**
@@ -17,55 +24,39 @@ Web-based management interface for MikroTik routers with AI-powered network diag
 The dashboard provides multiple specialized views for comprehensive network management:
 
 ### Dashboard
-Real-time router metrics, system resource monitoring, interface status overview, and traffic statistics at a glance.
+Real-time router metrics, system resource monitoring, interface status overview, and traffic statistics at a glance. Live WebSocket updates for interface data with visual traffic indicators.
 
 ![Dashboard](docs/screenshots/dashboard.png)
 
 ### AI Agent Diagnostics
-Claude-powered network troubleshooting with automated issue detection, confidence scoring, and actionable recommendations. Features 14 specialized MCP tools for deep network analysis.
+AI-powered network troubleshooting with automated issue detection, severity classification, confidence scoring, and actionable recommendations. Features 14 specialized MCP tools for deep network analysis including firewall path testing, connectivity diagnostics, and security auditing.
 
 ![AI Agent](docs/screenshots/ai-agent.png)
 
-### Network Interfaces
-Comprehensive interface management with detailed configuration options, traffic monitoring, and status indicators. Toggle interfaces on/off and view real-time statistics.
+### Network Management
+Comprehensive network management with tabbed interface for Interfaces, IP Addresses, Routes, and ARP Table. Features click-to-copy for all network values, toggle interfaces on/off, real-time traffic statistics, and detailed interface configuration.
 
-![Network Interfaces](docs/screenshots/network.png)
+![Network Management](docs/screenshots/network.png)
 
-### Additional Pages
+### WireGuard VPN
+Complete WireGuard VPN configuration with automatic key generation, peer management, QR code generation for mobile devices, and interface setup. Easy-to-use interface for secure remote access.
 
-- **Chat**: Interactive AI assistant for natural language network queries
-- **Analytics**: Traffic analysis, usage patterns, and historical data visualization
-- **Firewall**: Firewall rule management and connection tracking
-- **WireGuard**: VPN configuration, peer management, and QR code generation
-- **Network Map**: Visual topology mapping and device discovery
-- **Documentation**: Built-in help system and API reference
-- **Learning Dashboard**: Network education resources and tutorials
-- **Settings**: System configuration, API credentials, backup/restore, and service management
-- **Terminal**: Direct router CLI access with command history and persistent sessions
+![WireGuard VPN](docs/screenshots/wireguard.png)
 
-## Core Features
+### Settings & Configuration
+Comprehensive settings management with tabbed interface for Server Configuration and UI Preferences. Configure MikroTik connection, AI provider selection (Claude, Cloudflare Workers AI, LM Studio), system prompts, and application behavior.
 
-- **AI-Powered Diagnostics**: Claude-based network troubleshooting with 14 specialized MCP tools
-- **Real-Time Monitoring**: Live router metrics (CPU, memory, uptime, traffic)
-- **Interface Management**: Configure and monitor all network interfaces
-- **WireGuard VPN**: Complete VPN setup with automatic key generation, peer management, and mobile QR codes
-- **Configuration Backups**: Automated backup creation, download, restore with SQLite persistence
-- **Service Management**: Start, stop, restart backend services with real-time status monitoring
-- **Firewall Analysis**: Automatic path analysis and blocking rule identification
-- **Network Diagnostics**: Ping, traceroute, ARP lookups, DNS resolution, DHCP lease tracking
-- **Systematic Troubleshooting**: 5-phase diagnostic workflow for connectivity issues
-- **Persistent Terminal**: WebSocket-based terminal with session history and auto-reconnection
-- **Dark Theme UI**: WCAG 2.1 AA compliant, responsive design with custom component system
+![Settings](docs/screenshots/settings.png)
 
 ## Quick Start
 
 ### Prerequisites
 - Node.js 18+
-- MikroTik router with API access
+- MikroTik router with API access enabled
 - AI Provider (choose one):
-  - **Claude** (Anthropic) - Premium quality, highest cost
-  - **Cloudflare Workers AI** - 93% cheaper, function calling support
-  - **LM Studio** - Free local inference
+  - **Claude** (Anthropic) - quality, highest cost
+  - **Cloudflare Workers AI** - cheaper, function calling support, llama-4-scout-17b-16e model
+  - **LM Studio** - Free local inference with custom models
 
 ### Frontend Setup
 ```bash
@@ -81,77 +72,37 @@ npm install
 cp .env.example .env
 # Configure .env with:
 # - MikroTik router credentials
-# - Claude API key
+# - AI provider API key/endpoint
 # - Server settings
 npm run dev       # Backend server on port 3000
 ```
 
 ### Full Stack Development
 ```bash
-npm run dev:full  # Runs frontend and backend concurrently
+npm run dev:full  # Runs frontend and backend concurrently with automatic port cleanup
 ```
 
 ## Tech Stack
 
 **Frontend**
 - React 18 + TypeScript 5
-- CSS Modules with custom properties
+- CSS Modules with custom design tokens
 - Vite 5 build system
-- Atomic design architecture
+- Atomic design architecture (atoms, molecules, organisms)
+- Socket.IO client for real-time updates
 
 **Backend**
 - Node.js + Express + TypeScript
-- MikroTik RouterOS API client
+- MikroTik RouterOS API client (node-routeros)
 - Multi-provider AI support with 14 MCP tools:
   - Claude AI SDK (Anthropic)
-  - Cloudflare Workers AI (llama-4-scout-17b-16e)
-  - LM Studio (local inference)
+  - Cloudflare Workers AI (llama-4-scout-17b-16e-instruct)
+  - LM Studio (local inference with OpenAI-compatible API)
 - Socket.IO for real-time WebSocket updates
 - Better-SQLite3 for local data persistence
 - QR code generation for WireGuard mobile configs
-- Configuration backup/restore system
-
-## Project Structure
-
-```
-src/
-├── components/
-│   ├── atoms/              # Input, Button, StatusBadge
-│   ├── molecules/          # RouterInfo, ChatMessage, QuickAction
-│   └── organisms/          # Sidebar, Header, ChatPanel, TerminalPanel
-├── pages/                  # Dashboard, Network, Firewall, Settings
-├── styles/
-│   ├── tokens.css         # Design system variables
-│   └── reset.css          # CSS normalization
-├── types/                  # TypeScript interfaces
-└── hooks/                  # React hooks
-
-server/
-├── src/
-│   ├── routes/            # API endpoints
-│   │   ├── agent.ts       # AI agent diagnostics
-│   │   ├── backups.ts     # Configuration backup/restore
-│   │   ├── health.ts      # Health check
-│   │   ├── router.ts      # Router status & interfaces
-│   │   ├── service.ts     # Service management
-│   │   ├── settings.ts    # Settings persistence
-│   │   ├── setup.ts       # Initial setup wizard
-│   │   ├── terminal.ts    # Terminal command execution
-│   │   └── wireguard.ts   # WireGuard VPN management
-│   ├── services/
-│   │   ├── ai/            # Claude AI integration
-│   │   │   └── mcp/       # 14 MCP tool implementations
-│   │   ├── backup-management.service.ts
-│   │   ├── config/        # Configuration management
-│   │   ├── settings.ts    # Settings service
-│   │   └── wireguard/     # WireGuard service
-│   ├── data/              # SQLite databases
-│   │   ├── agent.db       # AI agent data
-│   │   └── wireguard.db   # WireGuard configs
-│   └── utils/             # Helper functions
-├── MCP_TOOLS_QUICK_REFERENCE.md
-└── NETWORK_TROUBLESHOOTING_TOOLS.md
-```
+- JSON-based configuration with file watcher and validation
+- Zod schema validation
 
 ## AI Assistant Capabilities
 
@@ -161,19 +112,21 @@ server/
 - Network layer inspection (ARP, DNS, DHCP)
 - Interface status and traffic analysis
 - System resource monitoring
+- Security vulnerability detection
 
 **Troubleshooting Workflow**
 1. Initial assessment and symptom collection
 2. Layer-by-layer network analysis
 3. Firewall rule path testing (80% of connectivity issues)
 4. Interface and routing verification
-5. Confidence-scored recommendations
+5. Confidence-scored recommendations with severity classification
 
 **Natural Language Interface**
 - Plain English query support
 - Automatic tool selection based on context
 - Detailed technical explanations
 - Actionable remediation steps
+- Issue tracking with status management (Detected, Investigating, Resolved, Ignored)
 
 See [server/MCP_TOOLS_QUICK_REFERENCE.md](server/MCP_TOOLS_QUICK_REFERENCE.md) for complete tool documentation.
 
@@ -187,9 +140,16 @@ See [server/MCP_TOOLS_QUICK_REFERENCE.md](server/MCP_TOOLS_QUICK_REFERENCE.md) f
 
 **Spacing Scale**: 4px, 8px, 12px, 16px, 24px, 32px
 
+**Component Architecture**
+- Atomic design: atoms → molecules → organisms → pages
+- CSS Modules with design tokens
+- Custom components (no direct Ant Design form components)
+- Selective Ant Design integration (Tabs, Slider, Card, Alert, etc.)
+
 **Layout**
 - Fixed sidebar: 260px
-- Content split: 50/50 flexible
+- Content split: Flexible responsive layout
+- Terminal taskbar: Fixed at bottom (48px height)
 - Mobile-first responsive breakpoints
 
 **Customization**: Edit `src/styles/tokens.css` to modify design tokens.
@@ -243,6 +203,13 @@ DATA_DIR=./data
 BACKUPS_DIR=./data/backups
 ```
 
+**Configuration Management**
+- Settings stored in `server/config.json` (gitignored)
+- File watcher for automatic reload on config changes
+- Backup/restore functionality via Settings UI
+- Validation with Zod schemas
+- Migration scripts for config format updates
+
 ## Development
 
 **Code Quality**
@@ -250,11 +217,38 @@ BACKUPS_DIR=./data/backups
 - ESLint configuration
 - CSS Modules (no Tailwind dependency)
 - Atomic design methodology
+- Custom component system with design guidelines (see CLAUDE.md)
 
 **Performance**
 - Code splitting ready
 - Vite HMR for fast development
 - WebSocket for efficient real-time updates
+- Interface caching and optimization
+
+**Development Commands**
+```bash
+# Frontend
+npm run dev              # Start Vite dev server
+npm run build            # Build for production
+npm run preview          # Preview production build
+
+# Backend
+cd server
+npm run dev              # Start with hot reload
+npm run build            # Build TypeScript
+npm run start            # Run production build
+npm run typecheck        # Type checking only
+
+# Configuration Management
+npm run migrate-config   # Migrate config format
+npm run validate-config  # Validate config.json
+npm run backup-config    # Create config backup
+npm run restore-config   # Restore from backup
+npm run list-backups     # List available backups
+
+# Full Stack
+npm run dev:full         # Run both frontend and backend with port cleanup
+```
 
 ## License
 

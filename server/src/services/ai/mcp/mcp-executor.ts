@@ -158,6 +158,14 @@ export class MCPExecutor {
 
       console.log(`[MCPExecutor] Executing tool: ${name} (call ID: ${id})`);
 
+      // Track deprecated tool usage (Phase 3)
+      if (name === 'get_router_info') {
+        console.warn(
+          `[MCPExecutor] ⚠️ DEPRECATED TOOL USAGE: get_router_info called in session ${context.sessionId}. ` +
+          `Recommend using get_system_resources instead.`
+        );
+      }
+
       // Execute tool
       const result = await tool.execute(input, context);
 

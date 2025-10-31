@@ -12,6 +12,17 @@
   border-radius: var(--radius-md);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
   overflow: hidden;
+  transition: opacity var(--transition-fast);
+}
+
+.window.dragging {
+  opacity: 0.4;
+  cursor: move;
+  pointer-events: none;
+}
+
+.window.dragging .titleBar {
+  pointer-events: auto;
 }
 
 .titleBar {

@@ -1,0 +1,107 @@
+.container {
+  display: inline-flex;
+  flex-direction: column;
+  margin-top: var(--space-xs);
+}
+
+.summary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-xs) var(--space-md);
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+  font-family: var(--font-family-mono);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.summary:hover {
+  background: var(--color-bg-secondary);
+  border-color: var(--color-accent-primary);
+}
+
+.icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  background: var(--color-accent-primary);
+  color: var(--color-bg-primary);
+  border-radius: var(--radius-sm);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.totalTokens {
+  color: var(--color-text-primary);
+  font-weight: 600;
+}
+
+.cost {
+  color: var(--color-accent-success);
+  font-weight: 500;
+}
+
+.arrow {
+  display: inline-block;
+  font-size: 8px;
+  color: var(--color-text-tertiary);
+  transition: transform var(--transition-fast);
+}
+
+.arrow.expanded {
+  transform: rotate(180deg);
+}
+
+.details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  margin-top: var(--space-xs);
+  padding: var(--space-md);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-family: var(--font-family-mono);
+}
+
+.detailRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-xs) 0;
+}
+
+.detailRow.total {
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--color-border-primary);
+  font-weight: 600;
+}
+
+.detailRow.costRow {
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--color-border-primary);
+}
+
+.label {
+  color: var(--color-text-secondary);
+}
+
+.value {
+  color: var(--color-text-primary);
+  font-weight: 500;
+}
+
+.detailRow.total .value {
+  color: var(--color-accent-primary);
+}
+
+.detailRow.costRow .value {
+  color: var(--color-accent-success);
+}

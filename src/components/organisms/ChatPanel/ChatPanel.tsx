@@ -9,6 +9,7 @@ import {
 } from '@ant-design/icons';
 import { ChatMessage } from '../../../types/chat';
 import { Button } from '../../atoms/Button/Button';
+import { TokenCost } from '../../molecules/TokenCost/TokenCost';
 import styles from './ChatPanel.module.css';
 
 export interface ChatPanelProps {
@@ -107,11 +108,28 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
     // Simulate AI response delay
     setTimeout(() => {
       const response = generateMockResponse(inputValue);
+
+      // Generate mock token usage based on response length
+      const promptLength = inputValue.length;
+      const responseLength = response.length;
+      const promptTokens = Math.ceil(promptLength / 4);
+      const completionTokens = Math.ceil(responseLength / 4);
+      const totalTokens = promptTokens + completionTokens;
+
+      // Mock cost calculation (example pricing: $0.00001 per token)
+      const cost = totalTokens * 0.00001;
+
       const assistantMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         content: response,
         sender: 'assistant',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        tokenUsage: {
+          promptTokens,
+          completionTokens,
+          totalTokens,
+          cost,
+        },
       };
 
       setMessages(prev => [...prev, assistantMessage]);
@@ -180,6 +198,9 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
               <div className={styles.messageTime}>
                 {new Date(message.timestamp).toLocaleTimeString()}
               </div>
+              {message.tokenUsage && message.sender === 'assistant' && (
+                <TokenCost tokenUsage={message.tokenUsage} />
+              )}
             </div>
           </div>
         ))}

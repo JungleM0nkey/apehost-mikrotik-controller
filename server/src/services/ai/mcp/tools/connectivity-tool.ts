@@ -15,7 +15,7 @@ import mikrotikService from '../../../mikrotik.js';
 export class ConnectivityTool extends BaseMCPTool {
   readonly name = 'test_connectivity';
   readonly description =
-    'Test network connectivity to troubleshoot reachability and performance issues. Actions: (1) ping - test reachability and latency, (2) traceroute - diagnose WHERE latency or packet loss occurs by showing hop-by-hop path, (3) bandwidth-test - test MikroTik-to-MikroTik throughput (requires bandwidth-server on target), (4) internet-speed-test - test public internet speed. Use traceroute immediately when investigating high latency or packet loss to identify which network segment is causing the issue. Use internet-speed-test for overall internet performance.';
+    'PRIMARY PURPOSE: Test network connectivity, measure internet speed, and diagnose network issues. DO NOT use for system resources (CPU/memory), traffic statistics, or interface monitoring. CRITICAL: When user asks for "speed test", "bandwidth test", "how fast is my internet", or "internet speed", ALWAYS use action=internet-speed-test. Actions: (1) ping - basic reachability and latency checks ONLY, (2) traceroute - diagnose WHERE latency/packet-loss occurs by showing hop-by-hop path, (3) bandwidth-test - test MikroTik-to-MikroTik throughput (requires bandwidth-server on target), (4) internet-speed-test - measure actual internet download speed and latency (USE THIS for all "speed test" requests).';
 
   readonly inputSchema: ToolInputSchema = {
     type: 'object',

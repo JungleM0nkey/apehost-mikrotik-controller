@@ -20,6 +20,8 @@ export class LMStudioProvider implements LLMProvider {
   private endpoint: string;
   private contextWindow: number;
 
+  private configuredContextWindow?: number; // User-configured value to preserve
+
   constructor(endpoint: string, model: string, contextWindow?: number) {
     if (!endpoint) {
       throw new ConfigError('LM Studio endpoint is required. Set LMSTUDIO_ENDPOINT in .env');
@@ -36,9 +38,16 @@ export class LMStudioProvider implements LLMProvider {
     // Use provided parameter, environment variable, or fallback to default
     if (contextWindow) {
       this.contextWindow = contextWindow;
+      this.configuredContextWindow = contextWindow; // Save user config
     } else {
       const envContextWindow = process.env.LMSTUDIO_CONTEXT_WINDOW;
-      this.contextWindow = envContextWindow ? parseInt(envContextWindow, 10) : 32768;
+      if (envContextWindow) {
+        this.contextWindow = parseInt(envContextWindow, 10);
+        this.configuredContextWindow = this.contextWindow;
+      } else {
+        this.contextWindow = 32768;
+        this.configuredContextWindow = undefined; // No user config, can be auto-detected
+      }
     }
 
     console.log(`[LMStudioProvider] Context window configured: ${this.contextWindow}`);
@@ -255,25 +264,31 @@ export class LMStudioProvider implements LLMProvider {
       // Find the loaded model and extract its context window
       const loadedModel = models.find((m: any) => m.id === this.model);
 
-      if (loadedModel) {
-        // Extract context_window from model metadata
-        // LM Studio may provide this in different fields
-        this.contextWindow = loadedModel.context_length ||
-                            loadedModel.context_window ||
-                            loadedModel.max_context_length ||
-                            32768; // Fallback
-        console.log(`[LMStudioProvider] Model '${this.model}' loaded with context window: ${this.contextWindow}`);
-      } else {
-        const availableModels = models.map((m: any) => m.id);
-        console.warn(`[LMStudioProvider] Model '${this.model}' not found in loaded models:`, availableModels);
-        console.warn('[LMStudioProvider] Using first available model');
+      // Only auto-detect context window if user hasn't configured it
+      if (!this.configuredContextWindow) {
+        if (loadedModel) {
+          // Extract context_window from model metadata
+          // LM Studio may provide this in different fields
+          this.contextWindow = loadedModel.context_length ||
+                              loadedModel.context_window ||
+                              loadedModel.max_context_length ||
+                              32768; // Fallback
+          console.log(`[LMStudioProvider] Model '${this.model}' auto-detected context window: ${this.contextWindow}`);
+        } else {
+          const availableModels = models.map((m: any) => m.id);
+          console.warn(`[LMStudioProvider] Model '${this.model}' not found in loaded models:`, availableModels);
+          console.warn('[LMStudioProvider] Using first available model');
 
-        // Use first available model's context window
-        const firstModel = models[0];
-        this.contextWindow = firstModel.context_length ||
-                            firstModel.context_window ||
-                            firstModel.max_context_length ||
-                            32768;
+          // Use first available model's context window
+          const firstModel = models[0];
+          this.contextWindow = firstModel.context_length ||
+                              firstModel.context_window ||
+                              firstModel.max_context_length ||
+                              32768;
+          console.log(`[LMStudioProvider] Auto-detected context window from first model: ${this.contextWindow}`);
+        }
+      } else {
+        console.log(`[LMStudioProvider] Using user-configured context window: ${this.contextWindow} (model metadata ignored)`);
       }
 
       return true;

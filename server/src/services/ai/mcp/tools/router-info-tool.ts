@@ -15,7 +15,7 @@ import mikrotikService from '../../../mikrotik.js';
 export class RouterInfoTool extends BaseMCPTool {
   readonly name = 'get_router_info';
   readonly description =
-    'Get system information about the MikroTik router including CPU usage, memory usage, uptime, RouterOS version, and router hostname. Use this when the user asks about system resources, performance, or router identity.';
+    '[DEPRECATED] Use get_system_resources with type="identity" or type="resources" instead. This tool is maintained for backward compatibility only and will be removed in a future release. Get basic system information about the MikroTik router including CPU usage, memory usage, uptime, RouterOS version, and router hostname. Use this when the user asks about CPU usage, memory usage, system uptime, RouterOS version, or router identity. DO NOT use for network speed tests, bandwidth testing, or internet performance measurement.';
 
   readonly inputSchema: ToolInputSchema = {
     type: 'object',
@@ -24,6 +24,12 @@ export class RouterInfoTool extends BaseMCPTool {
   };
 
   async execute(params: Record<string, unknown>, context: ToolExecutionContext): Promise<ToolResult> {
+    // Log deprecation warning
+    console.warn(
+      `[RouterInfoTool] ⚠️ DEPRECATED: get_router_info called from conversation ${context.conversationId}. ` +
+      `Use get_system_resources with type="identity" or type="resources" instead.`
+    );
+
     const startTime = Date.now();
 
     try {
