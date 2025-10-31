@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Rnd } from 'react-rnd';
-import { ExpandOutlined, CompressOutlined, MinusOutlined, CloseOutlined, CodeOutlined, ReloadOutlined } from '@ant-design/icons';
+import { ExpandOutlined, CompressOutlined, MinusOutlined, CloseOutlined, CodeOutlined, ReloadOutlined, DeleteOutlined } from '@ant-design/icons';
+import { Modal, message } from 'antd';
 import { useTerminalManager } from '../../../contexts/TerminalManagerContext';
 import { useLLMStatus } from '../../../hooks/useLLMStatus';
 import { TerminalPanel } from '../TerminalPanel/TerminalPanel';
 import { AssistantPanel } from '../AssistantPanel/AssistantPanel';
+import { clearConversation } from '../../../utils/conversationStorage';
 import type { Terminal } from '../../../types/terminal-manager';
 import type { TerminalTab } from '../../../types/terminal';
 import styles from './TerminalWindow.module.css';
@@ -49,6 +51,7 @@ export const TerminalWindow: React.FC<TerminalWindowProps> = ({ terminal }) => {
   const [isMinimizing, setIsMinimizing] = useState(false);
   const [activeTab, setActiveTab] = useState<TerminalTab>('terminal');
   const [modelInfo, setModelInfo] = useState<AIModelInfo | null>(null);
+  const [clearTrigger, setClearTrigger] = useState(0);
 
   // Initialize WebSocket connection
   useEffect(() => {
@@ -189,14 +192,49 @@ export const TerminalWindow: React.FC<TerminalWindowProps> = ({ terminal }) => {
     if (activeTab === 'assistant') {
       return (
         <AssistantPanel
+          key={`assistant-${clearTrigger}`}
           websocket={terminal.websocketConnection}
           terminalId={terminal.id}
           hideHeader
+          onRunCommand={handleRunCommand}
         />
       );
     }
 
     return null;
+  };
+
+  const handleRunCommand = (command: string) => {
+    // Send command to terminal
+    const socket = terminal.websocketConnection.getSocket();
+    if (socket) {
+      socket.emit('terminal:input', {
+        terminalId: terminal.id,
+        data: command + '\n'
+      });
+
+      // Switch to terminal tab to show execution
+      setActiveTab('terminal');
+    }
+  };
+
+  const handleClearHistory = () => {
+    Modal.confirm({
+      title: 'Clear Conversation History',
+      content: 'Are you sure you want to clear all messages? This action cannot be undone.',
+      okText: 'Clear History',
+      okType: 'danger',
+      cancelText: 'Cancel',
+      onOk: () => {
+        const socket = terminal.websocketConnection.getSocket();
+        if (socket) {
+          socket.emit('assistant:clearHistory', { conversationId: terminal.id });
+          clearConversation(terminal.id);
+          setClearTrigger(prev => prev + 1); // Force AssistantPanel to remount
+          message.success('Conversation history cleared');
+        }
+      },
+    });
   };
 
   // Maximized mode
@@ -248,27 +286,40 @@ export const TerminalWindow: React.FC<TerminalWindowProps> = ({ terminal }) => {
           </div>
         </div>
         <div className={styles.tabBar}>
-          <button
-            className={`${styles.tab} ${activeTab === 'terminal' ? styles.tabActive : ''}`}
-            onClick={() => setActiveTab('terminal')}
-          >
-            Terminal
-          </button>
-          <button
-            className={`${styles.tab} ${activeTab === 'assistant' ? styles.tabActive : ''} ${!llmStatus.configured ? styles.tabDisabled : ''}`}
-            onClick={() => llmStatus.configured && setActiveTab('assistant')}
-            disabled={!llmStatus.configured}
-            title={!llmStatus.configured ? 'AI Assistant requires LLM configuration. Please configure in Settings.' : 'AI Assistant'}
-          >
-            <div className={styles.tabContent}>
-              <span>AI Assistant</span>
-              {modelInfo && modelInfo.available && activeTab === 'assistant' && (
-                <span className={styles.tabModelInfo}>
-                  {modelInfo.model} • {typeof modelInfo.context_window === 'number' ? `${modelInfo.context_window.toLocaleString()}` : modelInfo.context_window} context
-                </span>
-              )}
-            </div>
-          </button>
+          <div className={styles.tabGroup}>
+            <button
+              className={`${styles.tab} ${activeTab === 'terminal' ? styles.tabActive : ''}`}
+              onClick={() => setActiveTab('terminal')}
+            >
+              Terminal
+            </button>
+            <button
+              className={`${styles.tab} ${activeTab === 'assistant' ? styles.tabActive : ''} ${!llmStatus.configured ? styles.tabDisabled : ''}`}
+              onClick={() => llmStatus.configured && setActiveTab('assistant')}
+              disabled={!llmStatus.configured}
+              title={!llmStatus.configured ? 'AI Assistant requires LLM configuration. Please configure in Settings.' : 'AI Assistant'}
+            >
+              <div className={styles.tabContent}>
+                <span>AI Assistant</span>
+                {modelInfo && modelInfo.available && activeTab === 'assistant' && (
+                  <span className={styles.tabModelInfo}>
+                    {modelInfo.model} • {typeof modelInfo.context_window === 'number' ? `${modelInfo.context_window.toLocaleString()}` : modelInfo.context_window} context
+                  </span>
+                )}
+              </div>
+            </button>
+          </div>
+          {activeTab === 'assistant' && (
+            <button
+              className={styles.clearHistoryButton}
+              onClick={handleClearHistory}
+              title="Start a new conversation session"
+              aria-label="Clear conversation history"
+            >
+              <DeleteOutlined />
+              <span>New Session</span>
+            </button>
+          )}
         </div>
         {renderTabContent()}
       </div>
@@ -336,27 +387,40 @@ export const TerminalWindow: React.FC<TerminalWindowProps> = ({ terminal }) => {
           </div>
         </div>
         <div className={styles.tabBar}>
-          <button
-            className={`${styles.tab} ${activeTab === 'terminal' ? styles.tabActive : ''}`}
-            onClick={() => setActiveTab('terminal')}
-          >
-            Terminal
-          </button>
-          <button
-            className={`${styles.tab} ${activeTab === 'assistant' ? styles.tabActive : ''} ${!llmStatus.configured ? styles.tabDisabled : ''}`}
-            onClick={() => llmStatus.configured && setActiveTab('assistant')}
-            disabled={!llmStatus.configured}
-            title={!llmStatus.configured ? 'AI Assistant requires LLM configuration. Please configure in Settings.' : 'AI Assistant'}
-          >
-            <div className={styles.tabContent}>
-              <span>AI Assistant</span>
-              {modelInfo && modelInfo.available && activeTab === 'assistant' && (
-                <span className={styles.tabModelInfo}>
-                  {modelInfo.model} • {typeof modelInfo.context_window === 'number' ? `${modelInfo.context_window.toLocaleString()}` : modelInfo.context_window} context
-                </span>
-              )}
-            </div>
-          </button>
+          <div className={styles.tabGroup}>
+            <button
+              className={`${styles.tab} ${activeTab === 'terminal' ? styles.tabActive : ''}`}
+              onClick={() => setActiveTab('terminal')}
+            >
+              Terminal
+            </button>
+            <button
+              className={`${styles.tab} ${activeTab === 'assistant' ? styles.tabActive : ''} ${!llmStatus.configured ? styles.tabDisabled : ''}`}
+              onClick={() => llmStatus.configured && setActiveTab('assistant')}
+              disabled={!llmStatus.configured}
+              title={!llmStatus.configured ? 'AI Assistant requires LLM configuration. Please configure in Settings.' : 'AI Assistant'}
+            >
+              <div className={styles.tabContent}>
+                <span>AI Assistant</span>
+                {modelInfo && modelInfo.available && activeTab === 'assistant' && (
+                  <span className={styles.tabModelInfo}>
+                    {modelInfo.model} • {typeof modelInfo.context_window === 'number' ? `${modelInfo.context_window.toLocaleString()}` : modelInfo.context_window} context
+                  </span>
+                )}
+              </div>
+            </button>
+          </div>
+          {activeTab === 'assistant' && (
+            <button
+              className={styles.clearHistoryButton}
+              onClick={handleClearHistory}
+              title="Start a new conversation session"
+              aria-label="Clear conversation history"
+            >
+              <DeleteOutlined />
+              <span>New Session</span>
+            </button>
+          )}
         </div>
         <div className={styles.content}>
           {isConnecting ? (

@@ -4,7 +4,7 @@ import {
   DashboardOutlined,
   GlobalOutlined,
   SafetyOutlined,
-  ApiOutlined,
+  LockOutlined,
   SettingOutlined,
   ClusterOutlined,
   RobotOutlined,
@@ -61,9 +61,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
       label: 'Firewall',
     },
     {
-      key: 'dhcp',
-      icon: <ApiOutlined />,
-      label: 'DHCP',
+      key: 'wireguard',
+      icon: <LockOutlined />,
+      label: 'Wireguard VPN',
     },
     {
       key: 'analytics',

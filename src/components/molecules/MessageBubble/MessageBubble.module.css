@@ -101,6 +101,119 @@
   margin: 4px 0;
 }
 
+.markdown h1,
+.markdown h2,
+.markdown h3,
+.markdown h4,
+.markdown h5,
+.markdown h6 {
+  color: var(--color-accent-primary);
+  margin: var(--space-lg) 0 var(--space-md) 0;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.markdown h1 {
+  font-size: 20px;
+  border-bottom: 2px solid rgba(255, 140, 0, 0.3);
+  padding-bottom: var(--space-sm);
+}
+
+.markdown h2 {
+  font-size: 18px;
+  border-bottom: 1px solid rgba(255, 140, 0, 0.2);
+  padding-bottom: var(--space-xs);
+}
+
+.markdown h3 {
+  font-size: 16px;
+}
+
+.markdown h4,
+.markdown h5,
+.markdown h6 {
+  font-size: 14px;
+}
+
+.markdown table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: var(--space-md) 0;
+  background: var(--color-bg-terminal);
+  border: 1px solid rgba(255, 140, 0, 0.2);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  font-size: 13px;
+}
+
+.markdown thead {
+  background: rgba(255, 140, 0, 0.15);
+}
+
+.markdown th {
+  padding: var(--space-sm) var(--space-md);
+  text-align: left;
+  font-weight: 600;
+  color: var(--color-accent-primary);
+  border-bottom: 2px solid rgba(255, 140, 0, 0.3);
+}
+
+.markdown td {
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: 1px solid rgba(255, 140, 0, 0.1);
+  color: var(--color-text-primary);
+}
+
+.markdown tr:last-child td {
+  border-bottom: none;
+}
+
+.markdown tr:hover {
+  background: rgba(255, 140, 0, 0.05);
+}
+
+.markdown blockquote {
+  margin: var(--space-md) 0;
+  padding: var(--space-md);
+  border-left: 3px solid var(--color-accent-primary);
+  background: rgba(255, 140, 0, 0.05);
+  color: var(--color-text-secondary);
+  font-style: italic;
+  border-radius: var(--radius-sm);
+}
+
+.markdown blockquote p {
+  margin: 0;
+}
+
+.markdown a {
+  color: var(--color-accent-primary);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(255, 140, 0, 0.3);
+  transition: all var(--transition-fast);
+}
+
+.markdown a:hover {
+  color: #ff8c00;
+  border-bottom-color: #ff8c00;
+  text-shadow: 0 0 8px rgba(255, 140, 0, 0.4);
+}
+
+.markdown hr {
+  margin: var(--space-lg) 0;
+  border: none;
+  border-top: 1px solid rgba(255, 140, 0, 0.2);
+}
+
+.markdown strong {
+  color: var(--color-accent-primary);
+  font-weight: 600;
+}
+
+.markdown em {
+  color: var(--color-text-secondary);
+}
+
 .cursor {
   display: inline-block;
   width: 8px;
@@ -146,6 +259,24 @@
   opacity: 0.6;
 }
 
+.actions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.retryButton {
+  opacity: 0.6;
+  transition: all 0.2s;
+  color: #ff8c00 !important;
+}
+
+.retryButton:hover {
+  opacity: 1 !important;
+  color: var(--color-accent-primary) !important;
+  transform: rotate(-30deg);
+}
+
 .copyButton {
   opacity: 0.6;
   transition: opacity 0.2s;
@@ -155,4 +286,91 @@
 .copyButton:hover {
   opacity: 1 !important;
   color: var(--color-accent-primary) !important;
+}
+
+.commandBlock {
+  margin: var(--space-md) 0;
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-tertiary);
+  overflow: hidden;
+}
+
+.commandHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-bg-secondary);
+  border-bottom: 1px solid var(--color-border-primary);
+}
+
+.commandLabel {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--color-accent-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.commandActions {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.commandActions :global(.ant-btn) {
+  background: rgba(255, 140, 0, 0.1) !important;
+  border: 1px solid rgba(255, 140, 0, 0.3) !important;
+  color: #ff8c00 !important;
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-xs);
+  height: 28px;
+  padding: 0 var(--space-md);
+  transition: all var(--transition-fast);
+}
+
+.commandActions :global(.ant-btn:hover:not(:disabled)) {
+  background: rgba(255, 140, 0, 0.2) !important;
+  border-color: #ff8c00 !important;
+  box-shadow: 0 0 8px rgba(255, 140, 0, 0.4) !important;
+  transform: translateY(-1px);
+}
+
+.commandActions :global(.ant-btn:active) {
+  transform: translateY(0);
+}
+
+.commandActions :global(.ant-btn-primary) {
+  background: rgba(255, 107, 53, 0.15) !important;
+  border: 1px solid var(--color-accent-primary) !important;
+  color: var(--color-accent-primary) !important;
+  font-weight: 600;
+}
+
+.commandActions :global(.ant-btn-primary:hover:not(:disabled)) {
+  background: rgba(255, 107, 53, 0.25) !important;
+  border-color: var(--color-accent-primary) !important;
+  box-shadow: 0 0 12px rgba(255, 107, 53, 0.5) !important;
+}
+
+.commandActions :global(.ant-btn) :global(.anticon) {
+  color: inherit;
+  font-size: 14px;
+}
+
+.commandCode {
+  margin: 0;
+  padding: var(--space-md);
+  background: var(--color-bg-terminal);
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-primary);
+  overflow-x: auto;
+}
+
+.commandCode code {
+  background: none;
+  padding: 0;
+  border-radius: 0;
+  font-family: inherit;
 }

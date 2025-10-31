@@ -20,7 +20,7 @@ export class LMStudioProvider implements LLMProvider {
   private endpoint: string;
   private contextWindow: number;
 
-  constructor(endpoint: string, model: string) {
+  constructor(endpoint: string, model: string, contextWindow?: number) {
     if (!endpoint) {
       throw new ConfigError('LM Studio endpoint is required. Set LMSTUDIO_ENDPOINT in .env');
     }
@@ -33,9 +33,13 @@ export class LMStudioProvider implements LLMProvider {
     this.model = model;
     this.defaultMaxTokens = 2048;
 
-    // Use environment variable if provided, otherwise fallback to default
-    const envContextWindow = process.env.LMSTUDIO_CONTEXT_WINDOW;
-    this.contextWindow = envContextWindow ? parseInt(envContextWindow, 10) : 32768;
+    // Use provided parameter, environment variable, or fallback to default
+    if (contextWindow) {
+      this.contextWindow = contextWindow;
+    } else {
+      const envContextWindow = process.env.LMSTUDIO_CONTEXT_WINDOW;
+      this.contextWindow = envContextWindow ? parseInt(envContextWindow, 10) : 32768;
+    }
 
     console.log(`[LMStudioProvider] Context window configured: ${this.contextWindow}`);
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Sidebar } from './components/organisms/Sidebar/Sidebar';
 import { Header } from './components/organisms/Header/Header';
 import { DashboardPage } from './pages/DashboardPage/DashboardPage';
@@ -7,26 +7,51 @@ import { ChatPage } from './pages/ChatPage/ChatPage';
 import { SettingsPage } from './pages/SettingsPage/SettingsPage';
 import { NetworkPage } from './pages/NetworkPage/NetworkPage';
 import { FirewallPage } from './pages/FirewallPage/FirewallPage';
+import { WireguardPage } from './pages/WireguardPage/WireguardPage';
 import { NetworkMapPage } from './pages/NetworkMapPage/NetworkMapPage';
 import { AgentPage } from './pages/AgentPage/AgentPage';
 import { DocumentationPage } from './pages/DocumentationPage/DocumentationPage';
 import { LearningDashboardPage } from './pages/LearningDashboardPage/LearningDashboardPage';
+import { SetupWizardPage } from './pages/SetupWizardPage/SetupWizardPage';
 import { TerminalManagerProvider, useTerminalManager } from './contexts/TerminalManagerContext';
 import { TerminalTaskbar } from './components/organisms/TerminalTaskbar/TerminalTaskbar';
 import { TerminalWindow } from './components/organisms/TerminalWindow/TerminalWindow';
 import { useTerminalKeyboardShortcuts } from './hooks/useTerminalKeyboardShortcuts';
 import { useRouterInfo } from './hooks/useRouterInfo';
+import { Spin } from 'antd';
 import './styles/tokens.css';
 import './styles/reset.css';
 import styles from './App.module.css';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
 const AppContent: React.FC = () => {
   const [activeNav, setActiveNav] = useState('dashboard');
+  const [setupRequired, setSetupRequired] = useState<boolean | null>(null);
+  const [checkingSetup, setCheckingSetup] = useState(true);
   const { routerInfo } = useRouterInfo();
   const { state, deactivateAllTerminals } = useTerminalManager();
 
   // Enable keyboard shortcuts
   useTerminalKeyboardShortcuts();
+
+  // Check if setup is required on mount
+  useEffect(() => {
+    const checkSetupStatus = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/setup/status`);
+        const data = await response.json();
+        setSetupRequired(data.needsSetup);
+      } catch (error) {
+        console.error('Failed to check setup status:', error);
+        setSetupRequired(false);
+      } finally {
+        setCheckingSetup(false);
+      }
+    };
+
+    checkSetupStatus();
+  }, []);
 
   // Default router info while loading
   const defaultRouterInfo = {
@@ -55,6 +80,8 @@ const AppContent: React.FC = () => {
         return <NetworkPage />;
       case 'firewall':
         return <FirewallPage />;
+      case 'wireguard':
+        return <WireguardPage />;
       case 'analytics':
         return <NetworkMapPage />;
       case 'agent':
@@ -63,16 +90,6 @@ const AppContent: React.FC = () => {
         return <DocumentationPage />;
       case 'learning':
         return <LearningDashboardPage />;
-      case 'dhcp':
-        return (
-          <div className={styles.placeholder}>
-            <h1>{activeNav.charAt(0).toUpperCase() + activeNav.slice(1)}</h1>
-            <p>This section is under construction</p>
-            <p style={{ marginTop: '16px', color: 'var(--color-text-secondary)' }}>
-              Implemented pages: Dashboard, Terminal, AI Assistant, Settings, Network, Firewall, Network Map, Documentation
-            </p>
-          </div>
-        );
       default:
         return (
           <div className={styles.placeholder}>
@@ -90,6 +107,21 @@ const AppContent: React.FC = () => {
   const handleMainClick = () => {
     deactivateAllTerminals();
   };
+
+  // Show loading spinner while checking setup status
+  if (checkingSetup) {
+    return (
+      <div className={styles.loading}>
+        <Spin size="large" />
+        <p>Checking configuration...</p>
+      </div>
+    );
+  }
+
+  // Show setup wizard if setup is required
+  if (setupRequired) {
+    return <SetupWizardPage />;
+  }
 
   return (
     <div className={styles.app}>

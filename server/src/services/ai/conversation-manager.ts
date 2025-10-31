@@ -4,10 +4,54 @@
  */
 
 import type { Message } from './providers/base.js';
+import { getAgentDatabase } from '../agent/database/agent-db.js';
+import { getFeedbackDatabase } from '../agent/database/feedback-db.js';
 
 export interface ConversationMessage extends Message {
   id: string;
   timestamp: Date;
+}
+
+/**
+ * Enhanced metadata tracking for troubleshooting sessions
+ * Phase 1: Foundation - Execution tracking
+ */
+export interface ToolExecution {
+  tool_name: string;
+  parameters: Record<string, any>;
+  result: any;
+  timestamp: number;
+  success: boolean;
+  execution_time?: number;
+}
+
+export interface CommandExecution {
+  command: string;
+  output: string;
+  timestamp: number;
+  success: boolean;
+  error?: string;
+}
+
+export interface ConversationMetadata {
+  // Session tracking
+  troubleshooting_session_id?: string;
+  active_issue_ids?: string[];
+
+  // Execution tracking
+  tools_called: ToolExecution[];
+  commands_executed: CommandExecution[];
+
+  // Troubleshooting context
+  identified_problems?: string[];
+  attempted_solutions?: string[];
+  resolution_status?: 'investigating' | 'resolved' | 'escalated';
+
+  // Session metrics
+  total_tool_calls?: number;
+  total_commands?: number;
+  session_start?: number;
+  last_tool_call?: number;
 }
 
 export interface Conversation {
@@ -15,7 +59,7 @@ export interface Conversation {
   messages: ConversationMessage[];
   createdAt: Date;
   lastActivity: Date;
-  metadata?: Record<string, any>;
+  metadata: ConversationMetadata;
 }
 
 class ConversationManager {
@@ -38,6 +82,13 @@ class ConversationManager {
       messages: [],
       createdAt: new Date(),
       lastActivity: new Date(),
+      metadata: {
+        tools_called: [],
+        commands_executed: [],
+        session_start: Date.now(),
+        total_tool_calls: 0,
+        total_commands: 0,
+      },
     };
 
     this.conversations.set(conversationId, conversation);
@@ -180,27 +231,61 @@ TOOL EXECUTION BEHAVIOR:
 OUTPUT FORMATTING RULES:
 
 1. ALWAYS call the appropriate tool first to get REAL data - NEVER make up or use example data
-2. Format all data output in code blocks using \`\`\` markdown syntax
-3. Create proper ASCII tables with box-drawing characters:
+
+2. NEVER use emojis in your responses. Use text-based status indicators instead:
+   - Instead of ✅ use [OK] or "Success"
+   - Instead of ❌ use [FAILED] or "Error"
+   - Instead of ⚠️ use [WARN] or "Warning"
+   - Instead of 🔥 use [CPU] or describe the metric
+   - Use plain text for all status indicators and symbols
+
+3. FORMAT BASED ON DATA SIZE:
+   - Small datasets (1-5 items): Use simple bullet lists or inline format
+   - Medium datasets (6-15 items): Use simple tables without box-drawing
+   - Large datasets (16+ items): Use ASCII tables with box-drawing characters
+
+4. For ASCII tables with box-drawing:
    - Use ┌─┬─┐ for top border
    - Use ├─┼─┤ for header separator
    - Use └─┴─┘ for bottom border
-   - Use │ for column separators on ALL rows (header AND data)
+   - Use │ for column separators on ALL rows
    - Align columns with proper spacing
-4. Use command-style headers showing actual count (e.g., "DHCP Leases (3 active):")
-5. ALWAYS include brief explanatory text AFTER the code block
-6. Use short, direct sentences for explanations
-7. When tool execution fails, report the error directly - NEVER hallucinate or invent data
 
-Example format for DHCP leases:
+5. BREVITY:
+   - Keep explanations to 1-2 sentences unless user asks for details
+   - Let the data speak for itself
+   - Omit obvious explanations (e.g., don't explain what a DHCP lease is)
+
+6. COMMAND FORMATTING:
+   - When providing RouterOS commands, use code blocks with 'routeros' language tag:
+     \`\`\`routeros
+     /ip firewall filter add chain=forward action=accept src-address=192.168.1.0/24
+     \`\`\`
+   - Always explain what the command does
+   - Warn about potential risks (e.g., "This will allow all traffic from...")
+
+7. ERROR HANDLING:
+   - When tool execution fails, report the error directly
+   - NEVER hallucinate or invent data
+   - Suggest alternative approaches if available
+
+Example compact format for small dataset:
 \`\`\`
 DHCP Leases (3 active):
+• 192.168.100.10 (AA:BB:CC:DD:EE:01) - device-1 - Bound
+• 192.168.100.20 (AA:BB:CC:DD:EE:02) - device-2 - Bound  
+• 192.168.100.30 (AA:BB:CC:DD:EE:03) - device-3 - Bound
+\`\`\`
+
+Example table format for larger dataset:
+\`\`\`
+DHCP Leases (12 active):
 ┌─────────────────┬───────────────────┬──────────────┬────────┐
 │ IP Address      │ MAC Address       │ Hostname     │ Status │
 ├─────────────────┼───────────────────┼──────────────┼────────┤
 │ 192.168.100.10  │ AA:BB:CC:DD:EE:01 │ device-1     │ Bound  │
 │ 192.168.100.20  │ AA:BB:CC:DD:EE:02 │ device-2     │ Bound  │
-│ 192.168.100.30  │ AA:BB:CC:DD:EE:03 │ device-3     │ Bound  │
+[... more rows ...]
 └─────────────────┴───────────────────┴──────────────┴────────┘
 \`\`\`
 
@@ -211,6 +296,310 @@ When users ask questions, use appropriate tools to gather real-time information.
 You can only execute read-only commands. Write operations are not allowed for security reasons.`;
 
     this.addMessage(conversationId, 'system', systemPrompt);
+  }
+
+  /**
+   * Build dynamic system context (Phase 1: Context Awareness)
+   * Injects current system state into conversation
+   */
+  private async buildDynamicContext(conversationId: string): Promise<string | null> {
+    try {
+      const agentDb = getAgentDatabase();
+      const parts: string[] = [];
+
+      // 1. Active Issues from Agent System
+      const activeIssues = agentDb.getIssues({ status: 'detected' });
+      if (activeIssues.length > 0) {
+        // Group by severity
+        const critical = activeIssues.filter(i => i.severity === 'critical');
+        const high = activeIssues.filter(i => i.severity === 'high');
+        const medium = activeIssues.filter(i => i.severity === 'medium');
+        const low = activeIssues.filter(i => i.severity === 'low');
+
+        const issueLines: string[] = ['CURRENT SYSTEM STATUS (from automated monitoring):'];
+
+        if (critical.length > 0) {
+          issueLines.push(`\n[CRITICAL] ${critical.length} critical issue${critical.length !== 1 ? 's' : ''}:`);
+          critical.slice(0, 3).forEach(issue => {
+            issueLines.push(`  - ${issue.title} (detected ${this.formatTimeSince(issue.detected_at)} ago)`);
+          });
+          if (critical.length > 3) {
+            issueLines.push(`  ... and ${critical.length - 3} more critical issues`);
+          }
+        }
+
+        if (high.length > 0) {
+          issueLines.push(`\n[HIGH] ${high.length} high severity issue${high.length !== 1 ? 's' : ''}:`);
+          high.slice(0, 2).forEach(issue => {
+            issueLines.push(`  - ${issue.title}`);
+          });
+          if (high.length > 2) {
+            issueLines.push(`  ... and ${high.length - 2} more`);
+          }
+        }
+
+        if (medium.length > 0 || low.length > 0) {
+          const total = medium.length + low.length;
+          issueLines.push(`\n[INFO] ${medium.length} medium and ${low.length} low severity issues detected.`);
+        }
+
+        issueLines.push('\nUse query_agent_system tool to get full details:');
+        issueLines.push('  query_agent_system({ action: "get_issues" })');
+        issueLines.push('  query_agent_system({ action: "get_issue_details", issue_id: "<id>" })');
+
+        parts.push(issueLines.join('\n'));
+      }
+
+      // 2. System Health Summary
+      const issueCounts = agentDb.getIssueCounts();
+      const totalActive = Object.values(issueCounts).reduce((sum, count) => sum + count, 0);
+
+      if (totalActive === 0) {
+        parts.push('SYSTEM HEALTH: No active issues detected. System appears healthy.');
+      }
+
+      // 3. Recent Activity (last 1 hour)
+      const oneHourAgo = Date.now() - 60 * 60 * 1000;
+      const allIssues = agentDb.getIssues({});
+      const recentIssues = allIssues.filter(i => i.detected_at >= oneHourAgo);
+
+      if (recentIssues.length > 0) {
+        parts.push(`\nRECENT ACTIVITY: ${recentIssues.length} new issue${recentIssues.length !== 1 ? 's' : ''} detected in the last hour.`);
+      }
+
+      // 4. Historical Learning Context (Phase 3.2: Pattern-aware responses)
+      const learningContext = await this.buildLearningContext();
+      if (learningContext) {
+        parts.push(learningContext);
+      }
+
+      // 5. Conversation metadata context (if available)
+      const conversation = this.conversations.get(conversationId);
+      if (conversation?.metadata) {
+        if (conversation.metadata.troubleshooting_session_id) {
+          parts.push(`\nACTIVE TROUBLESHOOTING SESSION: ${conversation.metadata.troubleshooting_session_id}`);
+        }
+
+        if (conversation.metadata.active_issue_ids && conversation.metadata.active_issue_ids.length > 0) {
+          parts.push(`Currently investigating: ${conversation.metadata.active_issue_ids.join(', ')}`);
+        }
+      }
+
+      return parts.length > 0 ? '\n\n' + parts.join('\n\n') : null;
+    } catch (error) {
+      console.error('[ConversationManager] Error building dynamic context:', error);
+      return null; // Graceful degradation - continue without context if error occurs
+    }
+  }
+
+  /**
+   * Format time since timestamp in human-readable format
+   */
+  private formatTimeSince(timestamp: number): string {
+    const diff = Date.now() - timestamp;
+    const seconds = Math.floor(diff / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    if (days > 0) return `${days}d ${hours % 24}h`;
+    if (hours > 0) return `${hours}h ${minutes % 60}m`;
+    if (minutes > 0) return `${minutes}m`;
+    return `${seconds}s`;
+  }
+
+  /**
+   * Build historical learning context from patterns and resolutions
+   * Phase 3.2: Pattern-aware responses
+   */
+  private async buildLearningContext(): Promise<string | null> {
+    try {
+      const feedbackDb = getFeedbackDatabase();
+      const agentDb = getAgentDatabase();
+      const parts: string[] = [];
+
+      // 1. Learned False Positive Patterns
+      // Get all patterns and filter for high confidence
+      const allPatterns = feedbackDb.getAllPatterns();
+      const highConfidencePatterns = allPatterns
+        .filter(p => p.confidence >= 0.7)
+        .map(p => ({
+          rule_name: p.rule_name,
+          pattern_type: p.pattern_type,
+          confidence: p.confidence,
+          occurrence_count: p.occurrence_count
+        }));
+
+      if (highConfidencePatterns.length > 0) {
+        // Sort by occurrence count and take top 5
+        const topPatterns = highConfidencePatterns
+          .sort((a, b) => b.occurrence_count - a.occurrence_count)
+          .slice(0, 5);
+
+        const patternLines: string[] = ['\nLEARNED FALSE POSITIVE PATTERNS:'];
+        patternLines.push('These detection patterns have been frequently marked as false positives:');
+
+        topPatterns.forEach(p => {
+          patternLines.push(`  - ${p.rule_name} (${p.pattern_type}): ${Math.round(p.confidence * 100)}% confidence, seen ${p.occurrence_count} times`);
+        });
+
+        patternLines.push('\nConsider these patterns when analyzing similar issues.');
+        patternLines.push('Use pattern_learning tool with action="get_learned_patterns" for detailed pattern data.');
+
+        parts.push(patternLines.join('\n'));
+      }
+
+      // 2. Successful Resolution Approaches (last 30 days)
+      const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
+      const resolvedSessions = agentDb.getSessions({ status: 'resolved' })
+        .filter(s => s.created_at >= thirtyDaysAgo && s.effectiveness === 'fully_resolved')
+        .slice(0, 20); // Limit to recent 20 sessions
+
+      if (resolvedSessions.length > 0) {
+        // Extract common resolution keywords
+        const keywordCounts = new Map<string, { count: number; examples: string[] }>();
+        const keywords = ['restart', 'reset', 'clear', 'update', 'configure', 'check', 'analyze', 'fix', 'disable', 'enable'];
+
+        for (const session of resolvedSessions) {
+          if (!session.resolution_summary) continue;
+          const summary = session.resolution_summary.toLowerCase();
+
+          for (const keyword of keywords) {
+            if (summary.includes(keyword)) {
+              const existing = keywordCounts.get(keyword) || { count: 0, examples: [] };
+              existing.count++;
+              if (existing.examples.length < 2) {
+                existing.examples.push(session.description.substring(0, 50));
+              }
+              keywordCounts.set(keyword, existing);
+            }
+          }
+        }
+
+        // Get top 3 most common approaches
+        const topApproaches = Array.from(keywordCounts.entries())
+          .filter(([_, stats]) => stats.count >= 2) // At least 2 occurrences
+          .sort((a, b) => b[1].count - a[1].count)
+          .slice(0, 3);
+
+        if (topApproaches.length > 0) {
+          const resolutionLines: string[] = ['\nSUCCESSFUL RESOLUTION APPROACHES (last 30 days):'];
+
+          topApproaches.forEach(([approach, stats]) => {
+            const successRate = Math.round((stats.count / resolvedSessions.length) * 100);
+            resolutionLines.push(`  - "${approach}" approach: used in ${stats.count} successful resolutions (~${successRate}% success rate)`);
+          });
+
+          resolutionLines.push('\nUse pattern_learning tool with action="query_resolution_history" for detailed resolution data.');
+          resolutionLines.push('Use pattern_learning tool with action="get_resolution_stats" for comprehensive statistics.');
+
+          parts.push(resolutionLines.join('\n'));
+        }
+      }
+
+      return parts.length > 0 ? parts.join('\n\n') : null;
+    } catch (error) {
+      console.error('[ConversationManager] Error building learning context:', error);
+      return null; // Graceful degradation
+    }
+  }
+
+  /**
+   * Track tool execution in conversation metadata
+   * Phase 1: Foundation - Execution tracking
+   */
+  trackToolExecution(
+    conversationId: string,
+    toolName: string,
+    parameters: Record<string, any>,
+    result: any,
+    success: boolean,
+    executionTime?: number
+  ): void {
+    const conversation = this.conversations.get(conversationId);
+    if (!conversation) return;
+
+    const toolExecution: ToolExecution = {
+      tool_name: toolName,
+      parameters,
+      result,
+      timestamp: Date.now(),
+      success,
+      execution_time: executionTime,
+    };
+
+    conversation.metadata.tools_called.push(toolExecution);
+    conversation.metadata.total_tool_calls = (conversation.metadata.total_tool_calls || 0) + 1;
+    conversation.metadata.last_tool_call = Date.now();
+
+    // Keep only last 20 tool executions to prevent memory bloat
+    if (conversation.metadata.tools_called.length > 20) {
+      conversation.metadata.tools_called = conversation.metadata.tools_called.slice(-20);
+    }
+
+    console.log(`[ConversationManager] Tracked tool execution: ${toolName} (success: ${success})`);
+  }
+
+  /**
+   * Track command execution in conversation metadata
+   * Phase 1: Foundation - Execution tracking
+   */
+  trackCommandExecution(
+    conversationId: string,
+    command: string,
+    output: string,
+    success: boolean,
+    error?: string
+  ): void {
+    const conversation = this.conversations.get(conversationId);
+    if (!conversation) return;
+
+    const commandExecution: CommandExecution = {
+      command,
+      output,
+      timestamp: Date.now(),
+      success,
+      error,
+    };
+
+    conversation.metadata.commands_executed.push(commandExecution);
+    conversation.metadata.total_commands = (conversation.metadata.total_commands || 0) + 1;
+
+    // Keep only last 15 command executions to prevent memory bloat
+    if (conversation.metadata.commands_executed.length > 15) {
+      conversation.metadata.commands_executed = conversation.metadata.commands_executed.slice(-15);
+    }
+
+    console.log(`[ConversationManager] Tracked command execution: ${command.substring(0, 50)}... (success: ${success})`);
+  }
+
+  /**
+   * Set active issue IDs for troubleshooting session
+   */
+  setActiveIssues(conversationId: string, issueIds: string[]): void {
+    const conversation = this.conversations.get(conversationId);
+    if (!conversation) return;
+
+    conversation.metadata.active_issue_ids = issueIds;
+    console.log(`[ConversationManager] Set active issues for ${conversationId}: ${issueIds.join(', ')}`);
+  }
+
+  /**
+   * Update troubleshooting session ID
+   */
+  setTroubleshootingSession(conversationId: string, sessionId: string): void {
+    const conversation = this.conversations.get(conversationId);
+    if (!conversation) return;
+
+    conversation.metadata.troubleshooting_session_id = sessionId;
+    console.log(`[ConversationManager] Set troubleshooting session: ${sessionId}`);
+  }
+
+  /**
+   * Get conversation metadata
+   */
+  getMetadata(conversationId: string): ConversationMetadata | undefined {
+    return this.conversations.get(conversationId)?.metadata;
   }
 
   /**
@@ -248,17 +637,30 @@ You can only execute read-only commands. Write operations are not allowed for se
 
   /**
    * Get conversation history formatted for LLM
+   * Now with dynamic context injection (Phase 1: Context Awareness)
    */
-  getMessagesForLLM(conversationId: string): Message[] {
+  async getMessagesForLLM(conversationId: string): Promise<Message[]> {
     const conversation = this.conversations.get(conversationId);
     if (!conversation) {
       return [];
     }
 
-    return conversation.messages.map(m => ({
+    const messages = conversation.messages.map(m => ({
       role: m.role,
       content: m.content,
     }));
+
+    // Inject dynamic context into system message
+    const dynamicContext = await this.buildDynamicContext(conversationId);
+    if (dynamicContext && messages.length > 0 && messages[0].role === 'system') {
+      // Append dynamic context to existing system message
+      messages[0] = {
+        ...messages[0],
+        content: messages[0].content + dynamicContext
+      };
+    }
+
+    return messages;
   }
 
   /**

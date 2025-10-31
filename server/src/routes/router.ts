@@ -304,6 +304,92 @@ routerRoutes.get('/scan/full', async (req: Request, res: Response) => {
 });
 
 /**
+ * GET /api/router/scan/host
+ * Lookup specific host by IP or MAC address
+ * Query params: ip (IP address) or mac (MAC address)
+ *
+ * This endpoint combines data from ARP table, DHCP leases, and interface
+ * configuration to provide complete information about a host.
+ */
+routerRoutes.get('/scan/host', async (req: Request, res: Response) => {
+  try {
+    const { ip, mac } = req.query;
+
+    if (!ip && !mac) {
+      return res.status(400).json({
+        error: 'Missing required parameter',
+        message: 'Either ip or mac query parameter is required'
+      });
+    }
+
+    // Perform comprehensive network scan
+    const scanData = await mikrotikService.performNetworkScan();
+    const { enhancedHosts } = scanData;
+
+    // Get interface information for network segments
+    const interfaces = await mikrotikService.getIpAddresses();
+
+    // Filter hosts by IP or MAC
+    let matchingHosts: any[] = [];
+
+    if (ip) {
+      matchingHosts = enhancedHosts.filter((host: any) => host.address === ip);
+    } else if (mac) {
+      const macUpper = String(mac).toUpperCase().replace(/[:-]/g, ':');
+      matchingHosts = enhancedHosts.filter((host: any) => {
+        const hostMac = (host.macAddress || '').toUpperCase().replace(/[:-]/g, ':');
+        return hostMac === macUpper;
+      });
+    }
+
+    if (matchingHosts.length === 0) {
+      return res.status(404).json({
+        error: 'Host not found',
+        message: `No host found with ${ip ? `IP ${ip}` : `MAC ${mac}`}`,
+        query: { ip, mac },
+        interfaces: interfaces.map((iface: any) => ({
+          name: iface.interface,
+          address: iface.address,
+          network: iface.network,
+        })),
+        recommendations: [
+          'Host may be offline or not yet discovered',
+          ip ? `Try pinging the host: /ping address=${ip}` : 'Check physical connections',
+          'Ensure host is on a configured network segment'
+        ]
+      });
+    }
+
+    // Add network segment information
+    const hostsWithNetwork = matchingHosts.map((host: any) => {
+      const ifaceConfig = interfaces.find((iface: any) => iface.interface === host.interface);
+      return {
+        ...host,
+        networkSegment: ifaceConfig ? {
+          address: ifaceConfig.address,
+          network: ifaceConfig.network,
+          interface: ifaceConfig.interface,
+        } : null
+      };
+    });
+
+    res.json({
+      found: true,
+      query: { ip, mac },
+      hosts: hostsWithNetwork,
+      count: hostsWithNetwork.length,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error: any) {
+    console.error('Error looking up host:', error);
+    res.status(500).json({
+      error: 'Failed to lookup host',
+      message: error.message
+    });
+  }
+});
+
+/**
  * GET /api/router/speed-test
  * Perform internet speed test (latency and download speed)
  */

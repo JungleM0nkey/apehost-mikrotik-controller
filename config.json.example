@@ -1,0 +1,73 @@
+{
+  "version": "1.0.0",
+
+  "_comment_server": "Server Configuration",
+  "server": {
+    "port": 3000,
+    "corsOrigin": "http://localhost:5173",
+    "nodeEnv": "development"
+  },
+
+  "_comment_mikrotik": "MikroTik Router Connection",
+  "mikrotik": {
+    "host": "192.168.88.1",
+    "port": 8728,
+    "username": "admin",
+    "password": "your_password_here",
+    "timeout": 10000,
+    "keepaliveInterval": 30000
+  },
+
+  "_comment_llm": "LLM Provider Configuration - Set provider to 'claude' or 'lmstudio'",
+  "llm": {
+    "provider": "lmstudio",
+    "claude": {
+      "apiKey": "",
+      "model": "claude-3-5-sonnet-20241022"
+    },
+    "lmstudio": {
+      "endpoint": "http://localhost:1234",
+      "model": "granite-4.0-h-tiny-Q4_K_M.gguf",
+      "contextWindow": 70752
+    }
+  },
+
+  "_comment_assistant": "AI Assistant Behavior Configuration",
+  "assistant": {
+    "temperature": 0.7,
+    "maxTokens": 2048,
+    "systemPrompt": "You are an expert MikroTik router assistant. Help users configure and troubleshoot their MikroTik RouterOS devices. Be concise, accurate, and security-conscious."
+  },
+
+  "_comment_ui": "User Interface Settings",
+  "ui": {
+    "terminal": {
+      "fontFamily": "JetBrains Mono",
+      "fontSize": 14,
+      "lineHeight": 1.5,
+      "syntaxHighlighting": true,
+      "lineNumbers": false,
+      "historyLimit": 1000,
+      "colorScheme": "dark-orange"
+    },
+    "display": {
+      "timezone": "America/New_York",
+      "timeFormat": "12h",
+      "dateFormat": "MMM DD, YYYY"
+    },
+    "behavior": {
+      "enableSuggestions": true,
+      "showExplanations": true,
+      "autoExecuteSafe": false,
+      "requireConfirmation": true
+    },
+    "security": {
+      "storeCredentials": false,
+      "encryptCredentials": true,
+      "sessionTimeout": 60,
+      "enableAuditLogging": true,
+      "logAiConversations": true,
+      "logRouterCommands": true
+    }
+  }
+}

@@ -144,9 +144,23 @@ serviceRoutes.get('/mcp-tools', (req: Request, res: Response) => {
     const toolDefinitions = globalMCPExecutor.getToolDefinitions();
     const stats = globalMCPExecutor.getStats();
 
+    // Enhance tool definitions with category and risk level
+    const enhancedTools = toolDefinitions.map(tool => {
+      const category = categorizeTool(tool.name, tool.description);
+      const riskLevel = determineRiskLevel(tool.name, tool.description);
+
+      return {
+        name: tool.name,
+        description: tool.description,
+        category,
+        risk_level: riskLevel,
+        input_schema: tool.input_schema,
+      };
+    });
+
     res.json({
-      tools: toolDefinitions,
-      count: toolDefinitions.length,
+      tools: enhancedTools,
+      count: enhancedTools.length,
       stats: {
         total_tools: stats.toolCount,
         audit_stats: stats.auditStats,
@@ -162,6 +176,123 @@ serviceRoutes.get('/mcp-tools', (req: Request, res: Response) => {
     });
   }
 });
+
+/**
+ * Categorize a tool based on its name and description
+ */
+function categorizeTool(name: string, description: string): string {
+  const nameLower = name.toLowerCase();
+  const descLower = description.toLowerCase();
+
+  // Network & Connectivity
+  if (
+    nameLower.includes('interface') ||
+    nameLower.includes('network') ||
+    nameLower.includes('connectivity') ||
+    nameLower.includes('host') ||
+    nameLower.includes('arp') ||
+    nameLower.includes('dhcp')
+  ) {
+    return 'Network & Connectivity';
+  }
+
+  // Routing & Firewall
+  if (
+    nameLower.includes('route') ||
+    nameLower.includes('firewall') ||
+    nameLower.includes('nat')
+  ) {
+    return 'Routing & Firewall';
+  }
+
+  // Wireless
+  if (nameLower.includes('wireless') || nameLower.includes('wifi')) {
+    return 'Wireless';
+  }
+
+  // Monitoring & Diagnostics
+  if (
+    nameLower.includes('traffic') ||
+    nameLower.includes('log') ||
+    nameLower.includes('diagnostic') ||
+    nameLower.includes('system') ||
+    nameLower.includes('router_info')
+  ) {
+    return 'Monitoring & Diagnostics';
+  }
+
+  // Troubleshooting & AI
+  if (
+    nameLower.includes('troubleshoot') ||
+    nameLower.includes('agent') ||
+    nameLower.includes('trend') ||
+    nameLower.includes('pattern') ||
+    nameLower.includes('system_state')
+  ) {
+    return 'Troubleshooting & AI';
+  }
+
+  // Commands
+  if (nameLower.includes('command') || nameLower.includes('execute')) {
+    return 'Commands';
+  }
+
+  return 'General';
+}
+
+/**
+ * Determine risk level of a tool based on its name and description
+ */
+function determineRiskLevel(name: string, description: string): 'safe' | 'read_only' | 'write' | 'dangerous' {
+  const nameLower = name.toLowerCase();
+  const descLower = description.toLowerCase();
+
+  // Dangerous operations
+  if (
+    nameLower.includes('command') ||
+    nameLower.includes('execute') ||
+    descLower.includes('execute command')
+  ) {
+    return 'dangerous';
+  }
+
+  // Write operations
+  if (
+    descLower.includes('update') ||
+    descLower.includes('modify') ||
+    descLower.includes('change') ||
+    descLower.includes('configure') ||
+    descLower.includes('set') ||
+    descLower.includes('enable') ||
+    descLower.includes('disable')
+  ) {
+    return 'write';
+  }
+
+  // Read-only operations
+  if (
+    descLower.includes('get') ||
+    descLower.includes('retrieve') ||
+    descLower.includes('fetch') ||
+    descLower.includes('list') ||
+    descLower.includes('view') ||
+    descLower.includes('show')
+  ) {
+    return 'read_only';
+  }
+
+  // AI/Analysis operations (safe)
+  if (
+    nameLower.includes('agent') ||
+    nameLower.includes('trend') ||
+    nameLower.includes('pattern') ||
+    nameLower.includes('analyze')
+  ) {
+    return 'safe';
+  }
+
+  return 'read_only';
+}
 
 /**
  * Format uptime in human-readable format

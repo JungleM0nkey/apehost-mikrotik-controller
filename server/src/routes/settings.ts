@@ -48,17 +48,8 @@ router.put('/', async (req: Request, res: Response) => {
   try {
     const settings = req.body;
 
-    // Validate settings
-    const validation = settingsService.validateSettings(settings);
-    if (!validation.valid) {
-      return res.status(400).json({
-        error: 'Invalid settings',
-        errors: validation.errors
-      });
-    }
-
-    // Update settings via ConfigManager (this updates .env and process.env)
-    await configManager.updateSettings(settings);
+    // Update settings (validation happens in UnifiedConfigService via Zod schemas)
+    await settingsService.updateSettings(settings);
 
     // Track which services need refreshing
     const refreshedServices: string[] = [];
@@ -122,6 +113,15 @@ router.put('/', async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('[Settings API] Failed to update settings:', error);
+
+    // Check if it's a validation error (from Zod)
+    if (error instanceof Error && error.message.includes('validation')) {
+      return res.status(400).json({
+        error: 'Invalid settings',
+        message: error.message
+      });
+    }
+
     res.status(500).json({
       error: 'Failed to update settings',
       message: error instanceof Error ? error.message : 'Unknown error'

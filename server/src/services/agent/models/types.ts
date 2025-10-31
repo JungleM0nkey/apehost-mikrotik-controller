@@ -83,3 +83,95 @@ export interface IDetectionRule {
   description: string;
   detect(state: RouterState): Promise<Issue | null>;
 }
+
+/**
+ * Phase 2: Proactive Intelligence - Troubleshooting Session Types
+ */
+
+export type SessionSeverity = 'low' | 'medium' | 'high';
+export type SessionStatus = 'active' | 'resolved' | 'escalated';
+export type SessionEffectiveness = 'fully_resolved' | 'partially_resolved' | 'unresolved';
+export type StepActionType = 'tool_call' | 'command' | 'analysis' | 'recommendation';
+export type StepResult = 'success' | 'failed' | 'partial' | 'pending';
+
+/**
+ * Troubleshooting session for tracking multi-step problem resolution
+ */
+export interface TroubleshootingSession {
+  id: string;
+  conversation_id: string;
+  issue_id?: string;
+  description: string;
+  severity: SessionSeverity;
+  status: SessionStatus;
+  created_at: number;
+  updated_at: number;
+  resolved_at?: number;
+  resolution_summary?: string;
+  effectiveness?: SessionEffectiveness;
+  resolution_time_minutes?: number;
+}
+
+/**
+ * Individual step in a troubleshooting session
+ */
+export interface SessionStep {
+  id: string;
+  session_id: string;
+  step_number: number;
+  description: string;
+  action_type: StepActionType;
+  action_data?: Record<string, unknown>;
+  result: StepResult;
+  timestamp: number;
+  notes?: string;
+}
+
+/**
+ * Phase 3: Advanced Intelligence - Trend Analysis Types
+ */
+
+/**
+ * Metric data point for trend analysis
+ */
+export interface MetricDataPoint {
+  id: string;
+  metric_name: string;
+  metric_value: number;
+  timestamp: number;
+  metadata?: Record<string, unknown>;
+}
+
+/**
+ * Trend analysis result with prediction
+ */
+export interface TrendAnalysis {
+  metric_name: string;
+  data_points: number;
+  time_range: {
+    start: number;
+    end: number;
+    duration_hours: number;
+  };
+  statistics: {
+    min: number;
+    max: number;
+    avg: number;
+    current: number;
+  };
+  trend: {
+    direction: 'increasing' | 'decreasing' | 'stable';
+    slope: number;
+    confidence: number;
+  };
+  prediction?: {
+    next_hour: number;
+    next_day: number;
+    confidence: number;
+  };
+  anomalies: Array<{
+    timestamp: number;
+    value: number;
+    z_score: number;
+  }>;
+}

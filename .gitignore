@@ -13,6 +13,15 @@ dist-ssr/
 .env.local
 .env.production
 .env.development
+.env.backup
+
+# Configuration files (user config should not be committed)
+config.json
+config.json.backup.*
+
+# Allow configuration templates to be committed
+!config.default.json
+!config.json.example
 
 # Logs
 logs/

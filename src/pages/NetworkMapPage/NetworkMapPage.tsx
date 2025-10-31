@@ -166,7 +166,13 @@ export const NetworkMapPage: React.FC = () => {
       disabled: arp.disabled,
       invalid: arp.invalid
     })));
-    console.log('Interfaces:', topology.interfaces.map(i => i.name));
+    console.log('Interfaces:', topology.interfaces.map(i => ({
+      name: i.name,
+      type: i.type,
+      isBridge: i.isBridge,
+      bridge: i.bridge,
+      bridgePorts: i.bridgePorts
+    })));
 
     const newNodes: Node[] = [];
     const newEdges: Edge[] = [];
@@ -196,27 +202,283 @@ export const NetworkMapPage: React.FC = () => {
       }
     });
 
-    // Interface nodes - filter based on settings
-    const filteredInterfaces = topology.interfaces.filter(iface => {
+    // Separate interfaces into bridges, bridge members, and standalone interfaces
+    const bridges = topology.interfaces.filter(iface => iface.isBridge);
+    const bridgeMemberNames = new Set(
+      topology.interfaces
+        .filter(iface => iface.bridge)
+        .map(iface => iface.name)
+    );
+    const standaloneInterfaces = topology.interfaces.filter(
+      iface => !iface.isBridge && !iface.bridge
+    );
+
+    // Filter based on settings
+    const filteredBridges = bridges.filter(iface => {
+      if (iface.status === 'up') return showActiveInterfaces;
+      return showInactiveInterfaces;
+    });
+    
+    const filteredStandalone = standaloneInterfaces.filter(iface => {
       if (iface.status === 'up') return showActiveInterfaces;
       return showInactiveInterfaces;
     });
 
-    filteredInterfaces.forEach((iface) => {
+    // Render bridge interfaces with their member ports
+    filteredBridges.forEach((bridge) => {
+      const bridgeId = `interface-${bridge.id}`;
+      const memberPorts = topology.interfaces.filter(
+        iface => iface.bridge === bridge.name
+      );
+
+      // Filter member ports based on settings
+      const visibleMemberPorts = memberPorts.filter(iface => {
+        if (iface.status === 'up') return showActiveInterfaces;
+        return showInactiveInterfaces;
+      });
+
+      // Create bridge node (larger, acts as a group header)
+      newNodes.push({
+        id: bridgeId,
+        type: 'default',
+        position: { x: 0, y: 0 },
+        data: {
+          label: (
+            <div className={styles.bridgeNode}>
+              <div className={styles.nodeTitleRow}>
+                <InterfaceTypeIcon type="bridge" size={20} className={styles.nodeTypeIcon} />
+                <div className={styles.nodeTitle}>{bridge.name}</div>
+              </div>
+              <div className={styles.nodeSubtitle}>Bridge ({visibleMemberPorts.length} ports)</div>
+              {showDetailedInfo && bridge.ipAddress && (
+                <div className={styles.nodeInfo}>IP: {bridge.ipAddress}</div>
+              )}
+              <div className={`${styles.statusBadge} ${bridge.status === 'up' ? styles.statusUp : styles.statusDown}`}>
+                {bridge.status}
+              </div>
+            </div>
+          )
+        },
+        style: {
+          background: 'var(--color-bg-secondary)',
+          color: 'var(--color-text-primary)',
+          border: `3px solid ${bridge.status === 'up' ? 'var(--color-accent-success)' : 'var(--color-border-primary)'}`,
+          borderRadius: 'var(--radius-md)',
+          padding: '14px',
+          width: showDetailedInfo ? 180 : 160,
+          fontSize: '13px'
+        }
+      });
+
+      // Edge from router to bridge
+      newEdges.push({
+        id: `router-${bridgeId}`,
+        source: 'router',
+        target: bridgeId,
+        type: 'smoothstep',
+        animated: bridge.status === 'up',
+        style: {
+          stroke: bridge.status === 'up' ? 'var(--color-accent-success)' : 'var(--color-border-primary)',
+          strokeWidth: 3
+        },
+        markerEnd: {
+          type: MarkerType.ArrowClosed,
+          color: bridge.status === 'up' ? 'var(--color-accent-success)' : 'var(--color-border-primary)'
+        }
+      });
+
+      // Render member port nodes
+      visibleMemberPorts.forEach((port) => {
+        const portId = `interface-${port.id}`;
+
+        newNodes.push({
+          id: portId,
+          type: 'default',
+          position: { x: 0, y: 0 },
+          data: {
+            label: (
+              <div className={styles.bridgePortNode}>
+                <div className={styles.nodeTitleRow}>
+                  <InterfaceTypeIcon type={port.type} size={16} className={styles.nodeTypeIcon} />
+                  <div className={styles.nodeTitle}>{port.name}</div>
+                </div>
+                <div className={styles.nodeSubtitle}>{port.type}</div>
+                {showDetailedInfo && port.ipAddress && (
+                  <div className={styles.nodeInfo}>IP: {port.ipAddress}</div>
+                )}
+                <div className={`${styles.statusBadge} ${port.status === 'up' ? styles.statusUp : styles.statusDown}`}>
+                  {port.status}
+                </div>
+              </div>
+            )
+          },
+          style: {
+            background: 'var(--color-bg-tertiary)',
+            color: 'var(--color-text-primary)',
+            border: `2px solid ${port.status === 'up' ? 'var(--color-accent-success)' : 'var(--color-border-primary)'}`,
+            borderRadius: 'var(--radius-md)',
+            padding: '10px',
+            width: showDetailedInfo ? 140 : 120,
+            fontSize: '11px'
+          }
+        });
+
+        // Edge from bridge to member port
+        newEdges.push({
+          id: `${bridgeId}-${portId}`,
+          source: bridgeId,
+          target: portId,
+          type: 'smoothstep',
+          animated: port.status === 'up',
+          style: {
+            stroke: port.status === 'up' ? 'var(--color-accent-success)' : 'var(--color-border-primary)',
+            strokeWidth: 2,
+            strokeDasharray: '5,5' // Dashed line to indicate membership
+          },
+          markerEnd: {
+            type: MarkerType.ArrowClosed,
+            color: port.status === 'up' ? 'var(--color-accent-success)' : 'var(--color-border-primary)'
+          }
+        });
+
+        // Add hosts connected to this bridge port
+        const hostsOnPort = topology.arpTable.filter(
+          arp => {
+            const interfaceMatch = arp.interface.trim().toLowerCase() === port.name.trim().toLowerCase();
+            const validStatus = ['reachable', 'stale', 'delay'].includes(arp.status);
+            const isValid = !arp.disabled && !arp.invalid;
+            return interfaceMatch && validStatus && isValid;
+          }
+        );
+
+        hostsOnPort.forEach((host) => {
+          const hostId = `host-${host.id}`;
+
+          const getHostBorderColor = () => {
+            if (host.status === 'reachable') return 'var(--color-accent-success)';
+            if (host.status === 'stale') return 'var(--color-accent-primary)';
+            return 'var(--color-border-primary)';
+          };
+
+          newNodes.push({
+            id: hostId,
+            type: 'default',
+            position: { x: 0, y: 0 },
+            data: {
+              label: (
+                <div className={styles.hostNode}>
+                  <div className={styles.nodeTitle}>{host.address}</div>
+                  <div className={styles.nodeSubtitle}>{host.macAddress.substring(0, 17)}</div>
+                  <div className={styles.hostStatus}>{host.status}</div>
+                </div>
+              )
+            },
+            style: {
+              background: 'var(--color-bg-secondary)',
+              color: 'var(--color-text-primary)',
+              border: `1px solid ${getHostBorderColor()}`,
+              borderRadius: 'var(--radius-md)',
+              padding: '8px',
+              width: 120,
+              fontSize: '10px'
+            }
+          });
+
+          newEdges.push({
+            id: `${portId}-${hostId}`,
+            source: portId,
+            target: hostId,
+            type: 'smoothstep',
+            style: {
+              stroke: 'var(--color-border-secondary)',
+              strokeWidth: 1
+            },
+            markerEnd: {
+              type: MarkerType.ArrowClosed,
+              color: 'var(--color-border-secondary)'
+            }
+          });
+        });
+      });
+
+      // Add hosts connected directly to the bridge interface
+      const hostsOnBridge = topology.arpTable.filter(
+        arp => {
+          const interfaceMatch = arp.interface.trim().toLowerCase() === bridge.name.trim().toLowerCase();
+          const validStatus = ['reachable', 'stale', 'delay'].includes(arp.status);
+          const isValid = !arp.disabled && !arp.invalid;
+          // Don't add if already added via a member port
+          const notOnMemberPort = !memberPorts.some(
+            port => arp.interface.trim().toLowerCase() === port.name.trim().toLowerCase()
+          );
+          return interfaceMatch && validStatus && isValid && notOnMemberPort;
+        }
+      );
+
+      hostsOnBridge.forEach((host) => {
+        const hostId = `host-${host.id}`;
+
+        const getHostBorderColor = () => {
+          if (host.status === 'reachable') return 'var(--color-accent-success)';
+          if (host.status === 'stale') return 'var(--color-accent-primary)';
+          return 'var(--color-border-primary)';
+        };
+
+        newNodes.push({
+          id: hostId,
+          type: 'default',
+          position: { x: 0, y: 0 },
+          data: {
+            label: (
+              <div className={styles.hostNode}>
+                <div className={styles.nodeTitle}>{host.address}</div>
+                <div className={styles.nodeSubtitle}>{host.macAddress.substring(0, 17)}</div>
+                <div className={styles.hostStatus}>{host.status}</div>
+              </div>
+            )
+          },
+          style: {
+            background: 'var(--color-bg-secondary)',
+            color: 'var(--color-text-primary)',
+            border: `1px solid ${getHostBorderColor()}`,
+            borderRadius: 'var(--radius-md)',
+            padding: '8px',
+            width: 120,
+            fontSize: '10px'
+          }
+        });
+
+        newEdges.push({
+          id: `${bridgeId}-${hostId}`,
+          source: bridgeId,
+          target: hostId,
+          type: 'smoothstep',
+          style: {
+            stroke: 'var(--color-border-secondary)',
+            strokeWidth: 1
+          },
+          markerEnd: {
+            type: MarkerType.ArrowClosed,
+            color: 'var(--color-border-secondary)'
+          }
+        });
+      });
+    });
+
+    // Render standalone (non-bridge, non-member) interfaces
+    filteredStandalone.forEach((iface) => {
       const interfaceId = `interface-${iface.id}`;
 
-      // Try to find MAC address from ARP table for this interface
       const interfaceMac = topology.arpTable.find(
         arp => arp.interface.trim().toLowerCase() === iface.name.trim().toLowerCase()
       )?.macAddress;
 
-      // Get router's own MAC if this is a router interface
       const displayMac = interfaceMac || 'N/A';
 
       newNodes.push({
         id: interfaceId,
         type: 'default',
-        position: { x: 0, y: 0 }, // Will be positioned by layout
+        position: { x: 0, y: 0 },
         data: {
           label: (
             <div className={styles.interfaceNode}>
@@ -252,7 +514,6 @@ export const NetworkMapPage: React.FC = () => {
         }
       });
 
-      // Edge from router to interface
       newEdges.push({
         id: `router-${interfaceId}`,
         source: 'router',
@@ -269,26 +530,18 @@ export const NetworkMapPage: React.FC = () => {
         }
       });
 
-      // Add connected hosts for this interface
-      // Include reachable, stale, and delay status (active devices)
+      // Add connected hosts for this standalone interface
       const hostsOnInterface = topology.arpTable.filter(
         arp => {
-          // Match interface name (case-insensitive and trim whitespace)
           const interfaceMatch = arp.interface.trim().toLowerCase() === iface.name.trim().toLowerCase();
-
-          // Include reachable, stale, and delay statuses (exclude failed/probe)
           const validStatus = ['reachable', 'stale', 'delay'].includes(arp.status);
-
-          // Don't include disabled or invalid entries
           const isValid = !arp.disabled && !arp.invalid;
-
           return interfaceMatch && validStatus && isValid;
         }
       );
 
-      // Debug logging
       if (hostsOnInterface.length > 0) {
-        console.log(`Interface ${iface.name}: Found ${hostsOnInterface.length} hosts`,
+        console.log(`Standalone interface ${iface.name}: Found ${hostsOnInterface.length} hosts`,
           hostsOnInterface.map(h => ({ ip: h.address, mac: h.macAddress, status: h.status }))
         );
       }
@@ -296,7 +549,6 @@ export const NetworkMapPage: React.FC = () => {
       hostsOnInterface.forEach((host) => {
         const hostId = `host-${host.id}`;
 
-        // Determine host status color
         const getHostBorderColor = () => {
           if (host.status === 'reachable') return 'var(--color-accent-success)';
           if (host.status === 'stale') return 'var(--color-accent-primary)';
@@ -306,7 +558,7 @@ export const NetworkMapPage: React.FC = () => {
         newNodes.push({
           id: hostId,
           type: 'default',
-          position: { x: 0, y: 0 }, // Will be positioned by layout
+          position: { x: 0, y: 0 },
           data: {
             label: (
               <div className={styles.hostNode}>
@@ -327,7 +579,6 @@ export const NetworkMapPage: React.FC = () => {
           }
         });
 
-        // Edge from interface to host
         newEdges.push({
           id: `${interfaceId}-${hostId}`,
           source: interfaceId,
@@ -351,7 +602,8 @@ export const NetworkMapPage: React.FC = () => {
     // Debug summary
     const hostCount = newNodes.filter(n => n.id.startsWith('host-')).length;
     const interfaceCount = newNodes.filter(n => n.id.startsWith('interface-')).length;
-    console.log(`Network Map: ${interfaceCount} interfaces, ${hostCount} hosts displayed`);
+    const bridgeCount = bridges.length;
+    console.log(`Network Map: ${bridgeCount} bridges, ${interfaceCount} interfaces (${bridgeMemberNames.size} bridge members), ${hostCount} hosts displayed`);
     console.log('=== End Debug ===\n');
 
     setNodes(layoutedNodes);

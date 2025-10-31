@@ -27,6 +27,7 @@ export interface ServerSettings {
     lmstudio: {
       endpoint: string;
       model: string;
+      contextWindow: number;
     };
   };
   assistant: {
@@ -66,6 +67,13 @@ export interface UISettings {
     logAiConversations: boolean;
     logRouterCommands: boolean;
   };
+  aiAssistant: {
+    sidePanelSections: {
+      sessionInfo: boolean;
+      mostUsedTools: boolean;
+      availableTools: boolean;
+    };
+  };
 }
 
 // Combined Settings
@@ -102,5 +110,12 @@ export const defaultUISettings: UISettings = {
     enableAuditLogging: true,
     logAiConversations: true,
     logRouterCommands: true
+  },
+  aiAssistant: {
+    sidePanelSections: {
+      sessionInfo: true,
+      mostUsedTools: false,
+      availableTools: true
+    }
   }
 };

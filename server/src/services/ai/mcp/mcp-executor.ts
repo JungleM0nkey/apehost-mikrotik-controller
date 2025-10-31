@@ -30,6 +30,13 @@ import { LogsTool } from './tools/logs-tool.js';
 import { DiagnosticsTool } from './tools/diagnostics-tool.js';
 import { ConnectivityTool } from './tools/connectivity-tool.js';
 import { NetworkTool } from './tools/network-tool.js';
+import { HostDiscoveryTool } from './tools/host-discovery-tool.js';
+import { TroubleshootConnectionTool } from './tools/troubleshoot-connection-tool.js';
+import { AgentQueryTool } from './tools/agent-query-tool.js';
+import { TroubleshootingSessionTool } from './tools/troubleshooting-session-tool.js';
+import { SystemStateTool } from './tools/system-state-tool.js';
+import { TrendAnalysisTool } from './tools/trend-analysis-tool.js';
+import { PatternLearningTool } from './tools/pattern-learning-tool.js';
 
 export class MCPExecutor {
   private tools: Map<string, MCPTool> = new Map();
@@ -52,6 +59,8 @@ export class MCPExecutor {
     // Network troubleshooting tools
     this.registerTool(new ConnectivityTool());
     this.registerTool(new NetworkTool());
+    this.registerTool(new HostDiscoveryTool()); // Comprehensive host discovery
+    this.registerTool(new TroubleshootConnectionTool()); // One-step connectivity diagnosis
 
     // Traffic and bandwidth monitoring
     this.registerTool(new TrafficTool());
@@ -68,6 +77,21 @@ export class MCPExecutor {
 
     // AI Agent diagnostics
     this.registerTool(new DiagnosticsTool());
+
+    // Agent system integration (Phase 1: Context awareness)
+    this.registerTool(new AgentQueryTool());
+
+    // Troubleshooting session management (Phase 2: Proactive intelligence)
+    this.registerTool(new TroubleshootingSessionTool());
+
+    // System state snapshot and comparison (Phase 2: Proactive intelligence)
+    this.registerTool(new SystemStateTool());
+
+    // Trend analysis and prediction (Phase 3.1: Advanced intelligence)
+    this.registerTool(new TrendAnalysisTool());
+
+    // Pattern learning and historical resolution data (Phase 3.2: Pattern-aware responses)
+    this.registerTool(new PatternLearningTool());
 
     console.log(`[MCPExecutor] Registered ${this.tools.size} tools`);
   }

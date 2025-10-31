@@ -172,6 +172,15 @@ export class FeedbackDatabase {
     return rows.map((row) => this.parsePatternRow(row));
   }
 
+  getAllPatterns(): FalsePositivePattern[] {
+    const stmt = this.db.prepare(`
+      SELECT * FROM false_positive_patterns
+      ORDER BY occurrence_count DESC
+    `);
+    const rows = stmt.all() as any[];
+    return rows.map((row) => this.parsePatternRow(row));
+  }
+
   // ============ Improvement Rule Operations ============
 
   createImprovementRule(rule: Omit<ImprovementRule, 'id'>): ImprovementRule {

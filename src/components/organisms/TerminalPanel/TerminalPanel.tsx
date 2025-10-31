@@ -11,6 +11,7 @@ import {
 } from '@ant-design/icons';
 import type { WebSocketService, TerminalOutputEvent, TerminalErrorEvent, TerminalExecutingEvent } from '../../../services/websocket';
 import { TerminalLine } from '../../../types/terminal';
+import { TerminalCommandHelper } from '../../../utils/terminal-enhancements';
 import styles from './TerminalPanel.module.css';
 
 export interface TerminalPanelProps {
@@ -53,30 +54,7 @@ export const TerminalPanel: React.FC<TerminalPanelProps> = ({
     return `${Date.now()}-${lineIdCounter.current}`;
   };
 
-  // Common MikroTik commands for autocomplete
-  const commonCommands = [
-    '/system resource print',
-    '/system identity print',
-    '/system clock print',
-    '/system reboot',
-    '/ip address print',
-    '/ip route print',
-    '/ip firewall filter print',
-    '/ip firewall nat print',
-    '/interface print',
-    '/interface ethernet print',
-    '/interface wireless print',
-    '/user print',
-    '/log print',
-    '/file print',
-    '/routing bgp peer print',
-    '/routing ospf instance print',
-    '/tool ping',
-    '/tool traceroute',
-    '/quit',
-    '/help',
-    '/clear'
-  ];
+
 
   // Auto-scroll to bottom when new lines are added
   useEffect(() => {
@@ -137,6 +115,7 @@ Ready for commands. Happy routing!
 
         // Listen for command output
         const cleanupOutput = websocket.onOutput((data: TerminalOutputEvent) => {
+          // Output is already formatted on the server, just display it
           const responseLine: TerminalLine = {
             id: generateLineId(),
             type: 'output',
@@ -227,6 +206,8 @@ Ready for commands. Happy routing!
     if (cmdLower === '/clear' || cmdLower === 'clear') {
       setLines([]);
       setCurrentCommand('');
+      setSuggestions([]);
+      setSelectedSuggestion(-1);
       return;
     }
 
@@ -262,15 +243,18 @@ Note: All RouterOS commands must start with a forward slash (/)`,
         helpLine
       ]);
       setCurrentCommand('');
+      setSuggestions([]);
+      setSelectedSuggestion(-1);
       return;
     }
 
-    // Validate RouterOS command format
-    if (!cmd.startsWith('/')) {
+    // Validate command using our enhanced validator
+    const validation = TerminalCommandHelper.validateCommand(cmd);
+    if (!validation.valid) {
       const errorLine: TerminalLine = {
         id: generateLineId(),
         type: 'error',
-        content: `Error: RouterOS commands must start with /\nExample: /system resource print\nType /help for available commands`,
+        content: `✗ ${validation.error}\nExample: /system resource print\nType /help for available commands`,
         timestamp: new Date().toISOString()
       };
       setLines(prev => [...prev,
@@ -278,6 +262,8 @@ Note: All RouterOS commands must start with a forward slash (/)`,
         errorLine
       ]);
       setCurrentCommand('');
+      setSuggestions([]);
+      setSelectedSuggestion(-1);
       return;
     }
 
@@ -304,6 +290,8 @@ Note: All RouterOS commands must start with a forward slash (/)`,
         suggestionLine
       ]);
       setCurrentCommand('');
+      setSuggestions([]);
+      setSelectedSuggestion(-1);
       return;
     }
 
@@ -320,19 +308,37 @@ Note: All RouterOS commands must start with a forward slash (/)`,
       timestamp: new Date().toISOString()
     };
 
+    // Add command line
     setLines(prev => [...prev, commandLine]);
+    
+    // Add loading indicator
+    const loadingLine: TerminalLine = {
+      id: generateLineId(),
+      type: 'output',
+      content: `⠋ Executing command...`,
+      timestamp: new Date().toISOString()
+    };
+    setLines(prev => [...prev, loadingLine]);
+
     setCurrentCommand('');
+    setSuggestions([]);
+    setSelectedSuggestion(-1);
     setIsExecuting(true);
 
     try {
       // Execute command via WebSocket (now async with connection waiting)
       await websocket.executeCommand(cmd);
 
+      // Remove loading indicator after command completes
+      setLines(prev => prev.filter(line => line.id !== loadingLine.id));
+
       // Callback for external handling
       if (onCommand) {
         onCommand(cmd);
       }
     } catch (error) {
+      // Remove loading indicator on error
+      setLines(prev => prev.filter(line => line.id !== loadingLine.id));
       const errorLine: TerminalLine = {
         id: generateLineId(),
         type: 'error',
@@ -351,9 +357,7 @@ Note: All RouterOS commands must start with a forward slash (/)`,
 
     // Update autocomplete suggestions
     if (value.length > 0) {
-      const filtered = commonCommands.filter(cmd =>
-        cmd.toLowerCase().startsWith(value.toLowerCase())
-      );
+      const filtered = TerminalCommandHelper.getSuggestions(value);
       setSuggestions(filtered.slice(0, 5)); // Limit to 5 suggestions
       setSelectedSuggestion(-1);
     } else {
@@ -601,7 +605,23 @@ Note: All RouterOS commands must start with a forward slash (/)`,
           ref={outputRef}
           onContextMenu={handleContextMenu}
         >
-          {lines.map((line) => (
+          {lines.map((line) => {
+            // Format timestamp as HH:MM:SS
+            const formatTime = (timestamp: string): string => {
+              try {
+                const date = new Date(timestamp);
+                return date.toLocaleTimeString('en-US', {
+                  hour12: false,
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  second: '2-digit'
+                });
+              } catch {
+                return '';
+              }
+            };
+
+            return (
             <div
               key={line.id}
               className={`${styles.line} ${styles[line.type]} ${styles.copyableLine} ${
@@ -611,7 +631,11 @@ Note: All RouterOS commands must start with a forward slash (/)`,
               onMouseLeave={() => setHoveredLineId(null)}
             >
               {line.type === 'command' && (
-                <span className={styles.prompt}>[admin@MikroTik] &gt; </span>
+                <>
+                  <span className={styles.timestamp}>{line.timestamp ? formatTime(line.timestamp) : ''}</span>
+                  {' '}
+                  <span className={styles.prompt}>[admin@MikroTik] &gt; </span>
+                </>
               )}
               {line.type === 'error' && (
                 <ExclamationCircleOutlined className={styles.errorIcon} />
@@ -640,7 +664,8 @@ Note: All RouterOS commands must start with a forward slash (/)`,
                 </button>
               )}
             </div>
-          ))}
+            );
+          })}
           <div ref={terminalEndRef} />
         </div>
 

@@ -17,6 +17,7 @@ export interface ProviderConfig {
   claudeModel?: string;
   lmstudioEndpoint?: string;
   lmstudioModel?: string;
+  lmstudioContextWindow?: number;
 }
 
 export class ProviderFactory {
@@ -37,7 +38,7 @@ export class ProviderFactory {
         if (!config.lmstudioEndpoint || !config.lmstudioModel) {
           throw new ConfigError('LM Studio endpoint and model are required. Set LMSTUDIO_ENDPOINT and LMSTUDIO_MODEL in .env');
         }
-        return new LMStudioProvider(config.lmstudioEndpoint, config.lmstudioModel);
+        return new LMStudioProvider(config.lmstudioEndpoint, config.lmstudioModel, config.lmstudioContextWindow);
 
       default:
         throw new ConfigError(`Unknown provider type: ${config.type}. Use 'claude' or 'lmstudio'`);
@@ -57,8 +58,10 @@ export class ProviderFactory {
         claudeModel: llmConfig.claude.model,
         lmstudioEndpoint: llmConfig.lmstudio.endpoint,
         lmstudioModel: llmConfig.lmstudio.model,
+        lmstudioContextWindow: llmConfig.lmstudio.contextWindow,
       };
 
+      console.log(`[ProviderFactory] Config values - endpoint: ${config.lmstudioEndpoint}, model: ${config.lmstudioModel}, contextWindow: ${config.lmstudioContextWindow}`);
       const provider = this.createProvider(config);
       console.log(`[ProviderFactory] Successfully created ${provider.getName()} provider`);
       return provider;
@@ -81,6 +84,7 @@ export class ProviderFactory {
       claudeModel: process.env.CLAUDE_MODEL || 'claude-3-5-sonnet-20241022',
       lmstudioEndpoint: process.env.LMSTUDIO_ENDPOINT || 'http://localhost:1234/v1',
       lmstudioModel: process.env.LMSTUDIO_MODEL,
+      lmstudioContextWindow: process.env.LMSTUDIO_CONTEXT_WINDOW ? parseInt(process.env.LMSTUDIO_CONTEXT_WINDOW, 10) : undefined,
     };
 
     try {

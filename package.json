@@ -17,6 +17,7 @@
     "@ant-design/icons": "^6.1.0",
     "@ant-design/plots": "^2.6.6",
     "@types/d3-force": "^3.0.10",
+    "@types/react-syntax-highlighter": "^15.5.13",
     "antd": "^5.27.6",
     "d3-force": "^3.0.0",
     "dagre": "^0.8.5",
@@ -26,6 +27,7 @@
     "react-dom": "^18.3.1",
     "react-markdown": "^10.1.0",
     "react-rnd": "^10.5.2",
+    "react-syntax-highlighter": "^15.6.6",
     "reactflow": "^11.11.4",
     "remark-gfm": "^4.0.1",
     "socket.io-client": "^4.8.1"

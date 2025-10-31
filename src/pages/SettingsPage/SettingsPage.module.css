@@ -24,6 +24,13 @@
   max-width: 1200px;
 }
 
+.statusCards {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-lg);
+  margin-bottom: var(--space-xl);
+}
+
 .tabsContainer {
   margin-bottom: var(--space-xl);
 }
@@ -78,8 +85,31 @@
 .providerHeader {
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
+  gap: var(--space-md);
   margin-bottom: var(--space-xs);
+}
+
+.providerRadio {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--color-border-primary);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all var(--transition-fast);
+}
+
+.providerOption.active .providerRadio {
+  border-color: var(--color-accent-primary);
+}
+
+.providerRadioActive {
+  width: 10px;
+  height: 10px;
+  background: var(--color-accent-primary);
+  border-radius: 50%;
 }
 
 .providerTitle {
@@ -197,6 +227,10 @@
   .footer {
     left: 0;
     bottom: 48px; /* Keep above terminal taskbar on mobile */
+  }
+
+  .statusCards {
+    grid-template-columns: 1fr;
   }
 
   .gridTwo {

@@ -274,11 +274,21 @@
 /* Node Content Styling */
 .routerNode,
 .interfaceNode,
+.bridgeNode,
+.bridgePortNode,
 .hostNode {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 4px;
+}
+
+.bridgeNode {
+  background: linear-gradient(135deg, var(--color-bg-secondary) 0%, var(--color-bg-tertiary) 100%);
+}
+
+.bridgePortNode {
+  opacity: 0.95;
 }
 
 .nodeTitleRow {

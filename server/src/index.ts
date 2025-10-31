@@ -1,22 +1,12 @@
-// Load environment variables FIRST before any imports
-// IMPORTANT: Always load from project root .env, not from current working directory
-import { config } from 'dotenv';
+/**
+ * Configuration is now managed by UnifiedConfigService
+ * See server/src/services/config/ for configuration management
+ */
 import { fileURLToPath } from 'url';
 import path from 'path';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-// Load .env from project root (2 levels up from dist/)
-const envPath = path.resolve(__dirname, '../../.env');
-console.log(`[ENV] Loading environment from: ${envPath}`);
-const result = config({ path: envPath });
-if (result.error) {
-  console.error('[ENV] Error loading .env:', result.error);
-} else {
-  console.log('[ENV] Successfully loaded .env');
-  console.log(`[ENV] LMSTUDIO_CONTEXT_WINDOW=${process.env.LMSTUDIO_CONTEXT_WINDOW}`);
-}
 
 import express, { Request, Response } from 'express';
 import cors from 'cors';
@@ -25,6 +15,7 @@ import { terminalRoutes } from './routes/terminal.js';
 import { healthRoutes } from './routes/health.js';
 import { serviceRoutes } from './routes/service.js';
 import { settingsRoutes } from './routes/settings.js';
+import { setupRoutes } from './routes/setup.js';
 import agentRoutes from './routes/agent.js';
 import mikrotikService from './services/mikrotik.js';
 import { Server as SocketIOServer } from 'socket.io';
@@ -35,17 +26,12 @@ import { AIServiceError } from './services/ai/errors/index.js';
 import { globalMCPExecutor } from './services/ai/mcp/mcp-executor.js';
 import { createServer } from 'http';
 import { getHealthMonitor } from './services/agent/monitor/health-monitor.js';
+import { unifiedConfigService } from './services/config/unified-config.service.js';
+import { startMetricsCollection, stopMetricsCollection } from './services/agent/metrics-collector.js';
 
 const app = express();
-const PORT = process.env.PORT || 3000;
 const httpServer = createServer(app);
 let server: any = null;
-
-// Log configuration on startup
-console.log('\n[CONFIG] Configuration:');
-console.log(`   MikroTik Host: ${process.env.MIKROTIK_HOST}`);
-console.log(`   MikroTik Port: ${process.env.MIKROTIK_PORT}`);
-console.log(`   MikroTik User: ${process.env.MIKROTIK_USERNAME}`);
 
 // Middleware
 app.use(cors({
@@ -63,6 +49,9 @@ app.use((req, res, next) => {
 
 // Health check
 app.use('/api/health', healthRoutes);
+
+// Setup routes (must be accessible before authentication)
+app.use('/api/setup', setupRoutes);
 
 // API Routes
 app.use('/api/router', routerRoutes);
@@ -117,6 +106,14 @@ const gracefulShutdown = async (signal: string) => {
     console.log('[Server] Health Monitor stopped');
   } catch (error) {
     console.error('[Server] Error stopping Health Monitor:', error);
+  }
+
+  // Stop Metrics Collector
+  try {
+    stopMetricsCollection();
+    console.log('[Server] Metrics Collector stopped');
+  } catch (error) {
+    console.error('[Server] Error stopping Metrics Collector:', error);
   }
 
   // Close HTTP server
@@ -358,7 +355,7 @@ io.on('connection', (socket) => {
       });
 
       // Get conversation history for LLM
-      let messages = conversationManager.getMessagesForLLM(conversationId);
+      let messages = await conversationManager.getMessagesForLLM(conversationId);
 
       // Get MCP tool definitions for function calling
       const tools = globalMCPExecutor.getToolDefinitions();
@@ -386,10 +383,17 @@ io.on('connection', (socket) => {
 IMPORTANT INSTRUCTIONS:
 1. You have access to tools that query the router directly - USE THEM to answer questions
 2. When you receive tool results, present the ACTUAL DATA to the user in a clear, helpful format
-3. NEVER tell users to run manual commands or access the router themselves
+3. COMMAND SUGGESTIONS:
+   - For READ operations: Use your tools instead of suggesting commands
+   - For WRITE operations: Provide the exact command since you cannot execute write operations
+   - Format commands in code blocks with the 'routeros' language tag: \`\`\`routeros
+   - Always explain what the command does and any risks
 4. NEVER say tools are "not available" - they are available and you should use them
-5. Present data in tables, lists, or formatted text as appropriate
-6. Focus on answering the user's question with the real data you retrieve
+5. Present data concisely:
+   - For small datasets (< 5 items): Use simple lists
+   - For larger datasets: Use tables
+   - Keep explanations brief unless user asks for details
+6. Focus on answering the user's question directly with real data you retrieve
 
 Available tools allow you to:
 - Get router information and system details
@@ -407,7 +411,28 @@ When asked about the network, devices, or configuration - use the appropriate to
 
           // If no tool calls, we have the final response
           if (!response.toolCalls || response.toolCalls.length === 0) {
-            fullResponse = response.content;
+            // Filter out thinking blocks from the response
+            let cleanedResponse = response.content;
+
+            // Remove <think>...</think> blocks (case insensitive, multiline)
+            cleanedResponse = cleanedResponse.replace(/<think>[\s\S]*?<\/think>/gi, '');
+
+            // Remove <thinking>...</thinking> blocks (case insensitive, multiline)
+            cleanedResponse = cleanedResponse.replace(/<thinking>[\s\S]*?<\/thinking>/gi, '');
+
+            // Remove standalone <think> or </think> tags
+            cleanedResponse = cleanedResponse.replace(/<\/?think>/gi, '');
+            cleanedResponse = cleanedResponse.replace(/<\/?thinking>/gi, '');
+
+            // Trim whitespace and collapse multiple newlines
+            cleanedResponse = cleanedResponse.trim().replace(/\n{3,}/g, '\n\n');
+
+            // If after filtering we have no content, provide a default message
+            if (!cleanedResponse || cleanedResponse.length === 0) {
+              cleanedResponse = 'I understand your request. Let me help you with that.';
+            }
+
+            fullResponse = cleanedResponse;
 
             // Stream the final response to the client character by character with delay
             for (const char of fullResponse) {
@@ -431,6 +456,7 @@ When asked about the network, devices, or configuration - use the appropriate to
 
             try {
               const args = JSON.parse(toolCall.function.arguments);
+              const startTime = Date.now();
 
               // Execute tool with proper ToolCall and ToolExecutionContext parameters
               const result = await globalMCPExecutor.executeTool(
@@ -446,6 +472,18 @@ When asked about the network, devices, or configuration - use the appropriate to
                 }
               );
 
+              const executionTime = Date.now() - startTime;
+
+              // Track tool execution in conversation metadata
+              conversationManager.trackToolExecution(
+                conversationId,
+                toolCall.function.name,
+                args,
+                result,
+                result.success,
+                executionTime
+              );
+
               toolResults.push({
                 role: 'tool',
                 tool_call_id: toolCall.id,
@@ -453,9 +491,20 @@ When asked about the network, devices, or configuration - use the appropriate to
                 content: JSON.stringify(result),
               });
 
-              console.log(`[Assistant] Tool ${toolCall.function.name} executed successfully`);
+              console.log(`[Assistant] Tool ${toolCall.function.name} executed successfully (${executionTime}ms)`);
             } catch (error: any) {
               console.error(`[Assistant] Tool ${toolCall.function.name} failed:`, error.message);
+
+              // Track failed tool execution
+              conversationManager.trackToolExecution(
+                conversationId,
+                toolCall.function.name,
+                {},
+                { error: error.message },
+                false,
+                0
+              );
+
               toolResults.push({
                 role: 'tool',
                 tool_call_id: toolCall.id,
@@ -463,6 +512,15 @@ When asked about the network, devices, or configuration - use the appropriate to
                 content: JSON.stringify({ error: error.message }),
               });
             }
+          }
+
+          // Emit updated metadata to client after tool executions
+          const metadata = conversationManager.getMetadata(conversationId);
+          if (metadata) {
+            socket.emit('assistant:metadata', {
+              conversationId,
+              metadata,
+            });
           }
 
           // Add assistant message with tool calls to conversation
@@ -590,10 +648,47 @@ setInterval(() => {
 
 // Start server
 const startServer = async () => {
+  // Load configuration from UnifiedConfigService
+  console.log('[Server] Loading configuration...');
+  const config = await unifiedConfigService.get();
+  const PORT = config.server.port;
+
+  console.log('\n[CONFIG] Configuration loaded:');
+  console.log(`   Server Port: ${config.server.port}`);
+  console.log(`   Server Environment: ${config.server.nodeEnv}`);
+  console.log(`   Server CORS Origin: ${config.server.corsOrigin}`);
+  console.log(`   MikroTik Host: ${config.mikrotik.host}:${config.mikrotik.port}`);
+  console.log(`   MikroTik User: ${config.mikrotik.username}`);
+  console.log(`   LLM Provider: ${config.llm.provider}`);
+
+  // Watch for configuration changes and refresh services
+  unifiedConfigService.watch();
+  unifiedConfigService.on('change', async (changes) => {
+    console.log('[Server] Configuration changed, refreshing services...');
+
+    // Refresh AI provider
+    try {
+      aiProvider = await refreshGlobalProvider();
+      console.log('[Server] AI provider refreshed successfully');
+    } catch (error: any) {
+      console.error('[Server] Failed to refresh AI provider:', error.message);
+    }
+
+    // Refresh MikroTik connection if config changed
+    try {
+      console.log('[Server] Reconnecting to MikroTik with new configuration...');
+      await mikrotikService.disconnect('config_change');
+      // MikroTik service will automatically reconnect on next command
+      console.log('[Server] MikroTik connection reset successfully');
+    } catch (error: any) {
+      console.error('[Server] Failed to reset MikroTik connection:', error.message);
+    }
+  });
+
   const portAvailable = await checkPort(Number(PORT));
   if (!portAvailable) {
     console.error(`\n[Server] ERROR: Port ${PORT} is already in use!`);
-    console.error(`[Server] Please stop the existing process or change the PORT in .env`);
+    console.error(`[Server] Please stop the existing process or change the port in config.json`);
     console.error(`[Server] You can find the process with: ss -ltnp | grep :${PORT}\n`);
     process.exit(1);
   }
@@ -622,12 +717,17 @@ const startServer = async () => {
   healthMonitor.start();
   console.log('[Server] Health Monitor started - running health checks every 5 minutes');
 
+  // Initialize Metrics Collector (Phase 3: Trend Analysis)
+  console.log('[Server] Initializing Metrics Collector...');
+  startMetricsCollection(5); // Collect metrics every 5 minutes
+  console.log('[Server] Metrics Collector started - collecting system metrics every 5 minutes');
+
   server = httpServer.listen(Number(PORT), '0.0.0.0', () => {
     console.log(`\n[Server] MikroTik Dashboard API Server`);
     console.log(`[Server] Port: ${PORT}`);
     console.log(`[Server] Host: 0.0.0.0 (accessible from network)`);
-    console.log(`[Server] Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`[Server] CORS Origin: ${process.env.CORS_ORIGIN || 'http://localhost:5173'}`);
+    console.log(`[Server] Environment: ${config.server.nodeEnv}`);
+    console.log(`[Server] CORS Origin: ${config.server.corsOrigin}`);
     console.log(`\n[Server] HTTP API: http://0.0.0.0:${PORT}`);
     console.log(`[Server] WebSocket: ws://0.0.0.0:${PORT}`);
     console.log(`[Server] Health: http://0.0.0.0:${PORT}/api/health\n`);

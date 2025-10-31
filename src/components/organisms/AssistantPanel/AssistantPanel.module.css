@@ -1,10 +1,25 @@
+.wrapper {
+  display: flex;
+  height: 100%;
+  background: var(--color-bg-terminal);
+}
+
 .container {
   display: flex;
   flex-direction: column;
+  flex: 1;
   height: 100%;
   background: var(--color-bg-terminal);
   color: var(--color-text-primary);
   font-family: var(--font-mono);
+  min-width: 0;
+}
+
+.sidePanel {
+  width: auto;
+  height: 100%;
+  flex-shrink: 0;
+  transition: width var(--transition-normal);
 }
 
 .header {
@@ -56,16 +71,48 @@
   color: var(--color-text-tertiary);
 }
 
-.clearButton {
+.headerActions {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: center;
+}
+
+.infoButton {
   background: rgba(255, 140, 0, 0.1) !important;
   border-color: rgba(255, 140, 0, 0.3) !important;
   color: #ff8c00 !important;
+  font-weight: 500 !important;
+  padding: 4px 12px !important;
+  height: auto !important;
+  transition: all var(--transition-fast) !important;
+}
+
+.infoButton:hover:not(:disabled) {
+  background: rgba(255, 140, 0, 0.2) !important;
+  border-color: rgba(255, 140, 0, 0.5) !important;
+  box-shadow: 0 0 8px rgba(255, 140, 0, 0.3) !important;
+}
+
+.clearButton {
+  background: rgba(255, 140, 0, 0.15) !important;
+  border-color: rgba(255, 140, 0, 0.4) !important;
+  color: #ff8c00 !important;
+  font-weight: 500 !important;
+  padding: 4px 16px !important;
+  height: auto !important;
+  transition: all var(--transition-fast) !important;
 }
 
 .clearButton:hover:not(:disabled) {
-  background: rgba(255, 140, 0, 0.2) !important;
+  background: rgba(255, 140, 0, 0.25) !important;
   border-color: #ff8c00 !important;
-  box-shadow: 0 0 8px rgba(255, 140, 0, 0.4) !important;
+  box-shadow: 0 0 12px rgba(255, 140, 0, 0.5) !important;
+  transform: translateY(-1px);
+}
+
+.clearButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .messagesContainer {

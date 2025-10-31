@@ -1,5 +1,6 @@
 import { RouterOSAPI } from 'node-routeros';
 import { configManager } from './config-manager.js';
+import { PlainTerminalFormatter, SYMBOLS } from '../utils/terminal-formatter-plain.js';
 
 export interface MikroTikConfig {
   host: string;
@@ -35,6 +36,10 @@ export interface NetworkInterface {
   rxBytes: number;
   txBytes: number;
   comment?: string;
+  ipAddress?: string;
+  bridge?: string; // Name of bridge this interface belongs to
+  isBridge?: boolean; // True if this interface is a bridge
+  bridgePorts?: string[]; // For bridge interfaces, list of member port names
 }
 
 export interface HealthStatus {
@@ -67,6 +72,9 @@ class MikroTikService {
   // Cache system
   private cache: Map<string, {data: any; timestamp: number; ttl: number}> = new Map();
   private defaultCacheTTL: number = 5000; // 5 seconds default
+  
+  // Terminal formatting
+  private formatter: PlainTerminalFormatter = new PlainTerminalFormatter();
   private cacheHits: number = 0;
   private cacheMisses: number = 0;
 
@@ -561,6 +569,32 @@ class MikroTikService {
         console.warn('Failed to fetch IP addresses for interfaces:', error);
       }
 
+      // Get bridge port information to identify which interfaces are bridge members
+      let bridgePorts: any[] = [];
+      try {
+        bridgePorts = await this.executeCommand('/interface/bridge/port/print');
+      } catch (error) {
+        console.warn('Failed to fetch bridge port information:', error);
+      }
+
+      // Build a map of interface -> bridge and bridge -> ports
+      const interfaceToBridge = new Map<string, string>();
+      const bridgeToPorts = new Map<string, string[]>();
+
+      bridgePorts.forEach((port: any) => {
+        const interfaceName = port.interface;
+        const bridgeName = port.bridge;
+        
+        if (interfaceName && bridgeName) {
+          interfaceToBridge.set(interfaceName, bridgeName);
+          
+          if (!bridgeToPorts.has(bridgeName)) {
+            bridgeToPorts.set(bridgeName, []);
+          }
+          bridgeToPorts.get(bridgeName)!.push(interfaceName);
+        }
+      });
+
       return interfaces.map((iface: any, index: number) => {
         const ifaceName = iface.name || 'unknown';
         const currentRxBytes = parseInt(iface['rx-byte'] || '0');
@@ -608,6 +642,11 @@ class MikroTikService {
         // Find IP address for this interface
         const ipAddr = ipAddresses.find(addr => addr.interface === ifaceName);
 
+        // Determine if this is a bridge and what its relationship is
+        const isBridge = iface.type === 'bridge';
+        const bridgeName = interfaceToBridge.get(ifaceName);
+        const bridgePorts = isBridge ? bridgeToPorts.get(ifaceName) : undefined;
+
         return {
           id: iface['.id'] || `iface-${index}`,
           name: ifaceName,
@@ -619,6 +658,9 @@ class MikroTikService {
           txBytes: currentTxBytes,
           comment: iface.comment,
           ipAddress: ipAddr ? ipAddr.address : undefined,
+          bridge: bridgeName,
+          isBridge,
+          bridgePorts,
         };
       });
     } catch (error) {
@@ -743,45 +785,8 @@ class MikroTikService {
    * Colorize value based on type detection
    */
   private colorizeValue(key: string, value: any): string {
-    const valueStr = String(value);
-
-    // IP Address (192.168.1.1 or 10.0.0.1/24)
-    if (/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}(\/\d{1,2})?$/.test(valueStr)) {
-      return `<span class="value-ip">${valueStr}</span>`;
-    }
-
-    // MAC Address (AA:BB:CC:DD:EE:FF)
-    if (/^([0-9A-F]{2}:){5}[0-9A-F]{2}$/i.test(valueStr)) {
-      return `<span class="value-mac">${valueStr}</span>`;
-    }
-
-    // Boolean/Status - True/Enabled
-    if (/^(true|enabled|running|yes|up|active)$/i.test(valueStr)) {
-      return `<span class="value-true">${valueStr}</span>`;
-    }
-
-    // Boolean/Status - False/Disabled
-    if (/^(false|disabled|stopped|no|down|inactive)$/i.test(valueStr)) {
-      return `<span class="value-false">${valueStr}</span>`;
-    }
-
-    // Numbers and Metrics (1234, 50%, 1.5GHz, 100KiB)
-    if (/^\d+(\.\d+)?[KMGT]?(iB|B|Hz|bps|%)?$/.test(valueStr)) {
-      return `<span class="value-number">${valueStr}</span>`;
-    }
-
-    // Time/Uptime (1w2d3h4m5s)
-    if (/\d+[wdhms]/.test(valueStr)) {
-      return `<span class="value-time">${valueStr}</span>`;
-    }
-
-    // Interface Names (ether1, wlan1, bridge1)
-    if (/^(ether|wlan|bridge|vlan|pppoe|sfp)/i.test(valueStr)) {
-      return `<span class="value-interface">${valueStr}</span>`;
-    }
-
-    // Default - plain white text
-    return `<span class="value-default">${valueStr}</span>`;
+    // Use the enhanced formatter's colorization
+    return this.formatter.keyValue(key, value, 0).split(' : ')[1] || String(value);
   }
 
   /**
@@ -791,24 +796,28 @@ class MikroTikService {
     if (typeof item === 'string') return item;
 
     const entries = Object.entries(item).filter(([key]) => !key.startsWith('.'));
-    if (entries.length === 0) return '';
+    if (entries.length === 0) return this.formatter.status('No data available', 'warning');
 
     // Calculate max key length for alignment
     const maxKeyLength = Math.max(...entries.map(([key]) => key.length));
 
-    return entries.map(([key, value]) => {
-      const paddedKey = key.padEnd(maxKeyLength);
-      const coloredValue = this.colorizeValue(key, value);
-      return `  <span class="key">${paddedKey}</span> : ${coloredValue}`;
+    const formattedEntries = entries.map(([key, value]) => {
+      return this.formatter.keyValue(key, value, maxKeyLength + 2);
     }).join('\n');
+
+    return formattedEntries;
   }
 
   /**
    * Format multiple items with section separators
    */
   private formatMultipleItems(items: any[]): string {
+    if (items.length === 0) {
+      return this.formatter.status('No items found', 'info');
+    }
+
     return items.map((item, index) => {
-      const header = `<span class="section-header">━━━ Item ${index + 1} ${'━'.repeat(50)}</span>`;
+      const header = this.formatter.header(`${SYMBOLS.DIAMOND} Item ${index + 1}`, 60);
       const content = this.formatSingleItem(item);
       return `${header}\n${content}`;
     }).join('\n\n');
@@ -818,26 +827,47 @@ class MikroTikService {
    * Execute terminal command and format output
    */
   async executeTerminalCommand(command: string): Promise<string> {
+    const startTime = Date.now();
+    
     try {
       // Convert command format for RouterOS API
       const apiCommand = this.convertCommandFormat(command);
 
       const result = await this.executeCommand(apiCommand);
+      const executionTime = Date.now() - startTime;
+
+      // Create command summary header
+      const commandSummary = this.formatter.commandSummary(command, executionTime, true);
 
       // Format the result as a readable string
       if (!result || result.length === 0) {
-        return '<span class="value-true">Command executed successfully (no output)</span>';
+        return `${commandSummary}\n\n${this.formatter.status('Command executed successfully (no output)', 'success')}`;
       }
 
+      let formattedOutput: string;
+      
       // Format based on number of items
       if (result.length === 1) {
-        return this.formatSingleItem(result[0]);
+        formattedOutput = this.formatSingleItem(result[0]);
       } else {
-        return this.formatMultipleItems(result);
+        const itemCountHeader = this.formatter.status(`Found ${result.length} items`, 'info');
+        formattedOutput = `${itemCountHeader}\n\n${this.formatMultipleItems(result)}`;
       }
+
+      return `${commandSummary}\n\n${formattedOutput}`;
+      
     } catch (error: any) {
+      const executionTime = Date.now() - startTime;
+      const commandSummary = this.formatter.commandSummary(command, executionTime, false);
+      
       console.error('Error executing terminal command:', error);
-      throw new Error(error.message || 'Command execution failed');
+      
+      const errorMessage = this.formatter.status(
+        `Command failed: ${error.message || 'Unknown error'}`, 
+        'error'
+      );
+      
+      return `${commandSummary}\n\n${errorMessage}`;
     }
   }
 

@@ -31,6 +31,7 @@ export interface AppConfig {
     lmstudio: {
       endpoint: string;
       model: string;
+      contextWindow: number;
     };
   };
   assistant: {
@@ -74,8 +75,8 @@ class ConfigManager {
           port: settings.mikrotik.port,
           username: settings.mikrotik.username,
           password: settings.mikrotik.password,
-          timeout: parseInt(process.env.MIKROTIK_TIMEOUT || '10000'),
-          keepaliveInterval: parseInt(process.env.MIKROTIK_KEEPALIVE_SEC || '30') * 1000,
+          timeout: settings.mikrotik.timeout,
+          keepaliveInterval: settings.mikrotik.keepaliveInterval,
         },
         llm: {
           provider: settings.llm.provider,
@@ -86,6 +87,7 @@ class ConfigManager {
           lmstudio: {
             endpoint: settings.llm.lmstudio.endpoint,
             model: settings.llm.lmstudio.model,
+            contextWindow: settings.llm.lmstudio.contextWindow,
           },
         },
         assistant: {

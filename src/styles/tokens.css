@@ -308,6 +308,18 @@
   border-color: #ff8255 !important;
 }
 
+.ant-modal-footer .ant-btn-dangerous {
+  background-color: rgba(255, 107, 53, 0.15) !important;
+  border: 1px solid rgba(255, 107, 53, 0.4) !important;
+  color: #ff6b35 !important;
+}
+
+.ant-modal-footer .ant-btn-dangerous:hover {
+  background-color: rgba(255, 107, 53, 0.25) !important;
+  border-color: #ff6b35 !important;
+  box-shadow: 0 0 8px rgba(255, 107, 53, 0.4) !important;
+}
+
 .ant-modal-close {
   color: var(--color-text-secondary) !important;
 }
@@ -338,6 +350,11 @@
 /* Warning Modal */
 .ant-modal-confirm-warning .ant-modal-confirm-body > .anticon {
   color: #f59e0b !important;
+}
+
+/* Confirm Modal - Default icon color */
+.ant-modal-confirm .ant-modal-confirm-body > .anticon {
+  color: #ff8c00 !important;
 }
 
 /* Info Modal */

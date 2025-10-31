@@ -8,7 +8,12 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "migrate-config": "tsx scripts/migrate-config.ts",
+    "validate-config": "tsx scripts/validate-config.ts",
+    "backup-config": "tsx scripts/backup-config.ts",
+    "restore-config": "tsx scripts/restore-config.ts",
+    "list-backups": "tsx scripts/list-backups.ts"
   },
   "keywords": [
     "mikrotik",
@@ -22,17 +27,22 @@
     "@anthropic-ai/sdk": "^0.67.0",
     "@types/better-sqlite3": "^7.6.13",
     "better-sqlite3": "^12.4.1",
+    "boxen": "^7.1.1",
+    "chalk": "^5.6.2",
+    "chokidar": "^4.0.3",
+    "cli-progress": "^3.12.0",
     "cors": "^2.8.5",
-    "dotenv": "^16.3.1",
     "express": "^4.18.2",
     "node-routeros": "^1.6.9",
     "openai": "^6.7.0",
     "react-markdown": "^10.1.0",
     "remark-gfm": "^4.0.1",
     "socket.io": "^4.8.1",
-    "ws": "^8.14.2"
+    "ws": "^8.14.2",
+    "zod": "^4.1.12"
   },
   "devDependencies": {
+    "@types/chokidar": "^1.7.5",
     "@types/cors": "^2.8.15",
     "@types/express": "^4.17.20",
     "@types/node": "^20.9.0",

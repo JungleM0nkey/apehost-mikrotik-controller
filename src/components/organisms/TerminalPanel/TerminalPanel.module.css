@@ -136,6 +136,7 @@
   margin-bottom: 4px;
   word-wrap: break-word;
   white-space: pre-wrap;
+  font-family: 'JetBrains Mono', 'SF Mono', Consolas, 'Liberation Mono', 'Courier New', monospace;
 }
 
 /* Copy functionality styles */
@@ -223,7 +224,9 @@
 }
 
 .line.output {
-  color: #e0e0e0;
+  color: #e5e7eb;
+  font-family: 'JetBrains Mono', 'SF Mono', Consolas, 'Liberation Mono', 'Courier New', monospace;
+  line-height: 1.5;
 }
 
 .line.error {
@@ -256,6 +259,13 @@
 
 .line.prompt {
   color: #10b981;
+}
+
+.timestamp {
+  color: #6b7280;
+  font-size: 12px;
+  font-family: 'JetBrains Mono', 'SF Mono', Consolas, 'Liberation Mono', 'Courier New', monospace;
+  user-select: none;
 }
 
 .prompt {
@@ -483,19 +493,28 @@
   }
 }
 
-/* Terminal Output Value Colorization */
+/* Terminal Output Value Colorization - Enhanced */
 :global(.key) {
   color: #60a5fa;
   font-weight: 500;
+  text-shadow: 0 0 2px rgba(96, 165, 250, 0.3);
 }
 
 :global(.value-ip) {
   color: #10b981;
   font-weight: 500;
+  background: rgba(16, 185, 129, 0.1);
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-family: 'JetBrains Mono', monospace;
 }
 
 :global(.value-mac) {
   color: #60a5fa;
+  font-family: 'JetBrains Mono', monospace;
+  background: rgba(96, 165, 250, 0.1);
+  padding: 2px 4px;
+  border-radius: 3px;
 }
 
 :global(.value-true) {
@@ -509,28 +528,254 @@
 }
 
 :global(.value-number) {
-  color: #fbbf24;
+  color: #f472b6;
+  font-weight: 500;
+  font-family: 'JetBrains Mono', monospace;
 }
 
 :global(.value-time) {
   color: #9ca3af;
+  font-style: italic;
 }
 
 :global(.value-interface) {
   color: #fbbf24;
   font-weight: 500;
+  background: rgba(251, 191, 36, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  border-left: 3px solid #fbbf24;
 }
 
 :global(.value-default) {
-  color: #e0e0e0;
+  color: #e5e7eb;
+}
+
+:global(.value-null) {
+  color: #6b7280;
+  font-style: italic;
+  opacity: 0.7;
 }
 
 :global(.section-header) {
   color: #ff8c00;
   font-weight: 700;
   display: block;
-  margin: 12px 0 8px 0;
+  margin: 16px 0 12px 0;
   letter-spacing: 0.5px;
+  text-shadow: 0 0 8px rgba(255, 140, 0, 0.4);
+  border-bottom: 2px solid rgba(255, 140, 0, 0.3);
+  padding-bottom: 4px;
+}
+
+/* Status indicators */
+:global(.status-success) {
+  color: #10b981;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(16, 185, 129, 0.1);
+  padding: 4px 8px;
+  border-radius: 4px;
+  border-left: 3px solid #10b981;
+}
+
+:global(.status-error) {
+  color: #ef4444;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(239, 68, 68, 0.1);
+  padding: 4px 8px;
+  border-radius: 4px;
+  border-left: 3px solid #ef4444;
+}
+
+:global(.status-warning) {
+  color: #f59e0b;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(245, 158, 11, 0.1);
+  padding: 4px 8px;
+  border-radius: 4px;
+  border-left: 3px solid #f59e0b;
+}
+
+:global(.status-info) {
+  color: #3b82f6;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(59, 130, 246, 0.1);
+  padding: 4px 8px;
+  border-radius: 4px;
+  border-left: 3px solid #3b82f6;
+}
+
+/* Status with up/down indicators */
+:global(.value-status-up) {
+  color: #10b981;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+:global(.value-status-down) {
+  color: #ef4444;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Progress bars (rendered as text) */
+:global(.progress-bar) {
+  font-family: 'JetBrains Mono', monospace;
+  background: rgba(55, 65, 81, 0.3);
+  padding: 2px 8px;
+  border-radius: 4px;
+  display: inline-block;
+  min-width: 120px;
+}
+
+/* Enhanced terminal syntax highlighting */
+:global(.terminal-command) {
+  color: #06b6d4;
+  font-weight: 600;
+  background: rgba(6, 182, 212, 0.1);
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+:global(.terminal-path) {
+  color: #8b5cf6;
+  font-style: italic;
+  background: rgba(139, 92, 246, 0.1);
+  padding: 1px 3px;
+  border-radius: 2px;
+}
+
+:global(.terminal-url) {
+  color: #06b6d4;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+:global(.terminal-progress) {
+  color: #10b981;
+  font-weight: 600;
+  background: rgba(16, 185, 129, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Loading spinner */
+:global(.terminal-spinner) {
+  color: #ff8c00;
+  animation: spin 1s linear infinite;
+  font-size: 14px;
+  margin-right: 8px;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Pulse animation for status indicators */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 var(--pulse-color, #ff8c00);
+  }
+  50% {
+    opacity: 0.8;
+    box-shadow: 0 0 0 8px transparent;
+  }
+}
+
+/* Table formatting */
+:global(.terminal-table) {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #e5e7eb;
+  white-space: pre;
+  background: rgba(17, 24, 39, 0.5);
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(75, 85, 99, 0.3);
+  overflow-x: auto;
+}
+
+/* Command execution summary */
+:global(.command-summary) {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(17, 24, 39, 0.3);
+  border-radius: 6px;
+  margin-bottom: 12px;
+  font-size: 13px;
+}
+
+:global(.command-summary.error) {
+  border-left: 4px solid #ef4444;
+}
+
+/* Enhanced output sections */
+:global(.output-section) {
+  margin: 16px 0;
+  padding: 12px;
+  background: rgba(17, 24, 39, 0.2);
+  border-radius: 6px;
+  border-left: 3px solid #374151;
+}
+
+:global(.output-section-header) {
+  color: #ff8c00;
+  font-weight: 600;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Hover effects for interactive elements */
+:global(.terminal-command:hover),
+:global(.terminal-path:hover),
+:global(.terminal-url:hover) {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s ease;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  :global(.terminal-table) {
+    font-size: 10px;
+    padding: 8px;
+  }
+  
+  :global(.command-summary) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  
+  :global(.output-section) {
+    padding: 8px;
+    margin: 12px 0;
+  }
 }
 
 /* Context Menu */

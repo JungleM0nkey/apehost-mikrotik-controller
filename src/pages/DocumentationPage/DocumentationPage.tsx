@@ -4,8 +4,7 @@ import {
   BookOutlined,
   ApiOutlined,
   ToolOutlined,
-  CodeOutlined,
-  InfoCircleOutlined
+  CodeOutlined
 } from '@ant-design/icons';
 import api from '../../services/api';
 import styles from './DocumentationPage.module.css';
@@ -223,67 +222,7 @@ data: [DONE]`}</pre>
     </div>
   );
 
-  const renderIntroduction = () => (
-    <div className={styles.section}>
-      <h2 className={styles.sectionTitle}>
-        <BookOutlined /> Introduction
-      </h2>
-
-      <div className={styles.introCard}>
-        <h3>MikroTik Dashboard API & AI Toolset</h3>
-        <p>
-          This dashboard provides a comprehensive REST API for managing your MikroTik router and an AI assistant
-          powered by MCP (Model Context Protocol) tools for intelligent automation and analysis.
-        </p>
-      </div>
-
-      <div className={styles.features}>
-        <div className={styles.feature}>
-          <h4><ApiOutlined /> REST API</h4>
-          <p>
-            Access router information, manage DHCP, monitor interfaces, and control settings through
-            well-documented REST endpoints.
-          </p>
-        </div>
-
-        <div className={styles.feature}>
-          <h4><ToolOutlined /> AI MCP Tools</h4>
-          <p>
-            The AI assistant has access to {mcpTools.length} specialized tools that can interact with your router,
-            retrieve information, and perform automated analysis.
-          </p>
-        </div>
-
-        <div className={styles.feature}>
-          <h4><InfoCircleOutlined /> Real-time Updates</h4>
-          <p>
-            WebSocket connections provide real-time router status updates and streaming AI responses
-            for a seamless user experience.
-          </p>
-        </div>
-      </div>
-
-      <Alert
-        message="Authentication Required"
-        description="All API endpoints require proper authentication. Configure your API credentials in the Settings page."
-        type="info"
-        showIcon
-        style={{ marginTop: '24px' }}
-      />
-    </div>
-  );
-
   const tabItems = [
-    {
-      key: 'intro',
-      label: (
-        <span>
-          <BookOutlined />
-          Overview
-        </span>
-      ),
-      children: renderIntroduction(),
-    },
     {
       key: 'api',
       label: (
@@ -315,7 +254,7 @@ data: [DONE]`}</pre>
       </header>
 
       <div className={styles.content}>
-        <Tabs items={tabItems} defaultActiveKey="intro" />
+        <Tabs items={tabItems} defaultActiveKey="api" />
       </div>
     </div>
   );

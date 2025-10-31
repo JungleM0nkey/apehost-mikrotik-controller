@@ -45,6 +45,9 @@ export interface NetworkInterface {
   txBytes: number;
   comment?: string;
   ipAddress?: string;
+  bridge?: string; // Name of bridge this interface belongs to
+  isBridge?: boolean; // True if this interface is a bridge
+  bridgePorts?: string[]; // For bridge interfaces, list of member port names
 }
 
 export interface UpdateInterfaceRequest {

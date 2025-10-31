@@ -23,7 +23,7 @@ export class AuditLogger {
     }
 
     // Console log for development
-    const status = entry.result.success ? '✅' : '❌';
+    const status = entry.result.success ? '[OK]' : '[FAILED]';
     console.log(
       `[Audit] ${status} ${entry.toolName} | Session: ${entry.sessionId.slice(0, 8)} | ` +
         `Time: ${entry.executionTime}ms | ${new Date(entry.timestamp).toISOString()}`
