@@ -18,6 +18,13 @@ dist-ssr/
 # Configuration files (user config should not be committed)
 config.json
 config.json.backup.*
+config.backup.*.json
+
+# Backup directories
+.env-backups/
+.config-backups/
+server/.env-backups/
+server/.config-backups/
 
 # Allow configuration templates to be committed
 !config.default.json
