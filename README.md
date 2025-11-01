@@ -37,9 +37,15 @@ Real-time router metrics, system resource monitoring, interface status overview,
 ![Dashboard](docs/screenshots/dashboard.png)
 
 ### AI Agent Diagnostics
-AI-powered network troubleshooting with automated issue detection, severity classification, confidence scoring, and actionable recommendations. Features 14 specialized MCP tools for deep network analysis including firewall path testing, connectivity diagnostics, and security auditing.
+AI-powered network troubleshooting with automated issue detection, severity classification, confidence scoring, and actionable recommendations. Features 14 specialized MCP tools for deep network analysis including firewall path testing, connectivity diagnostics, security auditing, and internet speed testing.
 
 ![AI Agent](docs/screenshots/ai-agent.png)
+
+**Example: Speed Test Analysis**
+
+The AI assistant can perform comprehensive network diagnostics including internet speed tests with detailed analysis and recommendations:
+
+![Speed Test](docs/screenshots/speed_test_screenshot.jpeg)
 
 ### Network Management
 Comprehensive network management with tabbed interface for Interfaces, IP Addresses, Routes, and ARP Table. Features click-to-copy for all network values, toggle interfaces on/off, real-time traffic statistics, and detailed interface configuration.

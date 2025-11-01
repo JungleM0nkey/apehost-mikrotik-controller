@@ -15,7 +15,7 @@ import mikrotikService from '../../../mikrotik.js';
 export class ConnectivityTool extends BaseMCPTool {
   readonly name = 'test_connectivity';
   readonly description =
-    'PRIMARY PURPOSE: Test network connectivity, measure internet speed, and diagnose network issues. DO NOT use for system resources (CPU/memory), traffic statistics, or interface monitoring. CRITICAL: When user asks for "speed test", "bandwidth test", "how fast is my internet", or "internet speed", ALWAYS use action=internet-speed-test. Actions: (1) ping - basic reachability and latency checks ONLY, (2) traceroute - diagnose WHERE latency/packet-loss occurs by showing hop-by-hop path, (3) bandwidth-test - test MikroTik-to-MikroTik throughput (requires bandwidth-server on target), (4) internet-speed-test - measure actual internet download speed and latency (USE THIS for all "speed test" requests).';
+    'PRIMARY PURPOSE: Test network connectivity, measure internet speed, and diagnose network issues. DO NOT use for system resources (CPU/memory), traffic statistics, or interface monitoring. CRITICAL: When user asks for "speed test", "bandwidth test", "how fast is my internet", or "internet speed", ALWAYS use action=internet-speed-test WITHOUT an address parameter (defaults to Cloudflare). Actions: (1) ping - basic reachability and latency checks ONLY (requires address), (2) traceroute - diagnose WHERE latency/packet-loss occurs by showing hop-by-hop path (requires address), (3) bandwidth-test - test MikroTik-to-MikroTik throughput (requires bandwidth-server on target and address), (4) internet-speed-test - measure actual internet download speed and latency using Cloudflare infrastructure (address is OPTIONAL, defaults to 1.1.1.1).';
 
   readonly inputSchema: ToolInputSchema = {
     type: 'object',
@@ -56,7 +56,7 @@ export class ConnectivityTool extends BaseMCPTool {
         enum: ['send', 'receive', 'both'],
       },
     },
-    required: ['action', 'address'],
+    required: ['action'],
   };
 
   async execute(params: Record<string, unknown>, context: ToolExecutionContext): Promise<ToolResult> {
@@ -73,6 +73,11 @@ export class ConnectivityTool extends BaseMCPTool {
       }
 
       const action = params.action as string;
+
+      // Validate address requirement based on action
+      if (['ping', 'traceroute', 'bandwidth-test'].includes(action) && !params.address) {
+        return this.error(`Address parameter is required for ${action} action`);
+      }
 
       switch (action) {
         case 'ping':

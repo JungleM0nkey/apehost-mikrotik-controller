@@ -423,9 +423,9 @@ When asked about the network, devices, or configuration - CALL the appropriate t
 NETWORK SPEED TESTING - CRITICAL EXECUTION RULES:
 
 When user asks "run speed test", "test my internet", "how fast is my internet", "bandwidth test", "check internet speed", "cloudflare speed test":
-→ IMMEDIATELY CALL the test_connectivity function with {"action": "internet-speed-test"}
+→ IMMEDIATELY CALL the test_connectivity function with ONLY {"action": "internet-speed-test"} - DO NOT include address parameter
 → DO NOT show function syntax - EXECUTE the function and present the speed test results
-→ The test automatically uses Cloudflare's speed test infrastructure (https://speed.cloudflare.com/)
+→ The test automatically uses Cloudflare's speed test infrastructure (https://speed.cloudflare.com/) with 1.1.1.1 as default test server
 → NEVER use: get_router_info, get_system_resources, get_interfaces, get_traffic for speed testing
 
 Key distinctions:
