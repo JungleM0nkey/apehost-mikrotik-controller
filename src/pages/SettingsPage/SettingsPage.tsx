@@ -221,28 +221,31 @@ export const SettingsPage: React.FC = () => {
       setSaving(true);
       setNotification(null);
 
+      // Build mikrotik settings - exclude password if unchanged
+      const { password: mikrotikPassword, ...mikrotikRest } = serverSettings.mikrotik;
+      const mikrotikSettings = serverSettings.mikrotik.password !== originalMaskedPassword
+        ? serverSettings.mikrotik
+        : mikrotikRest as typeof serverSettings.mikrotik;
+
+      // Build claude settings - exclude apiKey if unchanged
+      const { apiKey: claudeApiKey, ...claudeRest } = serverSettings.llm.claude;
+      const claudeSettings = serverSettings.llm.claude.apiKey !== originalMaskedApiKey
+        ? serverSettings.llm.claude
+        : claudeRest as typeof serverSettings.llm.claude;
+
+      // Build cloudflare settings - exclude apiToken if unchanged
+      const { apiToken: cloudflareToken, ...cloudflareRest } = serverSettings.llm.cloudflare;
+      const cloudflareSettings = serverSettings.llm.cloudflare.apiToken !== originalMaskedCloudflareToken
+        ? serverSettings.llm.cloudflare
+        : cloudflareRest as typeof serverSettings.llm.cloudflare;
+
       const settingsToSave = {
         ...serverSettings,
-        mikrotik: {
-          ...serverSettings.mikrotik,
-          ...(serverSettings.mikrotik.password !== originalMaskedPassword
-            ? { password: serverSettings.mikrotik.password }
-            : {})
-        },
+        mikrotik: mikrotikSettings,
         llm: {
           ...serverSettings.llm,
-          claude: {
-            ...serverSettings.llm.claude,
-            ...(serverSettings.llm.claude.apiKey !== originalMaskedApiKey
-              ? { apiKey: serverSettings.llm.claude.apiKey }
-              : {})
-          },
-          cloudflare: {
-            ...serverSettings.llm.cloudflare,
-            ...(serverSettings.llm.cloudflare.apiToken !== originalMaskedCloudflareToken
-              ? { apiToken: serverSettings.llm.cloudflare.apiToken }
-              : {})
-          }
+          claude: claudeSettings,
+          cloudflare: cloudflareSettings
         }
       };
 
@@ -256,10 +259,8 @@ export const SettingsPage: React.FC = () => {
         const result = await response.json();
         setHasServerChanges(false);
 
-        // Update original masked values to match saved values
-        setOriginalMaskedPassword(serverSettings.mikrotik.password || '');
-        setOriginalMaskedApiKey(serverSettings.llm.claude.apiKey || '');
-        setOriginalMaskedCloudflareToken(serverSettings.llm.cloudflare.apiToken || '');
+        // Reload settings to sync state with backend and update masked values
+        await loadSettings();
 
         // Show success toast
         message.success(result.message || 'Server settings saved successfully!');
@@ -321,6 +322,26 @@ export const SettingsPage: React.FC = () => {
       }
     });
     setHasUIChanges(true);
+  };
+
+  const updateLLMProviderSettings = (
+    provider: 'claude' | 'lmstudio' | 'cloudflare',
+    field: string,
+    value: any
+  ) => {
+    if (!serverSettings) return;
+    setServerSettings({
+      ...serverSettings,
+      llm: {
+        ...serverSettings.llm,
+        [provider]: {
+          ...serverSettings.llm[provider],
+          [field]: value
+        }
+      }
+    });
+    setHasServerChanges(true);
+    setLLMTest(null);
   };
 
   const handleRestartSetup = async () => {
@@ -575,13 +596,7 @@ export const SettingsPage: React.FC = () => {
                               <Input
                                 type="password"
                                 value={serverSettings.llm.claude.apiKey}
-                                onChange={(e) => {
-                                  const newSettings = { ...serverSettings };
-                                  newSettings.llm.claude.apiKey = e.target.value;
-                                  setServerSettings(newSettings);
-                                  setHasServerChanges(true);
-                                  setLLMTest(null);
-                                }}
+                                onChange={(e) => updateLLMProviderSettings('claude', 'apiKey', e.target.value)}
                                 placeholder="sk-ant-api03-..."
                               />
                             </FormField>
@@ -590,13 +605,7 @@ export const SettingsPage: React.FC = () => {
                               <select
                                 className={styles.select}
                                 value={serverSettings.llm.claude.model}
-                                onChange={(e) => {
-                                  const newSettings = { ...serverSettings };
-                                  newSettings.llm.claude.model = e.target.value;
-                                  setServerSettings(newSettings);
-                                  setHasServerChanges(true);
-                                  setLLMTest(null);
-                                }}
+                                onChange={(e) => updateLLMProviderSettings('claude', 'model', e.target.value)}
                               >
                                 <option value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet (Latest)</option>
                                 <option value="claude-3-opus-20240229">Claude 3 Opus</option>
@@ -610,13 +619,7 @@ export const SettingsPage: React.FC = () => {
                             <FormField label="Server Endpoint" helpText="LM Studio server URL (usually http://localhost:1234)">
                               <Input
                                 value={serverSettings.llm.lmstudio.endpoint}
-                                onChange={(e) => {
-                                  const newSettings = { ...serverSettings };
-                                  newSettings.llm.lmstudio.endpoint = e.target.value;
-                                  setServerSettings(newSettings);
-                                  setHasServerChanges(true);
-                                  setLLMTest(null);
-                                }}
+                                onChange={(e) => updateLLMProviderSettings('lmstudio', 'endpoint', e.target.value)}
                                 placeholder="http://localhost:1234"
                               />
                             </FormField>
@@ -624,13 +627,7 @@ export const SettingsPage: React.FC = () => {
                             <FormField label="Model Name" helpText="The model loaded in LM Studio">
                               <Input
                                 value={serverSettings.llm.lmstudio.model}
-                                onChange={(e) => {
-                                  const newSettings = { ...serverSettings };
-                                  newSettings.llm.lmstudio.model = e.target.value;
-                                  setServerSettings(newSettings);
-                                  setHasServerChanges(true);
-                                  setLLMTest(null);
-                                }}
+                                onChange={(e) => updateLLMProviderSettings('lmstudio', 'model', e.target.value)}
                                 placeholder="Qwen2.5-Coder-14B-Instruct-Q4_K_M.gguf"
                               />
                             </FormField>
@@ -639,13 +636,7 @@ export const SettingsPage: React.FC = () => {
                               <Input
                                 type="number"
                                 value={serverSettings.llm.lmstudio.contextWindow}
-                                onChange={(e) => {
-                                  const newSettings = { ...serverSettings };
-                                  newSettings.llm.lmstudio.contextWindow = parseInt(e.target.value) || 32768;
-                                  setServerSettings(newSettings);
-                                  setHasServerChanges(true);
-                                  setLLMTest(null);
-                                }}
+                                onChange={(e) => updateLLMProviderSettings('lmstudio', 'contextWindow', parseInt(e.target.value) || 32768)}
                                 placeholder="32768"
                               />
                             </FormField>
@@ -656,13 +647,7 @@ export const SettingsPage: React.FC = () => {
                             <FormField label="Account ID" helpText="Get your Account ID from Cloudflare dashboard">
                               <Input
                                 value={serverSettings.llm.cloudflare.accountId}
-                                onChange={(e) => {
-                                  const newSettings = { ...serverSettings };
-                                  newSettings.llm.cloudflare.accountId = e.target.value;
-                                  setServerSettings(newSettings);
-                                  setHasServerChanges(true);
-                                  setLLMTest(null);
-                                }}
+                                onChange={(e) => updateLLMProviderSettings('cloudflare', 'accountId', e.target.value)}
                                 placeholder="your_cloudflare_account_id"
                               />
                             </FormField>
@@ -671,13 +656,7 @@ export const SettingsPage: React.FC = () => {
                               <Input
                                 type="password"
                                 value={serverSettings.llm.cloudflare.apiToken}
-                                onChange={(e) => {
-                                  const newSettings = { ...serverSettings };
-                                  newSettings.llm.cloudflare.apiToken = e.target.value;
-                                  setServerSettings(newSettings);
-                                  setHasServerChanges(true);
-                                  setLLMTest(null);
-                                }}
+                                onChange={(e) => updateLLMProviderSettings('cloudflare', 'apiToken', e.target.value)}
                                 placeholder="your_api_token"
                               />
                             </FormField>
@@ -686,13 +665,7 @@ export const SettingsPage: React.FC = () => {
                               <select
                                 className={styles.select}
                                 value={serverSettings.llm.cloudflare.model}
-                                onChange={(e) => {
-                                  const newSettings = { ...serverSettings };
-                                  newSettings.llm.cloudflare.model = e.target.value;
-                                  setServerSettings(newSettings);
-                                  setHasServerChanges(true);
-                                  setLLMTest(null);
-                                }}
+                                onChange={(e) => updateLLMProviderSettings('cloudflare', 'model', e.target.value)}
                               >
                                 <option value="@cf/meta/llama-4-scout-17b-16e-instruct">Llama 4 Scout 17B (Recommended)</option>
                               </select>
@@ -701,13 +674,7 @@ export const SettingsPage: React.FC = () => {
                             <FormField label="AI Gateway (Optional)" helpText="Optional: AI Gateway name for caching and analytics">
                               <Input
                                 value={serverSettings.llm.cloudflare.gateway || ''}
-                                onChange={(e) => {
-                                  const newSettings = { ...serverSettings };
-                                  newSettings.llm.cloudflare.gateway = e.target.value || undefined;
-                                  setServerSettings(newSettings);
-                                  setHasServerChanges(true);
-                                  setLLMTest(null);
-                                }}
+                                onChange={(e) => updateLLMProviderSettings('cloudflare', 'gateway', e.target.value || undefined)}
                                 placeholder="my-gateway-name"
                               />
                             </FormField>
@@ -726,12 +693,7 @@ export const SettingsPage: React.FC = () => {
                             max={2}
                             step={0.1}
                             value={serverSettings.assistant.temperature}
-                            onChange={(value) => {
-                              const newSettings = { ...serverSettings };
-                              newSettings.assistant.temperature = value;
-                              setServerSettings(newSettings);
-                              setHasServerChanges(true);
-                            }}
+                            onChange={(value) => updateServerSettings('assistant', 'temperature', value)}
                             marks={{ 0: '0', 0.7: '0.7', 1: '1', 2: '2' }}
                           />
                         </div>
@@ -740,12 +702,7 @@ export const SettingsPage: React.FC = () => {
                           <Input
                             type="number"
                             value={serverSettings.assistant.maxTokens}
-                            onChange={(e) => {
-                              const newSettings = { ...serverSettings };
-                              newSettings.assistant.maxTokens = parseInt(e.target.value);
-                              setServerSettings(newSettings);
-                              setHasServerChanges(true);
-                            }}
+                            onChange={(e) => updateServerSettings('assistant', 'maxTokens', parseInt(e.target.value))}
                           />
                         </FormField>
 
@@ -753,12 +710,7 @@ export const SettingsPage: React.FC = () => {
                           <Textarea
                             rows={4}
                             value={serverSettings.assistant.systemPrompt}
-                            onChange={(e) => {
-                              const newSettings = { ...serverSettings };
-                              newSettings.assistant.systemPrompt = e.target.value;
-                              setServerSettings(newSettings);
-                              setHasServerChanges(true);
-                            }}
+                            onChange={(e) => updateServerSettings('assistant', 'systemPrompt', e.target.value)}
                             placeholder="You are an expert MikroTik router assistant..."
                           />
                         </FormField>

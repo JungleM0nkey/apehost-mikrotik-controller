@@ -6,7 +6,6 @@
 
 
 
-
 > [!WARNING]
 > **Work In Progress - Not Production Ready**
 >
@@ -139,11 +138,6 @@ npm run dev:full  # Runs frontend and backend concurrently with automatic port c
 
 See [server/MCP_TOOLS_QUICK_REFERENCE.md](server/MCP_TOOLS_QUICK_REFERENCE.md) for complete tool documentation.
 
-## Design System
-
-**Theme**: Dark background (#0a0a0a) with orange accent (#ff6b35)
-
-**Customization**: Edit `src/styles/tokens.css` to modify design tokens.
 
 ## Configuration
 
