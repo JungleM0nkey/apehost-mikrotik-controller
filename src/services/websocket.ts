@@ -58,19 +58,21 @@ export class WebSocketService {
   private isConnecting: boolean = false;
   private reconnectAttempts: number = 0;
   private maxReconnectAttempts: number = 5;
+  private sessionReadyPromise: Promise<void> | null = null;
+  private sessionReadyResolve: (() => void) | null = null;
 
   /**
    * Connect to WebSocket server
    */
   connect(): Promise<void> {
-    if (this.socket?.connected) {
+    if (this.socket?.connected && this.sessionId) {
       return Promise.resolve();
     }
 
     if (this.isConnecting) {
       return new Promise((resolve) => {
         const checkConnection = setInterval(() => {
-          if (this.socket?.connected) {
+          if (this.socket?.connected && this.sessionId) {
             clearInterval(checkConnection);
             resolve();
           }
@@ -80,9 +82,14 @@ export class WebSocketService {
 
     this.isConnecting = true;
 
+    // Create a promise that resolves when session is created
+    this.sessionReadyPromise = new Promise((resolve) => {
+      this.sessionReadyResolve = resolve;
+    });
+
     return new Promise((resolve, reject) => {
       try {
-        const serverUrl = import.meta.env.DEV 
+        const serverUrl = import.meta.env.DEV
           ? 'http://localhost:3000'
           : window.location.origin;
 
@@ -98,19 +105,29 @@ export class WebSocketService {
           console.log('[WebSocket] Connected to server');
           this.isConnecting = false;
           this.reconnectAttempts = 0;
+          // Clear session ID on new connection - wait for new session:created event
+          this.sessionId = null;
+          this.sessionReadyPromise = new Promise((resolve) => {
+            this.sessionReadyResolve = resolve;
+          });
           resolve();
         });
 
         this.socket.on('session:created', (data: SessionCreatedEvent) => {
           console.log('[WebSocket] Session created:', data.sessionId);
           this.sessionId = data.sessionId;
+          // Resolve the session ready promise
+          if (this.sessionReadyResolve) {
+            this.sessionReadyResolve();
+            this.sessionReadyResolve = null;
+          }
         });
 
         this.socket.on('connect_error', (error) => {
           console.error('[WebSocket] Connection error:', error.message);
           this.isConnecting = false;
           this.reconnectAttempts++;
-          
+
           if (this.reconnectAttempts >= this.maxReconnectAttempts) {
             reject(new Error('Max reconnection attempts reached'));
           }
@@ -118,6 +135,8 @@ export class WebSocketService {
 
         this.socket.on('disconnect', (reason) => {
           console.log('[WebSocket] Disconnected:', reason);
+          // Clear session ID on disconnect
+          this.sessionId = null;
 
           // Attempt automatic reconnection for certain disconnect reasons
           if (reason === 'io server disconnect') {
@@ -174,7 +193,7 @@ export class WebSocketService {
 
   /**
    * Execute terminal command
-   * Waits for connection if currently connecting
+   * Waits for connection and session creation before executing
    */
   async executeCommand(command: string): Promise<void> {
     // If socket doesn't exist, throw error
@@ -182,40 +201,53 @@ export class WebSocketService {
       throw new Error('WebSocket not initialized. Please refresh the page.');
     }
 
-    // If already connected, execute immediately
-    if (this.socket.connected) {
-      this.socket.emit('terminal:execute', {
-        command,
-        sessionId: this.sessionId,
-      });
-      return;
+    // Wait for session to be ready (both connected and session created)
+    if (!this.socket.connected || !this.sessionId) {
+      console.log('[WebSocket] Waiting for session to be ready...');
+
+      // Wait for connection if not connected
+      if (!this.socket.connected) {
+        if (this.isConnecting) {
+          await new Promise<void>((resolve, reject) => {
+            const timeout = setTimeout(() => {
+              reject(new Error('Connection timeout'));
+            }, 5000);
+
+            const checkConnection = setInterval(() => {
+              if (this.socket?.connected) {
+                clearInterval(checkConnection);
+                clearTimeout(timeout);
+                resolve();
+              }
+            }, 100);
+          });
+        } else {
+          throw new Error('WebSocket not connected. Attempting to reconnect...');
+        }
+      }
+
+      // Wait for session to be created
+      if (!this.sessionId && this.sessionReadyPromise) {
+        console.log('[WebSocket] Waiting for session creation...');
+        try {
+          await Promise.race([
+            this.sessionReadyPromise,
+            new Promise<void>((_, reject) =>
+              setTimeout(() => reject(new Error('Session creation timeout')), 5000)
+            )
+          ]);
+          console.log('[WebSocket] Session ready, executing command');
+        } catch (error) {
+          throw new Error('Failed to create session. Please try again.');
+        }
+      }
     }
 
-    // If currently connecting, wait for connection
-    if (this.isConnecting) {
-      await new Promise<void>((resolve, reject) => {
-        const timeout = setTimeout(() => {
-          reject(new Error('Connection timeout'));
-        }, 5000);
-
-        const checkConnection = setInterval(() => {
-          if (this.socket?.connected) {
-            clearInterval(checkConnection);
-            clearTimeout(timeout);
-            resolve();
-          }
-        }, 100);
-      });
-
-      this.socket.emit('terminal:execute', {
-        command,
-        sessionId: this.sessionId,
-      });
-      return;
-    }
-
-    // Not connected and not connecting - try to reconnect
-    throw new Error('WebSocket not connected. Attempting to reconnect...');
+    // Execute command with session ID
+    this.socket.emit('terminal:execute', {
+      command,
+      sessionId: this.sessionId,
+    });
   }
 
   /**

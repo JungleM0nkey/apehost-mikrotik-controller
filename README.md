@@ -143,24 +143,6 @@ See [server/MCP_TOOLS_QUICK_REFERENCE.md](server/MCP_TOOLS_QUICK_REFERENCE.md) f
 
 **Theme**: Dark background (#0a0a0a) with orange accent (#ff6b35)
 
-**Typography**
-- UI: Arial
-- Terminal: Consolas
-
-**Spacing Scale**: 4px, 8px, 12px, 16px, 24px, 32px
-
-**Component Architecture**
-- Atomic design: atoms → molecules → organisms → pages
-- CSS Modules with design tokens
-- Custom components (no direct Ant Design form components)
-- Selective Ant Design integration (Tabs, Slider, Card, Alert, etc.)
-
-**Layout**
-- Fixed sidebar: 260px
-- Content split: Flexible responsive layout
-- Terminal taskbar: Fixed at bottom (48px height)
-- Mobile-first responsive breakpoints
-
 **Customization**: Edit `src/styles/tokens.css` to modify design tokens.
 
 ## Configuration
@@ -211,28 +193,6 @@ LMSTUDIO_CONTEXT_WINDOW=32768
 DATA_DIR=./data
 BACKUPS_DIR=./data/backups
 ```
-
-**Configuration Management**
-- Settings stored in `server/config.json` (gitignored)
-- File watcher for automatic reload on config changes
-- Backup/restore functionality via Settings UI
-- Validation with Zod schemas
-- Migration scripts for config format updates
-
-## Development
-
-**Code Quality**
-- Full TypeScript coverage
-- ESLint configuration
-- CSS Modules (no Tailwind dependency)
-- Atomic design methodology
-- Custom component system with design guidelines (see CLAUDE.md)
-
-**Performance**
-- Code splitting ready
-- Vite HMR for fast development
-- WebSocket for efficient real-time updates
-- Interface caching and optimization
 
 **Development Commands**
 ```bash
