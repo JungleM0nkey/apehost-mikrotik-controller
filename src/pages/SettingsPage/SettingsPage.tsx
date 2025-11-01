@@ -75,12 +75,13 @@ export const SettingsPage: React.FC = () => {
         const targetTab = sectionToTabMap[hash];
         setActiveTab(targetTab);
 
-        setTimeout(() => {
-          const element = document.getElementById(hash);
-          if (element) {
+        // Only scroll if the hash is an actual section ID, not just a tab key
+        const element = document.getElementById(hash);
+        if (element) {
+          setTimeout(() => {
             element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }
-        }, 100);
+          }, 100);
+        }
       }
     };
 
